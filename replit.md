@@ -131,9 +131,13 @@ Preferred communication style: Simple, everyday language.
 **Implementation**: OpenAI API with system prompts per coach type, chat history stored client-side
 
 ### Exercise Database Strategy
-**Decision**: Static, comprehensive exercise database in code (100+ exercises)
-**Rationale**: No database needed for static data, type-safe, fast lookups
-**Location**: lib/exercises.ts with categorization by muscle group and exercise type
+**Decision**: Exercises stored in PostgreSQL database (custom_exercises table) with static fallback
+**Rationale**: Allows admin panel editing of exercises while maintaining availability during API failures
+**Implementation**: 
+- 111 exercises migrated from static FULL_EXERCISE_DB to custom_exercises table
+- WorkoutLogger and Progress components fetch from /api/exercises with fallback to static database
+- Static FULL_EXERCISE_DB in lib/exercises.ts serves as fallback for offline/error scenarios
+- Admin panel (accessible via shield icon) allows editing exercises via /api/admin/exercises endpoints
 
 # External Dependencies
 
