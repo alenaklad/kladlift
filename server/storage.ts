@@ -424,17 +424,6 @@ export class DatabaseStorage implements IStorage {
     
     if (!submission) return undefined;
     
-    await db
-      .update(userExercises)
-      .set({
-        status: 'approved',
-        reviewedBy: adminId,
-        reviewedAt: new Date(),
-        reviewNotes: notes || null,
-        updatedAt: new Date()
-      })
-      .where(eq(userExercises.id, id));
-    
     const newExercise = await this.createCustomExercise({
       name: submission.name,
       muscle: submission.muscle,
@@ -444,6 +433,19 @@ export class DatabaseStorage implements IStorage {
       videoUrl: submission.videoUrl,
       createdBy: submission.userId
     });
+    
+    await db
+      .update(userExercises)
+      .set({
+        visibility: 'public',
+        status: 'approved',
+        reviewedBy: adminId,
+        reviewedAt: new Date(),
+        reviewNotes: notes || null,
+        approvedExerciseId: newExercise.id,
+        updatedAt: new Date()
+      })
+      .where(eq(userExercises.id, id));
     
     return newExercise;
   }

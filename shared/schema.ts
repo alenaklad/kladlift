@@ -126,6 +126,7 @@ export const userExercises = pgTable("user_exercises", {
   reviewedBy: varchar("reviewed_by").references(() => users.id),
   reviewedAt: timestamp("reviewed_at"),
   reviewNotes: text("review_notes"),
+  approvedExerciseId: varchar("approved_exercise_id").references(() => customExercises.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

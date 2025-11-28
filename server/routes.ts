@@ -263,6 +263,50 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/objects/set-acl", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { objectUrl, visibility } = req.body;
+      
+      if (!objectUrl) {
+        return res.status(400).json({ error: "URL объекта обязателен" });
+      }
+      
+      const normalizedPath = await objectStorage.trySetObjectEntityAclPolicy(objectUrl, {
+        owner: userId,
+        visibility: visibility || 'private'
+      });
+      
+      res.json({ path: normalizedPath });
+    } catch (error) {
+      console.error("Error setting ACL:", error);
+      res.status(500).json({ error: "Не удалось установить права доступа" });
+    }
+  });
+
+  app.post("/api/admin/objects/set-public", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { objectUrl } = req.body;
+      
+      if (!objectUrl) {
+        return res.status(400).json({ error: "URL объекта обязателен" });
+      }
+      
+      const objectFile = await objectStorage.getObjectEntityFile(objectUrl);
+      const currentPolicy = await objectStorage.canAccessObjectEntity({ objectFile });
+      
+      const normalizedPath = await objectStorage.trySetObjectEntityAclPolicy(objectUrl, {
+        owner: 'system',
+        visibility: 'public'
+      });
+      
+      res.json({ path: normalizedPath });
+    } catch (error) {
+      console.error("Error setting public ACL:", error);
+      res.status(500).json({ error: "Не удалось сделать объект публичным" });
+    }
+  });
+
   app.get("/objects/*", async (req: any, res) => {
     try {
       const objectPath = req.path;

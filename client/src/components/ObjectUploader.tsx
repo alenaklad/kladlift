@@ -66,8 +66,24 @@ export function ObjectUploader({
       }
 
       const fileUrl = uploadUrl.split('?')[0];
-      setUploadedUrl(fileUrl);
-      onUploadComplete(fileUrl);
+      
+      const aclResponse = await fetch('/api/objects/set-acl', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ objectUrl: fileUrl, visibility: 'private' })
+      });
+      
+      if (!aclResponse.ok) {
+        console.warn('Не удалось установить права доступа');
+      }
+      
+      const { path: normalizedPath } = await aclResponse.json();
+      const finalUrl = normalizedPath || fileUrl;
+      
+      setUploadedUrl(finalUrl);
+      onUploadComplete(finalUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка загрузки');
     } finally {
