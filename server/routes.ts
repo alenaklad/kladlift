@@ -1,7 +1,9 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+import { ObjectPermission } from "./objectAcl";
 import OpenAI from "openai";
 import { COACH_PERSONAS, type CoachPersonaId } from "@shared/schema";
 
@@ -9,6 +11,24 @@ const openai = new OpenAI({
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY
 });
+
+const objectStorage = new ObjectStorageService();
+
+const isAdmin = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?.claims?.sub;
+    if (!userId) {
+      return res.status(401).json({ error: "Не авторизован" });
+    }
+    const user = await storage.getUser(userId);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ error: "Доступ запрещен" });
+    }
+    next();
+  } catch (error) {
+    res.status(500).json({ error: "Ошибка проверки прав" });
+  }
+};
 
 export async function registerRoutes(
   httpServer: Server,
@@ -229,6 +249,228 @@ export async function registerRoutes(
         error: "Failed to process chat",
         response: "Извините, произошла ошибка. Попробуйте еще раз." 
       });
+    }
+  });
+
+  // --- Object Storage Routes ---
+  app.get("/api/objects/upload-url", isAuthenticated, async (req: any, res) => {
+    try {
+      const url = await objectStorage.getObjectEntityUploadURL();
+      res.json({ uploadUrl: url });
+    } catch (error) {
+      console.error("Error getting upload URL:", error);
+      res.status(500).json({ error: "Не удалось получить URL для загрузки" });
+    }
+  });
+
+  app.get("/objects/*", async (req: any, res) => {
+    try {
+      const objectPath = req.path;
+      const objectFile = await objectStorage.getObjectEntityFile(objectPath);
+      const userId = req.user?.claims?.sub;
+      
+      const canAccess = await objectStorage.canAccessObjectEntity({
+        userId,
+        objectFile,
+        requestedPermission: ObjectPermission.READ
+      });
+      
+      if (!canAccess) {
+        return res.status(403).json({ error: "Доступ запрещен" });
+      }
+      
+      await objectStorage.downloadObject(objectFile, res);
+    } catch (error) {
+      if (error instanceof ObjectNotFoundError) {
+        return res.status(404).json({ error: "Объект не найден" });
+      }
+      console.error("Error downloading object:", error);
+      res.status(500).json({ error: "Ошибка загрузки объекта" });
+    }
+  });
+
+  // --- Admin Routes ---
+  app.get("/api/admin/stats", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const stats = await storage.getUserStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ error: "Ошибка получения статистики" });
+    }
+  });
+
+  app.get("/api/admin/users", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ error: "Ошибка получения пользователей" });
+    }
+  });
+
+  app.patch("/api/admin/users/:id/role", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { role } = req.body;
+      if (!['user', 'admin'].includes(role)) {
+        return res.status(400).json({ error: "Недопустимая роль" });
+      }
+      const user = await storage.setUserRole(req.params.id, role);
+      if (!user) {
+        return res.status(404).json({ error: "Пользователь не найден" });
+      }
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ error: "Ошибка изменения роли" });
+    }
+  });
+
+  // --- Custom Exercises Routes (public database, admin-managed) ---
+  app.get("/api/exercises", async (req: any, res) => {
+    try {
+      const exercises = await storage.getCustomExercises();
+      res.json(exercises);
+    } catch (error) {
+      res.status(500).json({ error: "Ошибка получения упражнений" });
+    }
+  });
+
+  app.get("/api/exercises/:id", async (req: any, res) => {
+    try {
+      const exercise = await storage.getCustomExercise(req.params.id);
+      if (!exercise) {
+        return res.status(404).json({ error: "Упражнение не найдено" });
+      }
+      res.json(exercise);
+    } catch (error) {
+      res.status(500).json({ error: "Ошибка получения упражнения" });
+    }
+  });
+
+  app.post("/api/admin/exercises", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const exercise = await storage.createCustomExercise({
+        ...req.body,
+        createdBy: userId
+      });
+      res.json(exercise);
+    } catch (error) {
+      console.error("Error creating exercise:", error);
+      res.status(500).json({ error: "Ошибка создания упражнения" });
+    }
+  });
+
+  app.put("/api/admin/exercises/:id", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const exercise = await storage.updateCustomExercise(req.params.id, req.body);
+      if (!exercise) {
+        return res.status(404).json({ error: "Упражнение не найдено" });
+      }
+      res.json(exercise);
+    } catch (error) {
+      res.status(500).json({ error: "Ошибка обновления упражнения" });
+    }
+  });
+
+  app.delete("/api/admin/exercises/:id", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      await storage.deleteCustomExercise(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Ошибка удаления упражнения" });
+    }
+  });
+
+  // --- User Exercises Routes (private exercises) ---
+  app.get("/api/user-exercises", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const exercises = await storage.getUserExercises(userId);
+      res.json(exercises);
+    } catch (error) {
+      res.status(500).json({ error: "Ошибка получения упражнений" });
+    }
+  });
+
+  app.post("/api/user-exercises", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const exercise = await storage.createUserExercise(userId, req.body);
+      res.json(exercise);
+    } catch (error) {
+      console.error("Error creating user exercise:", error);
+      res.status(500).json({ error: "Ошибка создания упражнения" });
+    }
+  });
+
+  app.put("/api/user-exercises/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const exercise = await storage.updateUserExercise(userId, req.params.id, req.body);
+      if (!exercise) {
+        return res.status(404).json({ error: "Упражнение не найдено" });
+      }
+      res.json(exercise);
+    } catch (error) {
+      res.status(500).json({ error: "Ошибка обновления упражнения" });
+    }
+  });
+
+  app.delete("/api/user-exercises/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      await storage.deleteUserExercise(userId, req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Ошибка удаления упражнения" });
+    }
+  });
+
+  app.post("/api/user-exercises/:id/submit", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const exercise = await storage.submitUserExercise(userId, req.params.id);
+      if (!exercise) {
+        return res.status(404).json({ error: "Упражнение не найдено" });
+      }
+      res.json(exercise);
+    } catch (error) {
+      res.status(500).json({ error: "Ошибка отправки на модерацию" });
+    }
+  });
+
+  // --- Moderation Routes ---
+  app.get("/api/admin/submissions", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const submissions = await storage.getPendingSubmissions();
+      res.json(submissions);
+    } catch (error) {
+      res.status(500).json({ error: "Ошибка получения заявок" });
+    }
+  });
+
+  app.post("/api/admin/submissions/:id/approve", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const adminId = req.user.claims.sub;
+      const { notes } = req.body;
+      const exercise = await storage.approveSubmission(req.params.id, adminId, notes);
+      if (!exercise) {
+        return res.status(404).json({ error: "Заявка не найдена" });
+      }
+      res.json(exercise);
+    } catch (error) {
+      res.status(500).json({ error: "Ошибка одобрения заявки" });
+    }
+  });
+
+  app.post("/api/admin/submissions/:id/reject", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const adminId = req.user.claims.sub;
+      const { notes } = req.body;
+      await storage.rejectSubmission(req.params.id, adminId, notes);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Ошибка отклонения заявки" });
     }
   });
 
