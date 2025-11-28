@@ -11,6 +11,9 @@ Key features:
 - AI coaching system with multiple coach personas
 - Body composition tracking
 - Female cycle tracking integration
+- Custom exercise creation (private or submit to public database)
+- Admin panel with user statistics, exercise management, and moderation
+- Object storage for exercise media (photos, videos) with ACL-based access control
 - Russian language interface
 
 # User Preferences
@@ -57,6 +60,20 @@ Preferred communication style: Simple, everyday language.
 - POST /api/body-logs - Create body log
 - DELETE /api/body-logs/:id - Delete body log
 - POST /api/coach/chat - AI coach chat endpoint
+- GET /api/exercises - Fetch public exercises
+- GET /api/user-exercises - Fetch user's private exercises
+- POST /api/user-exercises - Create user exercise
+- PUT /api/user-exercises/:id - Update user exercise
+- DELETE /api/user-exercises/:id - Delete user exercise
+- POST /api/user-exercises/:id/submit - Submit for moderation
+- GET /api/admin/stats - Admin: user statistics
+- GET /api/admin/users - Admin: list all users
+- PATCH /api/admin/users/:id/role - Admin: change user role
+- GET /api/admin/submissions - Admin: pending moderation items
+- POST /api/admin/submissions/:id/approve - Admin: approve submission
+- POST /api/admin/submissions/:id/reject - Admin: reject submission
+- GET /api/objects/upload-url - Get presigned upload URL
+- POST /api/objects/set-acl - Set object ACL after upload
 
 **Storage Strategy**: 
 - PostgreSQL database with Drizzle ORM (DatabaseStorage class)
