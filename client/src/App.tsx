@@ -25,62 +25,9 @@ import { CoachView } from "@/components/CoachView";
 import { HistoryView } from "@/components/HistoryView";
 import { AdminPanel } from "@/components/AdminPanel";
 import { UserExerciseCreator } from "@/components/UserExerciseCreator";
+import { AuthForms } from "@/components/AuthForms";
 
 type AppView = 'dashboard' | 'log' | 'progress' | 'coach' | 'history' | 'admin' | 'my-exercises';
-
-function Landing() {
-  return (
-    <div className="min-h-screen bg-[#0A0E1A] text-white flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center px-6">
-        <div className="relative mb-8">
-          <div className="absolute -inset-8 bg-white/10 rounded-full blur-3xl"></div>
-          <div className="relative w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-2xl">
-            <Dumbbell size={48} className="text-[#0A0E1A]" />
-          </div>
-        </div>
-        
-        <h1 className="text-5xl font-black tracking-tight mb-4 text-center">
-          KladLift
-        </h1>
-        
-        <p className="text-xl text-gray-400 text-center mb-8 max-w-md">
-          Персональный тренировочный трекер с AI-коучингом и научным подходом
-        </p>
-
-        <div className="space-y-4 mb-12 text-center">
-          <div className="flex items-center gap-3 text-gray-300">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span>Персонализированные программы тренировок</span>
-          </div>
-          <div className="flex items-center gap-3 text-gray-300">
-            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-            <span>AI-тренер для техники и мотивации</span>
-          </div>
-          <div className="flex items-center gap-3 text-gray-300">
-            <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-            <span>Синхронизация на всех устройствах</span>
-          </div>
-        </div>
-
-        <a
-          href="/api/login"
-          className="w-full max-w-sm py-5 bg-white text-[#0A0E1A] rounded-2xl font-bold text-xl text-center shadow-2xl hover:bg-gray-100 transition-colors block"
-          data-testid="button-login"
-        >
-          Войти
-        </a>
-        
-        <p className="text-gray-500 text-sm mt-6 text-center">
-          Войдите через Google, GitHub или email
-        </p>
-      </div>
-
-      <footer className="p-6 text-center text-gray-600 text-sm">
-        Безопасно храним ваши данные
-      </footer>
-    </div>
-  );
-}
 
 function CalibrationView() {
   return (
@@ -319,14 +266,21 @@ function AuthenticatedApp() {
               )}
               <span className="hidden sm:block">{authUser.firstName || authUser.email}</span>
             </div>
-            <a
-              href="/api/logout"
+            <button
+              onClick={async () => {
+                try {
+                  await apiRequest('POST', '/api/auth/logout');
+                  queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+                } catch (error) {
+                  console.error('Logout failed:', error);
+                }
+              }}
               className="p-2 bg-[#1A1F2E] rounded-full text-gray-400 hover:text-white hover:bg-[#252A3A] transition-colors"
               data-testid="button-logout"
               title="Выйти"
             >
               <LogOut size={18} />
-            </a>
+            </button>
           </>
         )}
       </div>
@@ -404,7 +358,7 @@ function AppRouter() {
   }
 
   if (!isAuthenticated) {
-    return <Landing />;
+    return <AuthForms onSuccess={() => queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] })} />;
   }
 
   return <AuthenticatedApp />;

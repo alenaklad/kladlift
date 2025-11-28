@@ -75,11 +75,11 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table for Replit Auth
-// (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
+// User storage table with email/password authentication
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique(),
+  email: varchar("email").unique().notNull(),
+  password: varchar("password").notNull(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
@@ -90,6 +90,20 @@ export const users = pgTable("users", {
 
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+// Registration schema for validation
+export const registerSchema = z.object({
+  email: z.string().email("Введите корректный email"),
+  password: z.string().min(6, "Пароль должен быть не менее 6 символов"),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+});
+
+// Login schema for validation
+export const loginSchema = z.object({
+  email: z.string().email("Введите корректный email"),
+  password: z.string().min(1, "Введите пароль"),
+});
 
 // --- EXERCISE DATABASE TABLES ---
 

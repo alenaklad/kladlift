@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated, getUserId } from "./auth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
 import OpenAI from "openai";
@@ -14,9 +14,9 @@ const openai = new OpenAI({
 
 const objectStorage = new ObjectStorageService();
 
-const isAdmin = async (req: any, res: Response, next: NextFunction) => {
+const isAdmin = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = req.user?.claims?.sub;
+    const userId = getUserId(req);
     if (!userId) {
       return res.status(401).json({ error: "Не авторизован" });
     }
@@ -35,25 +35,13 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
-  // Setup Replit Auth
-  await setupAuth(app);
-  
-  // Auth user endpoint
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
+  // Setup custom email/password auth
+  setupAuth(app);
 
   // User profile endpoints (training profile, not auth user)
-  app.get("/api/user", isAuthenticated, async (req: any, res) => {
+  app.get("/api/user", isAuthenticated, async (req: Request, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req)!;
       const profile = await storage.getUserProfile(userId);
       res.json(profile || null);
     } catch (error) {
@@ -61,9 +49,9 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/user", isAuthenticated, async (req: any, res) => {
+  app.post("/api/user", isAuthenticated, async (req: Request, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req)!;
       const profile = await storage.saveUserProfile(userId, req.body);
       res.json(profile);
     } catch (error) {
@@ -73,9 +61,9 @@ export async function registerRoutes(
   });
 
   // Workout endpoints
-  app.get("/api/workouts", isAuthenticated, async (req: any, res) => {
+  app.get("/api/workouts", isAuthenticated, async (req: Request, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req)!;
       const workouts = await storage.getWorkouts(userId);
       res.json(workouts);
     } catch (error) {
@@ -83,9 +71,9 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/workouts/:id", isAuthenticated, async (req: any, res) => {
+  app.get("/api/workouts/:id", isAuthenticated, async (req: Request, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req)!;
       const workout = await storage.getWorkout(userId, req.params.id);
       if (!workout) {
         return res.status(404).json({ error: "Workout not found" });
@@ -96,9 +84,9 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/workouts", isAuthenticated, async (req: any, res) => {
+  app.post("/api/workouts", isAuthenticated, async (req: Request, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req)!;
       const workout = await storage.addWorkout(userId, req.body);
       res.json(workout);
     } catch (error) {
@@ -107,9 +95,9 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/workouts/:id", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/workouts/:id", isAuthenticated, async (req: Request, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req)!;
       const workout = await storage.updateWorkout(userId, req.params.id, req.body);
       if (!workout) {
         return res.status(404).json({ error: "Workout not found" });
@@ -120,9 +108,9 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/workouts/:id", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/workouts/:id", isAuthenticated, async (req: Request, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req)!;
       const deleted = await storage.deleteWorkout(userId, req.params.id);
       if (!deleted) {
         return res.status(404).json({ error: "Workout not found" });
@@ -134,9 +122,9 @@ export async function registerRoutes(
   });
 
   // Body log endpoints
-  app.get("/api/body-logs", isAuthenticated, async (req: any, res) => {
+  app.get("/api/body-logs", isAuthenticated, async (req: Request, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req)!;
       const logs = await storage.getBodyLogs(userId);
       res.json(logs);
     } catch (error) {
@@ -144,9 +132,9 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/body-logs", isAuthenticated, async (req: any, res) => {
+  app.post("/api/body-logs", isAuthenticated, async (req: Request, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req)!;
       const log = await storage.addBodyLog(userId, req.body);
       res.json(log);
     } catch (error) {
@@ -155,9 +143,9 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/body-logs/:id", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/body-logs/:id", isAuthenticated, async (req: Request, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req)!;
       const deleted = await storage.deleteBodyLog(userId, req.params.id);
       if (!deleted) {
         return res.status(404).json({ error: "Body log not found" });
@@ -169,7 +157,7 @@ export async function registerRoutes(
   });
 
   // AI Chat endpoint (protected)
-  app.post("/api/chat", isAuthenticated, async (req: any, res) => {
+  app.post("/api/chat", isAuthenticated, async (req: Request, res) => {
     try {
       const { coachId, message, image, history, userContext } = req.body;
       
@@ -253,7 +241,7 @@ export async function registerRoutes(
   });
 
   // --- Object Storage Routes ---
-  app.get("/api/objects/upload-url", isAuthenticated, async (req: any, res) => {
+  app.get("/api/objects/upload-url", isAuthenticated, async (req: Request, res) => {
     try {
       const url = await objectStorage.getObjectEntityUploadURL();
       res.json({ uploadUrl: url });
@@ -263,9 +251,9 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/objects/set-acl", isAuthenticated, async (req: any, res) => {
+  app.post("/api/objects/set-acl", isAuthenticated, async (req: Request, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req)!;
       const { objectUrl, visibility } = req.body;
       
       if (!objectUrl) {
@@ -392,7 +380,7 @@ export async function registerRoutes(
 
   app.post("/api/admin/exercises", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req)!;
       const exercise = await storage.createCustomExercise({
         ...req.body,
         createdBy: userId
@@ -426,9 +414,9 @@ export async function registerRoutes(
   });
 
   // --- User Exercises Routes (private exercises) ---
-  app.get("/api/user-exercises", isAuthenticated, async (req: any, res) => {
+  app.get("/api/user-exercises", isAuthenticated, async (req: Request, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req)!;
       const exercises = await storage.getUserExercises(userId);
       res.json(exercises);
     } catch (error) {
@@ -436,9 +424,9 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/user-exercises", isAuthenticated, async (req: any, res) => {
+  app.post("/api/user-exercises", isAuthenticated, async (req: Request, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req)!;
       const exercise = await storage.createUserExercise(userId, req.body);
       res.json(exercise);
     } catch (error) {
@@ -447,9 +435,9 @@ export async function registerRoutes(
     }
   });
 
-  app.put("/api/user-exercises/:id", isAuthenticated, async (req: any, res) => {
+  app.put("/api/user-exercises/:id", isAuthenticated, async (req: Request, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req)!;
       const exercise = await storage.updateUserExercise(userId, req.params.id, req.body);
       if (!exercise) {
         return res.status(404).json({ error: "Упражнение не найдено" });
@@ -460,9 +448,9 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/user-exercises/:id", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/user-exercises/:id", isAuthenticated, async (req: Request, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req)!;
       await storage.deleteUserExercise(userId, req.params.id);
       res.json({ success: true });
     } catch (error) {
@@ -470,9 +458,9 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/user-exercises/:id/submit", isAuthenticated, async (req: any, res) => {
+  app.post("/api/user-exercises/:id/submit", isAuthenticated, async (req: Request, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req)!;
       const exercise = await storage.submitUserExercise(userId, req.params.id);
       if (!exercise) {
         return res.status(404).json({ error: "Упражнение не найдено" });
@@ -495,7 +483,7 @@ export async function registerRoutes(
 
   app.post("/api/admin/submissions/:id/approve", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      const adminId = req.user.claims.sub;
+      const adminId = getUserId(req)!;
       const { notes } = req.body;
       const exercise = await storage.approveSubmission(req.params.id, adminId, notes);
       if (!exercise) {
@@ -509,7 +497,7 @@ export async function registerRoutes(
 
   app.post("/api/admin/submissions/:id/reject", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      const adminId = req.user.claims.sub;
+      const adminId = getUserId(req)!;
       const { notes } = req.body;
       await storage.rejectSubmission(req.params.id, adminId, notes);
       res.json({ success: true });
