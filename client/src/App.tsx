@@ -11,9 +11,11 @@ import {
   MessageCircle, 
   Home,
   LogOut,
-  User as UserIcon
+  User as UserIcon,
+  Shield,
+  PlusCircle
 } from "lucide-react";
-import type { UserProfile, Workout, BodyLog, WorkoutExercise } from "@shared/schema";
+import type { UserProfile, Workout, BodyLog, WorkoutExercise, User } from "@shared/schema";
 
 import { Onboarding } from "@/components/Onboarding";
 import { Dashboard } from "@/components/Dashboard";
@@ -21,8 +23,10 @@ import { WorkoutLogger } from "@/components/WorkoutLogger";
 import { Progress } from "@/components/Progress";
 import { CoachView } from "@/components/CoachView";
 import { HistoryView } from "@/components/HistoryView";
+import { AdminPanel } from "@/components/AdminPanel";
+import { UserExerciseCreator } from "@/components/UserExerciseCreator";
 
-type AppView = 'dashboard' | 'log' | 'progress' | 'coach' | 'history';
+type AppView = 'dashboard' | 'log' | 'progress' | 'coach' | 'history' | 'admin' | 'my-exercises';
 
 function Landing() {
   return (
@@ -98,6 +102,14 @@ function AuthenticatedApp() {
   const [isOnboarded, setIsOnboarded] = useState<boolean | null>(null);
   const [isCalibrating, setIsCalibrating] = useState(false);
   const [editingWorkout, setEditingWorkout] = useState<Workout | null>(null);
+
+  const { data: currentUser } = useQuery<User>({
+    queryKey: ['/api/auth/user'],
+    enabled: !!authUser,
+    retry: false
+  });
+
+  const isAdmin = currentUser?.role === 'admin';
 
   const { data: userProfile, isLoading: userLoading, refetch: refetchUser } = useQuery<UserProfile | null>({
     queryKey: ['/api/user'],
@@ -261,12 +273,38 @@ function AuthenticatedApp() {
     );
   }
 
+  if (view === 'admin' && isAdmin) {
+    return <AdminPanel onBack={() => setView('dashboard')} />;
+  }
+
+  if (view === 'my-exercises') {
+    return <UserExerciseCreator onBack={() => setView('dashboard')} />;
+  }
+
   return (
     <div className="min-h-screen bg-[#0A0E1A]">
       {/* User header with logout */}
       <div className="fixed top-0 right-0 p-4 z-50 flex items-center gap-3">
         {authUser && (
           <>
+            <button
+              onClick={() => setView('my-exercises')}
+              className="p-2 bg-[#1A1F2E] rounded-full text-gray-400 hover:text-white hover:bg-[#252A3A] transition-colors"
+              data-testid="button-my-exercises"
+              title="Мои упражнения"
+            >
+              <PlusCircle size={18} />
+            </button>
+            {isAdmin && (
+              <button
+                onClick={() => setView('admin')}
+                className="p-2 bg-[#1A1F2E] rounded-full text-gray-400 hover:text-white hover:bg-[#252A3A] transition-colors"
+                data-testid="button-admin-panel"
+                title="Админ-панель"
+              >
+                <Shield size={18} />
+              </button>
+            )}
             <div className="flex items-center gap-2 text-gray-400 text-sm">
               {authUser.profileImageUrl ? (
                 <img 
