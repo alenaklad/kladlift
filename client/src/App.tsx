@@ -4,11 +4,14 @@ import { QueryClientProvider, useQuery, useMutation } from "@tanstack/react-quer
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { 
   BarChart2, 
   Dumbbell, 
   MessageCircle, 
-  Home 
+  Home,
+  LogOut,
+  User as UserIcon
 } from "lucide-react";
 import type { UserProfile, Workout, BodyLog, WorkoutExercise } from "@shared/schema";
 
@@ -20,6 +23,60 @@ import { CoachView } from "@/components/CoachView";
 import { HistoryView } from "@/components/HistoryView";
 
 type AppView = 'dashboard' | 'log' | 'progress' | 'coach' | 'history';
+
+function Landing() {
+  return (
+    <div className="min-h-screen bg-[#0A0E1A] text-white flex flex-col">
+      <div className="flex-1 flex flex-col items-center justify-center px-6">
+        <div className="relative mb-8">
+          <div className="absolute -inset-8 bg-white/10 rounded-full blur-3xl"></div>
+          <div className="relative w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-2xl">
+            <Dumbbell size={48} className="text-[#0A0E1A]" />
+          </div>
+        </div>
+        
+        <h1 className="text-5xl font-black tracking-tight mb-4 text-center">
+          KladLift
+        </h1>
+        
+        <p className="text-xl text-gray-400 text-center mb-8 max-w-md">
+          Персональный тренировочный трекер с AI-коучингом и научным подходом
+        </p>
+
+        <div className="space-y-4 mb-12 text-center">
+          <div className="flex items-center gap-3 text-gray-300">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <span>Персонализированные программы тренировок</span>
+          </div>
+          <div className="flex items-center gap-3 text-gray-300">
+            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+            <span>AI-тренер для техники и мотивации</span>
+          </div>
+          <div className="flex items-center gap-3 text-gray-300">
+            <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+            <span>Синхронизация на всех устройствах</span>
+          </div>
+        </div>
+
+        <a
+          href="/api/login"
+          className="w-full max-w-sm py-5 bg-white text-[#0A0E1A] rounded-2xl font-bold text-xl text-center shadow-2xl hover:bg-gray-100 transition-colors block"
+          data-testid="button-login"
+        >
+          Войти
+        </a>
+        
+        <p className="text-gray-500 text-sm mt-6 text-center">
+          Войдите через Google, GitHub или email
+        </p>
+      </div>
+
+      <footer className="p-6 text-center text-gray-600 text-sm">
+        Безопасно храним ваши данные
+      </footer>
+    </div>
+  );
+}
 
 function CalibrationView() {
   return (
@@ -34,14 +91,15 @@ function CalibrationView() {
   );
 }
 
-function FitnessApp() {
+function AuthenticatedApp() {
   const { toast } = useToast();
+  const { user: authUser } = useAuth();
   const [view, setView] = useState<AppView>('dashboard');
   const [isOnboarded, setIsOnboarded] = useState<boolean | null>(null);
   const [isCalibrating, setIsCalibrating] = useState(false);
   const [editingWorkout, setEditingWorkout] = useState<Workout | null>(null);
 
-  const { data: user, isLoading: userLoading, refetch: refetchUser } = useQuery<UserProfile | null>({
+  const { data: userProfile, isLoading: userLoading, refetch: refetchUser } = useQuery<UserProfile | null>({
     queryKey: ['/api/user'],
   });
 
@@ -102,9 +160,9 @@ function FitnessApp() {
 
   useEffect(() => {
     if (!userLoading) {
-      setIsOnboarded(!!user);
+      setIsOnboarded(!!userProfile);
     }
-  }, [user, userLoading]);
+  }, [userProfile, userLoading]);
 
   const handleOnboardingComplete = async (userData: UserProfile, shouldLogInitial: boolean) => {
     setIsCalibrating(true);
@@ -141,9 +199,9 @@ function FitnessApp() {
     };
     await addBodyLogMutation.mutateAsync(log);
 
-    if (user) {
+    if (userProfile) {
       await saveUserMutation.mutateAsync({
-        ...user,
+        ...userProfile,
         weight,
         fat
       });
@@ -162,7 +220,7 @@ function FitnessApp() {
     return <CalibrationView />;
   }
 
-  if (!isOnboarded || !user) {
+  if (!isOnboarded || !userProfile) {
     return <Onboarding onComplete={handleOnboardingComplete} />;
   }
 
@@ -182,7 +240,7 @@ function FitnessApp() {
   if (view === 'coach') {
     return (
       <CoachView 
-        user={user} 
+        user={userProfile} 
         workouts={workouts} 
         onBack={() => setView('dashboard')} 
       />
@@ -205,9 +263,39 @@ function FitnessApp() {
 
   return (
     <div className="min-h-screen bg-[#0A0E1A]">
+      {/* User header with logout */}
+      <div className="fixed top-0 right-0 p-4 z-50 flex items-center gap-3">
+        {authUser && (
+          <>
+            <div className="flex items-center gap-2 text-gray-400 text-sm">
+              {authUser.profileImageUrl ? (
+                <img 
+                  src={authUser.profileImageUrl} 
+                  alt="" 
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-8 h-8 bg-[#1A1F2E] rounded-full flex items-center justify-center">
+                  <UserIcon size={16} />
+                </div>
+              )}
+              <span className="hidden sm:block">{authUser.firstName || authUser.email}</span>
+            </div>
+            <a
+              href="/api/logout"
+              className="p-2 bg-[#1A1F2E] rounded-full text-gray-400 hover:text-white hover:bg-[#252A3A] transition-colors"
+              data-testid="button-logout"
+              title="Выйти"
+            >
+              <LogOut size={18} />
+            </a>
+          </>
+        )}
+      </div>
+
       {view === 'dashboard' && (
         <Dashboard 
-          user={user}
+          user={userProfile}
           workouts={workouts}
           bodyLogs={bodyLogs}
           onLogClick={() => setView('log')}
@@ -222,7 +310,7 @@ function FitnessApp() {
       {view === 'progress' && (
         <Progress 
           workouts={workouts} 
-          userCycle={user.cycle} 
+          userCycle={userProfile.cycle} 
         />
       )}
 
@@ -266,11 +354,29 @@ function FitnessApp() {
   );
 }
 
+function AppRouter() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#0A0E1A]">
+        <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Landing />;
+  }
+
+  return <AuthenticatedApp />;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <FitnessApp />
+        <AppRouter />
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>

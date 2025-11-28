@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 import OpenAI from "openai";
 import { COACH_PERSONAS, type CoachPersonaId } from "@shared/schema";
 
@@ -14,36 +15,58 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
-  app.get("/api/user", async (req, res) => {
+  // Setup Replit Auth
+  await setupAuth(app);
+  
+  // Auth user endpoint
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser();
-      res.json(user || null);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to get user" });
-    }
-  });
-
-  app.post("/api/user", async (req, res) => {
-    try {
-      const user = await storage.saveUser(req.body);
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {
-      res.status(500).json({ error: "Failed to save user" });
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
     }
   });
 
-  app.get("/api/workouts", async (req, res) => {
+  // User profile endpoints (training profile, not auth user)
+  app.get("/api/user", isAuthenticated, async (req: any, res) => {
     try {
-      const workouts = await storage.getWorkouts();
+      const userId = req.user.claims.sub;
+      const profile = await storage.getUserProfile(userId);
+      res.json(profile || null);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get user profile" });
+    }
+  });
+
+  app.post("/api/user", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const profile = await storage.saveUserProfile(userId, req.body);
+      res.json(profile);
+    } catch (error) {
+      console.error("Error saving user profile:", error);
+      res.status(500).json({ error: "Failed to save user profile" });
+    }
+  });
+
+  // Workout endpoints
+  app.get("/api/workouts", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const workouts = await storage.getWorkouts(userId);
       res.json(workouts);
     } catch (error) {
       res.status(500).json({ error: "Failed to get workouts" });
     }
   });
 
-  app.get("/api/workouts/:id", async (req, res) => {
+  app.get("/api/workouts/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const workout = await storage.getWorkout(req.params.id);
+      const userId = req.user.claims.sub;
+      const workout = await storage.getWorkout(userId, req.params.id);
       if (!workout) {
         return res.status(404).json({ error: "Workout not found" });
       }
@@ -53,18 +76,21 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/workouts", async (req, res) => {
+  app.post("/api/workouts", isAuthenticated, async (req: any, res) => {
     try {
-      const workout = await storage.addWorkout(req.body);
+      const userId = req.user.claims.sub;
+      const workout = await storage.addWorkout(userId, req.body);
       res.json(workout);
     } catch (error) {
+      console.error("Error adding workout:", error);
       res.status(500).json({ error: "Failed to add workout" });
     }
   });
 
-  app.patch("/api/workouts/:id", async (req, res) => {
+  app.patch("/api/workouts/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const workout = await storage.updateWorkout(req.params.id, req.body);
+      const userId = req.user.claims.sub;
+      const workout = await storage.updateWorkout(userId, req.params.id, req.body);
       if (!workout) {
         return res.status(404).json({ error: "Workout not found" });
       }
@@ -74,9 +100,10 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/workouts/:id", async (req, res) => {
+  app.delete("/api/workouts/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const deleted = await storage.deleteWorkout(req.params.id);
+      const userId = req.user.claims.sub;
+      const deleted = await storage.deleteWorkout(userId, req.params.id);
       if (!deleted) {
         return res.status(404).json({ error: "Workout not found" });
       }
@@ -86,27 +113,32 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/body-logs", async (req, res) => {
+  // Body log endpoints
+  app.get("/api/body-logs", isAuthenticated, async (req: any, res) => {
     try {
-      const logs = await storage.getBodyLogs();
+      const userId = req.user.claims.sub;
+      const logs = await storage.getBodyLogs(userId);
       res.json(logs);
     } catch (error) {
       res.status(500).json({ error: "Failed to get body logs" });
     }
   });
 
-  app.post("/api/body-logs", async (req, res) => {
+  app.post("/api/body-logs", isAuthenticated, async (req: any, res) => {
     try {
-      const log = await storage.addBodyLog(req.body);
+      const userId = req.user.claims.sub;
+      const log = await storage.addBodyLog(userId, req.body);
       res.json(log);
     } catch (error) {
+      console.error("Error adding body log:", error);
       res.status(500).json({ error: "Failed to add body log" });
     }
   });
 
-  app.delete("/api/body-logs/:id", async (req, res) => {
+  app.delete("/api/body-logs/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const deleted = await storage.deleteBodyLog(req.params.id);
+      const userId = req.user.claims.sub;
+      const deleted = await storage.deleteBodyLog(userId, req.params.id);
       if (!deleted) {
         return res.status(404).json({ error: "Body log not found" });
       }
@@ -116,7 +148,8 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/chat", async (req, res) => {
+  // AI Chat endpoint (protected)
+  app.post("/api/chat", isAuthenticated, async (req: any, res) => {
     try {
       const { coachId, message, image, history, userContext } = req.body;
       

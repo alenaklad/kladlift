@@ -1,4 +1,15 @@
 import { z } from "zod";
+import { sql } from 'drizzle-orm';
+import {
+  index,
+  jsonb,
+  pgTable,
+  timestamp,
+  varchar,
+  integer,
+  real,
+  text,
+} from "drizzle-orm/pg-core";
 
 // --- CONSTANTS ---
 export const GOALS = {
@@ -49,6 +60,87 @@ export interface CyclePhase {
   };
   day: number;
 }
+
+// ========== DATABASE TABLES (Drizzle ORM) ==========
+
+// Session storage table for Replit Auth
+// (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// User storage table for Replit Auth
+// (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type UpsertUser = typeof users.$inferInsert;
+export type User = typeof users.$inferSelect;
+
+// User Profile (training settings) linked to user
+export const userProfiles = pgTable("user_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  gender: varchar("gender").notNull(),
+  age: integer("age").notNull(),
+  height: integer("height").notNull(),
+  weight: real("weight").notNull(),
+  fat: real("fat"),
+  experienceYears: real("experience_years").notNull(),
+  sleep: real("sleep").default(7),
+  stress: varchar("stress").default('moderate'),
+  calories: varchar("calories").default('maintenance'),
+  goal: varchar("goal").default('hypertrophy'),
+  trainingDays: integer("training_days").default(3),
+  priorityMuscles: text("priority_muscles").array(),
+  cycleLastPeriod: varchar("cycle_last_period"),
+  cycleLength: integer("cycle_length"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type InsertUserProfile = typeof userProfiles.$inferInsert;
+export type SelectUserProfile = typeof userProfiles.$inferSelect;
+
+// Workouts table linked to user
+export const workouts = pgTable("workouts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  date: timestamp("date").notNull(),
+  exercises: jsonb("exercises").notNull().$type<WorkoutExercise[]>(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type InsertWorkout = typeof workouts.$inferInsert;
+export type SelectWorkout = typeof workouts.$inferSelect;
+
+// Body Logs table linked to user
+export const bodyLogs = pgTable("body_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  date: timestamp("date").notNull(),
+  weight: real("weight").notNull(),
+  fat: real("fat"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type InsertBodyLog = typeof bodyLogs.$inferInsert;
+export type SelectBodyLog = typeof bodyLogs.$inferSelect;
+
+// ========== ZOD SCHEMAS (for validation) ==========
 
 // --- User Profile ---
 export const cycleDataSchema = z.object({
