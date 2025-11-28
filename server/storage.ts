@@ -4,13 +4,19 @@ import {
   type BodyLog,
   type User,
   type UpsertUser,
+  type InsertCustomExercise,
+  type SelectCustomExercise,
+  type InsertUserExercise,
+  type SelectUserExercise,
   users,
   userProfiles,
   workouts,
-  bodyLogs
+  bodyLogs,
+  customExercises,
+  userExercises
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, count, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -33,6 +39,30 @@ export interface IStorage {
   getBodyLogs(userId: string): Promise<BodyLog[]>;
   addBodyLog(userId: string, log: Omit<BodyLog, 'id'>): Promise<BodyLog>;
   deleteBodyLog(userId: string, id: string): Promise<boolean>;
+  
+  // Admin operations
+  getAllUsers(): Promise<User[]>;
+  getUserStats(): Promise<{ totalUsers: number; totalWorkouts: number; activeToday: number }>;
+  setUserRole(userId: string, role: string): Promise<User | undefined>;
+  
+  // Custom exercises (public database)
+  getCustomExercises(): Promise<SelectCustomExercise[]>;
+  getCustomExercise(id: string): Promise<SelectCustomExercise | undefined>;
+  createCustomExercise(exercise: Omit<InsertCustomExercise, 'id'>): Promise<SelectCustomExercise>;
+  updateCustomExercise(id: string, exercise: Partial<InsertCustomExercise>): Promise<SelectCustomExercise | undefined>;
+  deleteCustomExercise(id: string): Promise<boolean>;
+  
+  // User exercises (private + pending)
+  getUserExercises(userId: string): Promise<SelectUserExercise[]>;
+  createUserExercise(userId: string, exercise: Omit<InsertUserExercise, 'id' | 'userId'>): Promise<SelectUserExercise>;
+  updateUserExercise(userId: string, id: string, exercise: Partial<InsertUserExercise>): Promise<SelectUserExercise | undefined>;
+  deleteUserExercise(userId: string, id: string): Promise<boolean>;
+  submitUserExercise(userId: string, id: string): Promise<SelectUserExercise | undefined>;
+  
+  // Moderation
+  getPendingSubmissions(): Promise<SelectUserExercise[]>;
+  approveSubmission(id: string, adminId: string, notes?: string): Promise<SelectCustomExercise | undefined>;
+  rejectSubmission(id: string, adminId: string, notes?: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -261,6 +291,175 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(bodyLogs)
       .where(and(eq(bodyLogs.userId, userId), eq(bodyLogs.id, id)));
+    
+    return true;
+  }
+
+  // Admin operations
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getUserStats(): Promise<{ totalUsers: number; totalWorkouts: number; activeToday: number }> {
+    const [usersResult] = await db.select({ count: count() }).from(users);
+    const [workoutsResult] = await db.select({ count: count() }).from(workouts);
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const [activeResult] = await db
+      .select({ count: count() })
+      .from(workouts)
+      .where(sql`${workouts.date} >= ${today}`);
+    
+    return {
+      totalUsers: usersResult?.count || 0,
+      totalWorkouts: workoutsResult?.count || 0,
+      activeToday: activeResult?.count || 0
+    };
+  }
+
+  async setUserRole(userId: string, role: string): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ role, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  // Custom exercises (public database)
+  async getCustomExercises(): Promise<SelectCustomExercise[]> {
+    return await db.select().from(customExercises).orderBy(customExercises.name);
+  }
+
+  async getCustomExercise(id: string): Promise<SelectCustomExercise | undefined> {
+    const [exercise] = await db.select().from(customExercises).where(eq(customExercises.id, id));
+    return exercise;
+  }
+
+  async createCustomExercise(exercise: Omit<InsertCustomExercise, 'id'>): Promise<SelectCustomExercise> {
+    const id = randomUUID();
+    const [result] = await db
+      .insert(customExercises)
+      .values({ id, ...exercise })
+      .returning();
+    return result;
+  }
+
+  async updateCustomExercise(id: string, exercise: Partial<InsertCustomExercise>): Promise<SelectCustomExercise | undefined> {
+    const [result] = await db
+      .update(customExercises)
+      .set({ ...exercise, updatedAt: new Date() })
+      .where(eq(customExercises.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteCustomExercise(id: string): Promise<boolean> {
+    await db.delete(customExercises).where(eq(customExercises.id, id));
+    return true;
+  }
+
+  // User exercises (private + pending)
+  async getUserExercises(userId: string): Promise<SelectUserExercise[]> {
+    return await db
+      .select()
+      .from(userExercises)
+      .where(eq(userExercises.userId, userId))
+      .orderBy(desc(userExercises.createdAt));
+  }
+
+  async createUserExercise(userId: string, exercise: Omit<InsertUserExercise, 'id' | 'userId'>): Promise<SelectUserExercise> {
+    const id = randomUUID();
+    const [result] = await db
+      .insert(userExercises)
+      .values({ id, userId, ...exercise })
+      .returning();
+    return result;
+  }
+
+  async updateUserExercise(userId: string, id: string, exercise: Partial<InsertUserExercise>): Promise<SelectUserExercise | undefined> {
+    const [result] = await db
+      .update(userExercises)
+      .set({ ...exercise, updatedAt: new Date() })
+      .where(and(eq(userExercises.userId, userId), eq(userExercises.id, id)))
+      .returning();
+    return result;
+  }
+
+  async deleteUserExercise(userId: string, id: string): Promise<boolean> {
+    await db
+      .delete(userExercises)
+      .where(and(eq(userExercises.userId, userId), eq(userExercises.id, id)));
+    return true;
+  }
+
+  async submitUserExercise(userId: string, id: string): Promise<SelectUserExercise | undefined> {
+    const [result] = await db
+      .update(userExercises)
+      .set({ 
+        visibility: 'pending',
+        submittedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(and(eq(userExercises.userId, userId), eq(userExercises.id, id)))
+      .returning();
+    return result;
+  }
+
+  // Moderation
+  async getPendingSubmissions(): Promise<SelectUserExercise[]> {
+    return await db
+      .select()
+      .from(userExercises)
+      .where(eq(userExercises.visibility, 'pending'))
+      .orderBy(userExercises.submittedAt);
+  }
+
+  async approveSubmission(id: string, adminId: string, notes?: string): Promise<SelectCustomExercise | undefined> {
+    const [submission] = await db
+      .select()
+      .from(userExercises)
+      .where(eq(userExercises.id, id));
+    
+    if (!submission) return undefined;
+    
+    await db
+      .update(userExercises)
+      .set({
+        status: 'approved',
+        reviewedBy: adminId,
+        reviewedAt: new Date(),
+        reviewNotes: notes || null,
+        updatedAt: new Date()
+      })
+      .where(eq(userExercises.id, id));
+    
+    const newExercise = await this.createCustomExercise({
+      name: submission.name,
+      muscle: submission.muscle,
+      type: submission.type,
+      technique: submission.technique,
+      imageUrl: submission.imageUrl,
+      videoUrl: submission.videoUrl,
+      createdBy: submission.userId
+    });
+    
+    return newExercise;
+  }
+
+  async rejectSubmission(id: string, adminId: string, notes?: string): Promise<boolean> {
+    await db
+      .update(userExercises)
+      .set({
+        visibility: 'private',
+        status: 'rejected',
+        reviewedBy: adminId,
+        reviewedAt: new Date(),
+        reviewNotes: notes || null,
+        updatedAt: new Date()
+      })
+      .where(eq(userExercises.id, id));
     
     return true;
   }

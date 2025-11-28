@@ -83,12 +83,67 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  role: varchar("role").default('user'),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+// --- EXERCISE DATABASE TABLES ---
+
+// Custom exercises (public database - managed by admins)
+export const customExercises = pgTable("custom_exercises", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  muscle: varchar("muscle").notNull(),
+  type: varchar("type").notNull(),
+  technique: text("technique").notNull(),
+  imageUrl: varchar("image_url"),
+  videoUrl: varchar("video_url"),
+  createdBy: varchar("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type InsertCustomExercise = typeof customExercises.$inferInsert;
+export type SelectCustomExercise = typeof customExercises.$inferSelect;
+
+// User-created exercises (private or pending approval)
+export const userExercises = pgTable("user_exercises", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  name: varchar("name").notNull(),
+  muscle: varchar("muscle").notNull(),
+  type: varchar("type").notNull(),
+  technique: text("technique").notNull(),
+  imageUrl: varchar("image_url"),
+  videoUrl: varchar("video_url"),
+  visibility: varchar("visibility").default('private'),
+  status: varchar("status").default('active'),
+  submittedAt: timestamp("submitted_at"),
+  reviewedBy: varchar("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewNotes: text("review_notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type InsertUserExercise = typeof userExercises.$inferInsert;
+export type SelectUserExercise = typeof userExercises.$inferSelect;
+
+// Media assets (photos/videos for exercises)
+export const mediaAssets = pgTable("media_assets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id),
+  type: varchar("type").notNull(),
+  url: varchar("url").notNull(),
+  filename: varchar("filename"),
+  mimeType: varchar("mime_type"),
+  size: integer("size"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
 // User Profile (training settings) linked to user
 export const userProfiles = pgTable("user_profiles", {
