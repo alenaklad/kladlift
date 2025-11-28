@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { 
   AreaChart, 
   Area, 
@@ -13,17 +14,17 @@ import {
   MUSCLE_GROUPS, 
   type Workout, 
   type CycleData,
-  type MuscleGroup 
+  type MuscleGroup,
+  type SelectCustomExercise,
+  type SelectUserExercise,
+  type Exercise as ExerciseType
 } from '@shared/schema';
-import { 
-  FULL_EXERCISE_DB, 
-  getExerciseById 
-} from '@/lib/exercises';
 import { 
   getRangeFilter, 
   formatDate,
   getCyclePhaseForDate 
 } from '@/lib/training';
+import { FULL_EXERCISE_DB } from '@/lib/exercises';
 
 interface ProgressProps {
   workouts: Workout[];
@@ -35,6 +36,46 @@ export function Progress({ workouts, userCycle }: ProgressProps) {
   const [timeRange, setTimeRange] = useState('month');
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
 
+  // Fetch exercises from database
+  const { data: dbExercises = [] } = useQuery<SelectCustomExercise[]>({
+    queryKey: ['/api/exercises']
+  });
+
+  const { data: userExercises = [] } = useQuery<SelectUserExercise[]>({
+    queryKey: ['/api/user-exercises']
+  });
+
+  // Combine all exercises into a lookup map, with static fallback
+  const exerciseLookup = useMemo(() => {
+    const map = new Map<string, ExerciseType>();
+    
+    // First, populate from static database as fallback
+    FULL_EXERCISE_DB.forEach(ex => {
+      map.set(ex.id, ex);
+    });
+    
+    // Override/add from API data if available
+    dbExercises.forEach(ex => {
+      map.set(ex.id, {
+        id: ex.id,
+        name: ex.name,
+        muscle: ex.muscle as MuscleGroup,
+        type: ex.type as 'compound' | 'isolation',
+        technique: ex.technique
+      });
+    });
+    userExercises.forEach(ex => {
+      map.set(ex.id, {
+        id: ex.id,
+        name: ex.name,
+        muscle: ex.muscle as MuscleGroup,
+        type: ex.type as 'compound' | 'isolation',
+        technique: ex.technique
+      });
+    });
+    return map;
+  }, [dbExercises, userExercises]);
+
   const availableExercises = useMemo(() => {
     const set = new Set<string>();
     workouts.forEach(w => 
@@ -43,9 +84,9 @@ export function Progress({ workouts, userCycle }: ProgressProps) {
       })
     );
     return Array.from(set)
-      .map(id => FULL_EXERCISE_DB.find(e => e.id === id))
-      .filter(Boolean);
-  }, [workouts, selectedGroup]);
+      .map(id => exerciseLookup.get(id))
+      .filter(Boolean) as ExerciseType[];
+  }, [workouts, selectedGroup, exerciseLookup]);
 
   useEffect(() => {
     if (availableExercises.length > 0 && !selectedExerciseId) {
@@ -167,7 +208,7 @@ export function Progress({ workouts, userCycle }: ProgressProps) {
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h3 className="font-bold text-lg text-white">
-                  {getExerciseById(selectedExerciseId || '')?.name || 'Выберите упражнение'}
+                  {(selectedExerciseId && exerciseLookup.get(selectedExerciseId)?.name) || 'Выберите упражнение'}
                 </h3>
                 {statsChange && (
                   <div className={`flex items-center gap-1 text-sm mt-1 ${

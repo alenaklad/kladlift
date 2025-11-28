@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { 
   Search, 
   X, 
@@ -14,9 +15,11 @@ import {
   type Exercise as ExerciseType, 
   type WorkoutExercise, 
   type SetData,
-  type MuscleGroup
+  type MuscleGroup,
+  type SelectCustomExercise,
+  type SelectUserExercise
 } from '@shared/schema';
-import { FULL_EXERCISE_DB, getVisualForExercise } from '@/lib/exercises';
+import { getVisualForExercise, FULL_EXERCISE_DB } from '@/lib/exercises';
 import { MuscleTarget } from './MuscleTarget';
 
 interface WorkoutLoggerProps {
@@ -32,14 +35,52 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: Worko
   const [activeCategory, setActiveCategory] = useState<MuscleGroup>('legs');
   const [search, setSearch] = useState('');
 
+  // Fetch exercises from database (public exercises)
+  const { data: dbExercises = [], isLoading: dbLoading } = useQuery<SelectCustomExercise[]>({
+    queryKey: ['/api/exercises']
+  });
+
+  // Fetch user's personal exercises
+  const { data: userExercises = [], isLoading: userLoading } = useQuery<SelectUserExercise[]>({
+    queryKey: ['/api/user-exercises']
+  });
+
+  // Combine database exercises and user exercises, fallback to static DB if API fails
+  const allExercises = useMemo(() => {
+    // If we have database exercises, use them (combined with user exercises)
+    if (dbExercises.length > 0) {
+      const combined: ExerciseType[] = [
+        ...dbExercises.map(ex => ({
+          id: ex.id,
+          name: ex.name,
+          muscle: ex.muscle as MuscleGroup,
+          type: ex.type as 'compound' | 'isolation',
+          technique: ex.technique
+        })),
+        ...userExercises.map(ex => ({
+          id: ex.id,
+          name: ex.name,
+          muscle: ex.muscle as MuscleGroup,
+          type: ex.type as 'compound' | 'isolation',
+          technique: ex.technique
+        }))
+      ];
+      return combined;
+    }
+    // Fallback to static database if API hasn't loaded yet or failed
+    return FULL_EXERCISE_DB;
+  }, [dbExercises, userExercises]);
+
+  const isLoadingExercises = dbLoading || userLoading;
+
   const filteredDB = useMemo(() => {
     if (search.trim()) {
-      return FULL_EXERCISE_DB.filter(ex => 
+      return allExercises.filter(ex => 
         ex.name.toLowerCase().includes(search.toLowerCase())
       );
     }
-    return FULL_EXERCISE_DB.filter(ex => ex.muscle === activeCategory);
-  }, [activeCategory, search]);
+    return allExercises.filter(ex => ex.muscle === activeCategory);
+  }, [activeCategory, search, allExercises]);
 
   const handleSave = () => {
     if (exercises.length > 0) {
