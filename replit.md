@@ -3,6 +3,8 @@
 This is a personal fitness training tracker application (Персональный тренировочный трекер) designed to help users plan, log, and analyze their workout routines. The application features a data-driven approach to training with AI-powered coaching, progressive overload tracking, and sophisticated volume calculations based on individual recovery capacity and training goals.
 
 Key features:
+- User authentication via Replit Auth (Google, GitHub, email/password)
+- Data synchronization across devices via PostgreSQL database
 - Personalized workout programming based on user profile (experience, sleep, stress, nutrition)
 - Workout logging with comprehensive exercise database
 - Progress tracking with visualizations across muscle groups
@@ -57,9 +59,9 @@ Preferred communication style: Simple, everyday language.
 - POST /api/coach/chat - AI coach chat endpoint
 
 **Storage Strategy**: 
-- In-memory storage (MemStorage class) as the current implementation
-- Designed with IStorage interface for easy migration to database
-- Drizzle ORM configured for PostgreSQL (ready for database integration)
+- PostgreSQL database with Drizzle ORM (DatabaseStorage class)
+- All user data (profiles, workouts, body logs) scoped by userId with foreign key constraints
+- Session storage via connect-pg-simple for authentication persistence
 
 **AI Integration**: OpenAI API for AI coaching system with multiple coach personas (training, nutrition, motivation, recovery)
 
@@ -190,7 +192,9 @@ Preferred communication style: Simple, everyday language.
 
 ## Notes
 
-- Database (PostgreSQL via Neon) is configured but not actively used; application currently uses in-memory storage
+- Database (PostgreSQL via Neon) is actively used with full data persistence
+- User authentication via Replit Auth with session management (7-day TTL)
+- All API routes protected with isAuthenticated middleware
 - AI integration requires OpenAI API key via environment variables
 - Application is Russian-language focused with all UI text in Russian
 - Design follows strict color palette for muscle groups (defined in MUSCLE_GROUPS constant)
