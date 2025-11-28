@@ -1,0 +1,1508 @@
+﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceArea, Line } from 'recharts';
+import { Activity, ChevronRight, Plus, BarChart2, Search, ArrowUp, ArrowDown, Dumbbell, Layout, Trash2, Scale, X, Calendar, Clock, Edit2, ChevronLeft, Filter, Info, Sparkles, Brain, Zap, Send, User, Bot, PlayCircle, Image as ImageIcon, Youtube, Heart, Droplet, Moon, AlertCircle, RefreshCw, Check, Target, ArrowRight, Camera, Leaf, Flame, Battery, Play, ExternalLink, XCircle, Search as SearchIcon, FileText } from 'lucide-react';
+
+
+// --- API CONFIGURATION ---
+const apiKey = ""; // API Key provided by environment
+
+
+// --- CONSTANTS ---
+const GOALS = {
+  hypertrophy: { label: 'Эстетика и гипертрофия', description: 'Максимальный мышечный объем и пропорции.', repRange: '8-12', restMinutes: '1.5-2', volumeMod: 1.0 },
+  strength: { label: 'Абсолютная сила', description: 'Подъем максимальных весов. Нейральная эффективность.', repRange: '3-5', restMinutes: '3-5', volumeMod: 0.7 },
+  endurance: { label: 'Выносливость и рельеф', description: 'Функциональность, тонус, сжигание калорий и похудение.', repRange: '15-20', restMinutes: '0.5-1', volumeMod: 1.2 }
+};
+
+
+const STRESS_LEVELS = {
+  low: { label: 'Низкий', val: 1.1, desc: 'Жизнь спокойна, у меня много сил.' },
+  moderate: { label: 'Средний', val: 1.0, desc: 'Обычный ритм, бывают дедлайны.' },
+  high: { label: 'Высокий', val: 0.85, desc: 'Много работы, нервов или недосыпа.' }
+};
+
+
+const CALORIES_OPTS = {
+  surplus: { label: 'Профицит (Масса)', val: 1.1 },
+  maintenance: { label: 'Поддержка (Рекмпозиция)', val: 1.0 },
+  deficit: { label: 'Дефицит (Сушка)', val: 0.85 }
+};
+
+
+const MUSCLE_GROUPS = {
+  legs: { label: 'Ноги', color: '#34C759', bg: '#E8F5E9', text: '#1B5E20', image: 'https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?w=800&auto=format&fit=crop&q=60' },
+  back: { label: 'Спина', color: '#007AFF', bg: '#E3F2FD', text: '#0D47A1', image: 'https://images.unsplash.com/photo-1603287681836-d174d7a63381?w=800&auto=format&fit=crop&q=60' },
+  chest: { label: 'Грудь', color: '#FF2D55', bg: '#FFEBEE', text: '#B71C1C', image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&auto=format&fit=crop&q=60' },
+  shoulders: { label: 'Плечи', color: '#FF9500', bg: '#FFF3E0', text: '#E65100', image: 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=800&auto=format&fit=crop&q=60' },
+  arms: { label: 'Руки', color: '#AF52DE', bg: '#F3E5F5', text: '#4A148C', image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=800&auto=format&fit=crop&q=60' },
+  abs: { label: 'Кор', color: '#8E8E93', bg: '#F5F5F5', text: '#424242', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&auto=format&fit=crop&q=60' },
+  cardio: { label: 'Кардио', color: '#FF3B30', bg: '#FFEBEE', text: '#C62828', image: 'https://images.unsplash.com/photo-1538805060512-e2c9dc99e9e0?w=800&auto=format&fit=crop&q=60' }
+};
+
+
+// --- SVG ANATOMY COMPONENT ---
+const MuscleTarget = ({ muscle, className = "w-full h-full" }) => {
+    const getColor = (target) => muscle === target ? MUSCLE_GROUPS[target]?.color || '#FF0000' : '#E5E7EB';
+    return (
+        <svg viewBox="0 0 100 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M50 10 C 60 10 65 15 65 25 C 65 30 60 35 50 35 C 40 35 35 30 35 25 C 35 15 40 10 50 10" fill="#F3F4F6" />
+            <path d="M35 35 L 20 45 L 25 60 L 35 50 Z" fill={getColor('shoulders')} />
+            <path d="M65 35 L 80 45 L 75 60 L 65 50 Z" fill={getColor('shoulders')} />
+            <path d="M35 35 L 65 35 L 60 60 L 40 60 Z" fill={getColor('chest')} />
+            <path d="M20 45 L 10 80 L 20 85 L 25 60 Z" fill={getColor('arms')} />
+            <path d="M80 45 L 90 80 L 80 85 L 75 60 Z" fill={getColor('arms')} />
+            <path d="M35 50 L 25 80 L 35 90 L 40 60 Z" fill={getColor('back')} opacity="0.5"/>
+            <path d="M65 50 L 75 80 L 65 90 L 60 60 Z" fill={getColor('back')} opacity="0.5"/>
+            <path d="M40 60 L 60 60 L 55 90 L 45 90 Z" fill={getColor('abs')} />
+            <path d="M35 90 L 65 90 L 65 110 L 50 120 L 35 110 Z" fill={getColor('legs')} />
+            <path d="M35 110 L 45 110 L 40 160 L 30 160 Z" fill={getColor('legs')} />
+            <path d="M55 110 L 65 110 L 70 160 L 60 160 Z" fill={getColor('legs')} />
+        </svg>
+    );
+};
+
+
+// --- LOGIC ---
+
+
+const muscleBiasFactors = {
+  male: { legs: 1.0, back: 1.0, chest: 1.0, shoulders: 0.8, arms: 0.6, abs: 0.5 },
+  female: { legs: 1.3, back: 0.9, chest: 0.5, shoulders: 0.7, arms: 0.5, abs: 0.6 } 
+};
+
+
+function getBaseSetsPerMuscle(experienceYears) {
+  if (experienceYears < 1) return 10; 
+  if (experienceYears < 3) return 14; 
+  return 18; 
+}
+
+
+function getRecoveryMultiplier(sleep, stress, calories, age) {
+  let mult = 1.0;
+  if (sleep < 6) mult *= 0.8;
+  else if (sleep >= 8) mult *= 1.1;
+  mult *= (STRESS_LEVELS[stress]?.val || 1.0);
+  mult *= (CALORIES_OPTS[calories]?.val || 1.0);
+  if (age > 35) mult *= 0.95;
+  if (age > 45) mult *= 0.90;
+  if (age > 55) mult *= 0.85;
+  return mult;
+}
+
+
+function calculateFullProgram(userData) {
+  const { experienceYears = 0, sleep = 7, stress = 'moderate', calories = 'maintenance', age = 25, sex = 'male', goal = 'hypertrophy', priorityMuscles = [], trainingDays = 3 } = userData;
+  const standardSets = getBaseSetsPerMuscle(experienceYears);
+  const recoveryMult = getRecoveryMultiplier(sleep, stress, calories, age);
+  const goalMod = GOALS[goal]?.volumeMod || 1.0;
+  const adjustedBaseVolume = standardSets * recoveryMult * goalMod;
+  const biasFactors = muscleBiasFactors[sex === 'female' ? 'female' : 'male'];
+  let weeklyVolume = {};
+  let totalSets = 0;
+  
+  for (const [muscle, factor] of Object.entries(biasFactors)) {
+    let sets = Math.round(adjustedBaseVolume * factor);
+    if (priorityMuscles.includes(muscle)) sets = Math.round(sets * 1.3);
+    else if (priorityMuscles.length > 0) sets = Math.round(sets * 0.9);
+    if (sets < 3) sets = 3;
+    if (sets > 28) sets = 28;
+    weeklyVolume[muscle] = sets;
+    totalSets += sets;
+  }
+  
+  const perDay = {};
+  for (const [muscle, sets] of Object.entries(weeklyVolume)) {
+    perDay[muscle] = (sets / trainingDays).toFixed(1);
+  }
+  
+  return {
+    weeklyVolume,
+    perDay,
+    trainingParams: {
+      repRange: GOALS[goal]?.repRange || '8-12',
+      restMinutes: GOALS[goal]?.restMinutes || '1.5-2',
+      goalDescription: GOALS[goal]?.description || ''
+    },
+    meta: { standardSets, recoveryMultiplier: recoveryMult, totalWeeklySets: totalSets }
+  };
+}
+
+
+// --- HELPERS ---
+function getIsoDateString(dateMs) { return new Date(dateMs).toISOString().split('T')[0]; }
+function getStartOfDay(dateMs) { const d = new Date(dateMs); d.setHours(0,0,0,0); return d.getTime(); }
+function formatDate(dateStr) { const options = { day: 'numeric', month: 'long' }; return new Date(dateStr).toLocaleDateString('ru-RU', options).replace('.', ''); }
+function formatFullDate(dateStr) { return new Date(dateStr).toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' }); }
+function getExerciseImageStyle(muscle) { const group = MUSCLE_GROUPS[muscle] || MUSCLE_GROUPS.legs; return { backgroundColor: group.bg, color: group.text }; }
+function getInitials(name) { return name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase(); }
+function getRangeFilter(range) {
+  const now = new Date();
+  const todayStart = getStartOfDay(now.getTime());
+  const msInDay = 86400000;
+  const endOfToday = now.getTime();
+  const dayOfWeek = now.getDay(); 
+  const diffToMon = (dayOfWeek + 6) % 7;
+  const thisMonday = todayStart - (diffToMon * msInDay);
+  switch(range) {
+    case 'this_week': return { start: thisMonday, end: endOfToday };
+    case 'last_week': const lastMonday = thisMonday - (7 * msInDay); const lastSunday = thisMonday - 1; return { start: lastMonday, end: lastSunday };
+    case 'last_2_weeks': return { start: todayStart - (14 * msInDay), end: endOfToday };
+    case 'month': return { start: todayStart - (30 * msInDay), end: endOfToday };
+    case '3_months': return { start: todayStart - (90 * msInDay), end: endOfToday };
+    case '6_months': return { start: todayStart - (180 * msInDay), end: endOfToday };
+    case 'year': return { start: todayStart - (365 * msInDay), end: endOfToday };
+    case 'all': return { start: 0, end: endOfToday };
+    default: return { start: todayStart - (30 * msInDay), end: endOfToday };
+  }
+}
+function getCyclePhaseForDate(targetDateMs, lastPeriodDateStr, cycleLength = 28) {
+  if (!lastPeriodDateStr) return null;
+  const targetDate = new Date(targetDateMs);
+  const lastPeriod = new Date(lastPeriodDateStr);
+  targetDate.setHours(0,0,0,0); lastPeriod.setHours(0,0,0,0);
+  const diffTime = targetDate.getTime() - lastPeriod.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  let currentDay = (diffDays % cycleLength);
+  if (currentDay < 0) currentDay += cycleLength;
+  currentDay += 1;
+  const phases = {
+    menstrual: { id: 'menstrual', name: 'Менструация', color: '#EF4444', bg: 'rgba(239, 68, 68, 0.1)', desc: 'Низкая энергия. Восстановление.', rec: 'Йога, ходьба, легкая растяжка.', guidance: { sleep: 'Высокая потребность', strain: 'Низкая', stress: 'Минимизировать' } },
+    follicular: { id: 'follicular', name: 'Фолликулярная', color: '#EC4899', bg: 'rgba(236, 72, 153, 0.1)', desc: 'Рост энергии. Сила возвращается.', rec: 'Силовые, кардио, обучение новому.', guidance: { sleep: 'Нормальная', strain: 'Высокая', stress: 'Умеренная' } },
+    ovulation: { id: 'ovulation', name: 'Овуляция', color: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.1)', desc: 'Пик силы и тестостерона.', rec: 'Максимальные веса, HIIT, рекорды.', guidance: { sleep: 'Нормальная', strain: 'Максимальная', stress: 'Высокая толерантность' } },
+    luteal: { id: 'luteal', name: 'Лютеиновая', color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)', desc: 'Спад энергии. Выносливость ниже.', rec: 'Умеренные веса, больше повторов, пилатес.', guidance: { sleep: 'Нужен качественный сон', strain: 'Средняя/Низкая', stress: 'Чувствительность повышена' } }
+  };
+  if (currentDay >= 1 && currentDay <= 5) return { ...phases.menstrual, day: currentDay };
+  if (currentDay >= 6 && currentDay <= 13) return { ...phases.follicular, day: currentDay };
+  if (currentDay >= 14 && currentDay <= 16) return { ...phases.ovulation, day: currentDay };
+  return { ...phases.luteal, day: currentDay };
+}
+
+
+const FULL_EXERCISE_DB = (() => {
+  const exercises = [];
+  const add = (id, name, muscle, type, technique) => exercises.push({ id, name, muscle, type, technique });
+
+
+  // --- ГРУДЬ (CHEST) ---
+  add('bp_bb_flat', 'Жим штанги лежа', 'chest', 'compound', 'Классика. Лопатки сведены, мост, опускание на низ груди.');
+  add('bp_bb_inc', 'Жим штанги на наклонной', 'chest', 'compound', 'Акцент на верх груди. Угол 30-45 градусов.');
+  add('bp_bb_dec', 'Жим штанги на обратной наклонной', 'chest', 'compound', 'Акцент на низ груди.');
+  add('bp_db_flat', 'Жим гантелей лежа', 'chest', 'compound', 'Растяжение внизу, сведение вверху.');
+  add('bp_db_inc', 'Жим гантелей на наклонной', 'chest', 'compound', 'Верх груди, контроль плеч.');
+  add('bp_db_dec', 'Жим гантелей на обратной наклонной', 'chest', 'compound', 'Низ груди.');
+  add('bp_smith_flat', 'Жим в Смите лежа', 'chest', 'compound', 'Изолированная работа грудных без стабилизации.');
+  add('bp_smith_inc', 'Жим в Смите на наклонной', 'chest', 'compound', 'Верх груди в тренажере.');
+  add('bp_mach_press', 'Жим в грудном тренажере (сидя)', 'chest', 'compound', 'Безопасный жим с фиксированной траекторией.');
+  add('fly_db_flat', 'Разводка гантелей лежа', 'chest', 'isolation', 'Локти чуть согнуты, движение по дуге.');
+  add('fly_db_inc', 'Разводка гантелей на наклонной', 'chest', 'isolation', 'Растяжение верха груди.');
+  add('fly_pec_deck', 'Сведения в тренажере (Бабочка)', 'chest', 'isolation', 'Локти на уровне плеч, пиковое сокращение.');
+  add('cross_high', 'Кроссовер (верхние блоки)', 'chest', 'isolation', 'Сведение рук вниз перед собой (низ груди).');
+  add('cross_mid', 'Кроссовер (средние блоки)', 'chest', 'isolation', 'Сведение рук перед грудью.');
+  add('cross_low', 'Кроссовер (нижние блоки)', 'chest', 'isolation', 'Сведение рук вверх (верх груди).');
+  add('dips_chest', 'Отжимания на брусьях (грудь)', 'chest', 'compound', 'Корпус наклонен вперед, локти в стороны.');
+  add('pushup_std', 'Отжимания от пола (классика)', 'chest', 'compound', 'Тело ровное, касание грудью пола.');
+  add('pushup_wide', 'Отжимания широким хватом', 'chest', 'compound', 'Больше акцент на грудь, меньше на трицепс.');
+  add('pushup_legs_up', 'Отжимания (ноги на возвышении)', 'chest', 'compound', 'Акцент на верх груди.');
+  add('svend_press', 'Жим Свенда', 'chest', 'isolation', 'Сжатие блина ладонями перед грудью.');
+  add('landmine_press', 'Жим Лэндмайн одной рукой', 'chest', 'compound', 'Жим грифа, закрепленного в углу, стоя.');
+
+
+  // --- СПИНА (BACK) ---
+  add('dl_classic', 'Становая тяга (классика)', 'back', 'compound', 'Базовое упражнение. Спина прямая, штанга по ногам.');
+  add('dl_sumo', 'Становая тяга (сумо)', 'back', 'compound', 'Широкая стойка, акцент на ноги и спину.');
+  add('dl_rack', 'Тяга с плинтов (Rack Pull)', 'back', 'compound', 'Частичная становая тяга для верха спины.');
+  add('pullup_wide', 'Подтягивания широким хватом', 'back', 'compound', 'К груди, локти в стороны.');
+  add('pullup_narrow', 'Подтягивания узким хватом', 'back', 'compound', 'Больше амплитуда для широчайших.');
+  add('chinup', 'Подтягивания обратным хватом', 'back', 'compound', 'Акцент на бицепс и низ широчайших.');
+  add('lat_pull_wide', 'Тяга верхнего блока (широкая)', 'back', 'isolation', 'Аналог подтягиваний, контроль лопаток.');
+  add('lat_pull_rev', 'Тяга верхнего блока (обратная)', 'back', 'isolation', 'Хват снизу, к низу груди.');
+  add('lat_pull_vbar', 'Тяга верхнего блока (V-рукоять)', 'back', 'isolation', 'Нейтральный хват, низ широчайших.');
+  add('lat_pull_straight', 'Пуловер на блоке (прямые руки)', 'back', 'isolation', 'Изоляция широчайших, локти прямые.');
+  add('row_bb_bent', 'Тяга штанги в наклоне', 'back', 'compound', 'Корпус 45 градусов, тяга к поясу.');
+  add('row_bb_rev', 'Тяга штанги обратным хватом', 'back', 'compound', 'Локти ближе к корпусу, бицепс участвует.');
+  add('row_db_one', 'Тяга гантели одной рукой', 'back', 'compound', 'Упор о скамью, спина параллельна полу.');
+  add('row_tbar', 'Тяга Т-грифа', 'back', 'compound', 'Узкий хват, акцент на середину спины.');
+  add('row_tbar_chest', 'Тяга Т-грифа с упором грудью', 'back', 'compound', 'Изолирует спину, снимает нагрузку с поясницы.');
+  add('row_cable_sit', 'Тяга горизонтального блока', 'back', 'isolation', 'Сидя, спина прямая, сводить лопатки.');
+  add('row_mach', 'Тяга в рычажном тренажере', 'back', 'isolation', 'Поочередная тяга, хорошая амплитуда.');
+  add('face_pull', 'Тяга к лицу (Face Pull)', 'back', 'isolation', 'Канат к переносице, задняя дельта и верх спины.');
+  add('shrug_bb', 'Шраги со штангой', 'back', 'isolation', 'Подъем плеч к ушам, трапеции.');
+  add('shrug_db', 'Шраги с гантелями', 'back', 'isolation', 'Трапеции, руки по швам.');
+  add('hyperext', 'Гиперэкстензия', 'back', 'isolation', 'Разгибатели спины и ягодицы.');
+  add('superman', 'Лодочка (на полу)', 'back', 'isolation', 'Статическое напряжение разгибателей.');
+
+
+  // --- НОГИ (LEGS) ---
+  add('sq_bb_back', 'Приседания со штангой (на спине)', 'legs', 'compound', 'Король упражнений. Таз назад, колени в стороны.');
+  add('sq_bb_front', 'Фронтальные приседания', 'legs', 'compound', 'Штанга на груди, акцент на квадрицепс.');
+  add('sq_bb_zercher', 'Приседания Зерчера', 'legs', 'compound', 'Штанга на локтевых сгибах.');
+  add('sq_smith', 'Приседания в Смите', 'legs', 'compound', 'Фиксированная траектория, можно выставить ноги вперед.');
+  add('sq_goblet', 'Гоблет-приседания (с гирей)', 'legs', 'compound', 'Гиря у груди, глубокий сед.');
+  add('sq_sumo_db', 'Приседания плие (сумо)', 'legs', 'compound', 'Широкая стойка, гантель между ног.');
+  add('sq_box', 'Приседания на ящик', 'legs', 'compound', 'Сед до касания, взрывной подъем.');
+  add('lp_45', 'Жим ногами (платформа)', 'legs', 'compound', 'Большой вес, поясница прижата.');
+  add('lp_wide', 'Жим ногами (широкая постановка)', 'legs', 'compound', 'Акцент на приводящие и ягодицы.');
+  add('hack_sq', 'Гакк-приседания', 'legs', 'compound', 'Тренажер, спина прижата, квадрицепс.');
+  add('lunge_walk', 'Шагающие выпады', 'legs', 'compound', 'Динамика, длинный шаг.');
+  add('lunge_bb', 'Выпады со штангой на месте', 'legs', 'compound', 'Статика, контроль равновесия.');
+  add('lunge_back', 'Обратные выпады', 'legs', 'compound', 'Шаг назад, безопаснее для колен.');
+  add('split_sq_bulg', 'Болгарские сплит-приседания', 'legs', 'compound', 'Одна нога на скамье сзади.');
+  add('step_up', 'Зашагивания на тумбу', 'legs', 'compound', 'Подъем за счет силы одной ноги.');
+  add('rdl_bb', 'Румынская тяга (штанга)', 'legs', 'compound', 'Ноги чуть согнуты, таз назад, бицепс бедра.');
+  add('rdl_db', 'Румынская тяга (гантели)', 'legs', 'compound', 'Гантели скользят вдоль ног.');
+  add('leg_ext', 'Разгибания ног сидя', 'legs', 'isolation', 'Изоляция квадрицепса, пиковое сокращение.');
+  add('leg_curl_lie', 'Сгибания ног лежа', 'legs', 'isolation', 'Бицепс бедра, не отрывать таз.');
+  add('leg_curl_sit', 'Сгибания ног сидя', 'legs', 'isolation', 'Бицепс бедра в растянутом положении.');
+  add('leg_curl_stand', 'Сгибания ног стоя', 'legs', 'isolation', 'Поочередная проработка бицепса бедра.');
+  add('calf_stand', 'Подъем на носки стоя', 'legs', 'isolation', 'Икроножные мышцы.');
+  add('calf_sit', 'Подъем на носки сидя', 'legs', 'isolation', 'Камбаловидная мышца.');
+  add('hip_thrust', 'Ягодичный мост (штанга)', 'legs', 'compound', 'Лучшее для ягодиц. Лопатки на скамье.');
+  add('glute_bridge', 'Ягодичный мостик (с пола)', 'legs', 'isolation', 'Упрощенная версия моста.');
+  add('kickback_cable', 'Махи ногой назад (кроссовер)', 'legs', 'isolation', 'Изоляция ягодиц.');
+  add('abduction_mach', 'Разведение ног в тренажере', 'legs', 'isolation', 'Средняя ягодичная.');
+  add('adduction_mach', 'Сведение ног в тренажере', 'legs', 'isolation', 'Приводящие мышцы.');
+
+
+  // --- ПЛЕЧИ (SHOULDERS) ---
+  add('ohp_bb', 'Армейский жим (стоя)', 'shoulders', 'compound', 'База для плеч. Штанга с груди.');
+  add('ohp_db', 'Жим гантелей сидя', 'shoulders', 'compound', 'Стабильный корпус, полная амплитуда.');
+  add('ohp_smith', 'Жим в Смите сидя', 'shoulders', 'compound', 'Безопасный жим, контроль.');
+  add('arnold_press', 'Жим Арнольда', 'shoulders', 'compound', 'С разворотом кистей, проработка всех пучков.');
+  add('lat_raise_db', 'Махи гантелями в стороны', 'shoulders', 'isolation', 'Средняя дельта. Локти выше кистей.');
+  add('lat_raise_cable', 'Махи в стороны на блоке', 'shoulders', 'isolation', 'Постоянное напряжение.');
+  add('front_raise_db', 'Подъем гантелей перед собой', 'shoulders', 'isolation', 'Передняя дельта.');
+  add('front_raise_bb', 'Подъем штанги перед собой', 'shoulders', 'isolation', 'Передняя дельта.');
+  add('rear_fly_db', 'Махи в наклоне', 'shoulders', 'isolation', 'Задняя дельта.');
+  add('rear_pec_deck', 'Обратная бабочка (Pec Deck)', 'shoulders', 'isolation', 'Задняя дельта, локти назад.');
+  add('upright_row', 'Тяга штанги к подбородку', 'shoulders', 'compound', 'Средняя дельта и трапеция. Широкий хват.');
+  add('face_pull_delt', 'Тяга к лицу (акцент на плечи)', 'shoulders', 'isolation', 'Локти высоко, задняя дельта.');
+
+
+  // --- РУКИ (ARMS) ---
+  add('bic_bb_stand', 'Подъем штанги на бицепс (стоя)', 'arms', 'isolation', 'Классика. Прямой гриф или EZ.');
+  add('bic_db_sup', 'Подъем гантелей с супинацией', 'arms', 'isolation', 'Разворот кисти при подъеме.');
+  add('bic_hammer', 'Молотки', 'arms', 'isolation', 'Нейтральный хват, брахиалис.');
+  add('bic_scott', 'Сгибания на скамье Скотта', 'arms', 'isolation', 'Изоляция, нет читинга.');
+  add('bic_conc', 'Концентрированный подъем', 'arms', 'isolation', 'Сидя, упор локтем в бедро.');
+  add('bic_cable', 'Сгибания на нижнем блоке', 'arms', 'isolation', 'Равномерная нагрузка.');
+  add('bic_spider', 'Паучьи сгибания', 'arms', 'isolation', 'Лежа животом на наклонной скамье.');
+  add('tri_close_press', 'Жим узким хватом', 'arms', 'compound', 'База для трицепса. Локти вдоль тела.');
+  add('dips_tri', 'Отжимания на брусьях (трицепс)', 'arms', 'compound', 'Корпус прямо, локти назад.');
+  add('skull_crusher', 'Французский жим лежа', 'arms', 'isolation', 'Гриф ко лбу или за голову.');
+  add('tri_pushdown_rope', 'Разгибание на блоке (канат)', 'arms', 'isolation', 'Разведение концов внизу.');
+  add('tri_pushdown_bar', 'Разгибание на блоке (рукоять)', 'arms', 'isolation', 'Прямая или V-рукоять.');
+  add('tri_overhead_db', 'Разгибание гантели из-за головы', 'arms', 'isolation', 'Растяжение длинной головки.');
+  add('tri_kickback', 'Кик-бэк с гантелью', 'arms', 'isolation', 'В наклоне, разгибание руки назад.');
+
+
+  // --- КОР (ABS) ---
+  add('crunch_floor', 'Скручивания на полу', 'abs', 'isolation', 'Классика. Отрыв лопаток.');
+  add('leg_raise_hang', 'Подъем ног в висе', 'abs', 'isolation', 'Нижний пресс. Подкрутка таза.');
+  add('leg_raise_lie', 'Подъем ног лежа', 'abs', 'isolation', 'Руки под ягодицы.');
+  add('plank_std', 'Планка классическая', 'abs', 'isolation', 'Статика на локтях.');
+  add('plank_side', 'Планка боковая', 'abs', 'isolation', 'Косые мышцы.');
+  add('ab_wheel', 'Ролик для пресса', 'abs', 'compound', 'Мощное растяжение. С колен или стоя.');
+  add('woodchop', 'Дровосек (на блоке)', 'abs', 'compound', 'Вращение корпуса, косые мышцы.');
+  add('russian_twist', 'Русский твист', 'abs', 'isolation', 'Сидя, повороты корпуса с весом.');
+  add('vacuum', 'Вакуум', 'abs', 'isolation', 'Втягивание живота, поперечная мышца.');
+  add('cable_crunch', 'Молитва (скручивания на блоке)', 'abs', 'isolation', 'Стоя на коленях, тяга каната.');
+
+
+  // --- КАРДИО (CARDIO) ---
+  add('run_treadmill', 'Бег на дорожке', 'cardio', 'compound', 'Контроль пульса и темпа.');
+  add('run_outdoor', 'Бег на улице', 'cardio', 'compound', 'Свежий воздух, разный рельеф.');
+  add('walk_incline', 'Ходьба в гору', 'cardio', 'compound', 'Высокий наклон дорожки, жиросжигание.');
+  add('elliptical', 'Эллипсоид', 'cardio', 'compound', 'Без ударной нагрузки на суставы.');
+  add('bike_stat', 'Велотренажер', 'cardio', 'compound', 'Сидя, работа ног.');
+  add('rowing', 'Гребной тренажер', 'cardio', 'compound', 'Работа всего тела, выносливость.');
+  add('stairmaster', 'Степпер (лестница)', 'cardio', 'compound', 'Имитация подъема по лестнице.');
+  add('jump_rope', 'Скакалка', 'cardio', 'compound', 'Координация и икры.');
+  add('burpee', 'Берпи', 'cardio', 'compound', 'Кроссфит. Упор лежа - прыжок.');
+  add('boxing', 'Работа по мешку', 'cardio', 'compound', 'Удары руками, интенсивность.');
+
+
+  return exercises;
+})();
+
+
+// --- AI HELPERS ---
+
+
+const COACH_PERSONAS = {
+  training: {
+    name: 'Тренер',
+    icon: Dumbbell,
+    color: 'bg-blue-600',
+    textColor: 'text-blue-600',
+    bgLight: 'bg-blue-50',
+    desc: 'Программы, техника, прогрессия.',
+    systemPrompt: (user, context) => `
+      Ты - Элитный тренер KladLift. Твоя специализация: силовые тренировки, гипертрофия и периодизация.
+      Твоя цель: помочь пользователю (${user.gender}, ${user.weight}кг) достичь цели "${user.goal}".
+      Используй данные о тренировках: ${context.history}.
+      Будь краток, конкретен и профессионален. Используй термины (RPE, деалоад, мезоцикл).
+    `
+  },
+  nutrition: {
+    name: 'Нутрициолог',
+    icon: Leaf,
+    color: 'bg-green-600',
+    textColor: 'text-green-600',
+    bgLight: 'bg-green-50',
+    desc: 'КБЖУ, анализ тарелок, планы питания.',
+    systemPrompt: (user) => `
+      Ты - Нутрициолог KladLift. Твоя задача: анализ питания и КБЖУ.
+      Пользователь: ${user.gender}, ${user.weight}кг. Цель: ${user.goal}.
+      Если тебе прислали фото еды: определи ингредиенты, оцени калорийность и макронутриенты (БЖУ). Дай совет, как сделать блюдо полезнее.
+      Будь доброжелателен, но строг к сахару и трансжирам.
+    `
+  },
+  motivation: {
+    name: 'Ментор',
+    icon: Flame,
+    color: 'bg-red-600',
+    textColor: 'text-red-600',
+    bgLight: 'bg-red-50',
+    desc: 'Психология, дисциплина, настрой.',
+    systemPrompt: (user) => `
+      Ты - Ментор KladLift. Твой стиль: стоицизм, жесткая дисциплина, но с глубокой эмпатией.
+      Пользователь: ${user.gender}.
+      Если человек хочет сдаться - напомни ему, зачем он начал. Используй цитаты великих атлетов или философов.
+      Твоя задача - зажечь огонь и заставить идти в зал.
+    `
+  },
+  recovery: {
+    name: 'Биохакер',
+    icon: Battery,
+    color: 'bg-purple-600',
+    textColor: 'text-purple-600',
+    bgLight: 'bg-purple-50',
+    desc: 'Сон, стресс, добавки, режим.',
+    systemPrompt: (user, context) => `
+      Ты - Специалист по восстановлению KladLift (Биохакер).
+      Пользователь: ${user.gender}, Сон: ${user.sleep}ч, Стресс: ${user.stress}.
+      Твои темы: гигиена сна, управление стрессом, активное восстановление, сауна, массаж, добавки (только доказательные).
+      Объясняй физиологию простым языком.
+    `
+  }
+};
+
+
+const callGemini = async (messages, userContext, coachType = 'training', imageBase64 = null) => {
+  const coach = COACH_PERSONAS[coachType];
+  
+  let cycleContext = "";
+  if (userContext.user.gender === 'female' && userContext.user.cycle) {
+    const phase = getCyclePhaseForDate(Date.now(), userContext.user.cycle.lastPeriod, userContext.user.cycle.length);
+    if (phase) {
+      cycleContext = `ВАЖНО: У пользователя сейчас фаза "${phase.name}". Рекомендация: ${phase.rec}. Учти это в ответе.`;
+    }
+  }
+
+
+  const historyText = userContext.workouts ? 
+    userContext.workouts.slice(0, 3).map(w => `${new Date(w.date).toLocaleDateString()}: ${w.exercises.length} упражнений`).join(', ') 
+    : 'Нет недавних тренировок';
+
+
+  const systemInstruction = coach.systemPrompt(userContext.user, { history: historyText }) + "\n" + cycleContext + 
+    "\nОтвечай на русском языке. Используй Markdown.";
+
+
+  const userMessagePart = { text: messages[messages.length - 1].text };
+  const parts = [userMessagePart];
+  
+  if (imageBase64) {
+      parts.push({
+          inlineData: {
+              mimeType: "image/jpeg",
+              data: imageBase64
+          }
+      });
+  }
+
+
+  const contents = [{ role: 'user', parts: parts }];
+  
+  const model = imageBase64 ? "gemini-2.5-flash-preview-09-2025" : "gemini-2.5-flash-preview-09-2025";
+
+
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+      body: JSON.stringify({ 
+          contents,
+          systemInstruction: { parts: [{ text: systemInstruction }] }
+      })
+    });
+    const data = await response.json();
+    return data.candidates[0].content.parts[0].text;
+  } catch (error) { 
+      console.error(error);
+      return "Связь с нейросетью потеряна. Попробуйте позже."; 
+  }
+};
+
+
+const generateMuscleAnalysis = async (muscle, exercisesDone, user) => {
+  const muscleLabel = MUSCLE_GROUPS[muscle]?.label || muscle;
+  const historyContext = exercisesDone.slice(0, 15).map(e => 
+    `${e.name}: ${e.maxWeight}kg (${new Date(e.date).toLocaleDateString()})`
+  ).join('\n');
+
+
+  const prompt = `
+    Act as a World-Class Strength & Conditioning Coach (KladLift methodology).
+    
+    Analyze muscle group: ${muscleLabel} for a ${user.gender === 'male' ? 'Male' : 'Female'} athlete (${user.weight}kg).
+    
+    Training History for this muscle:
+    ${historyContext || "No recent data."}
+    
+    Your Task:
+    1. **Analysis**: Briefly assess if they are stalling or progressing (1 sentence).
+    2. **Action Plan**: Prescribe 2-3 specific exercises for the NEXT workout.
+       - Include precise sets, reps, and Suggested Weight (based on history or bodyweight).
+       - Mention a specific technique cue (e.g., "slow eccentric").
+    
+    Format Rules:
+    - Output ONLY valid Markdown.
+    - Use **Bold** for exercises.
+    - Use lists (-) for the plan.
+    - NO introductory fluff. Start directly with the insight.
+    - Language: Russian.
+  `;
+
+
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+    });
+    const data = await response.json();
+    return data.candidates[0].content.parts[0].text;
+  } catch (e) {
+    console.error(e);
+    return "Не удалось загрузить рекомендации ИИ.";
+  }
+};
+
+
+// --- COMPONENTS ---
+const Button = ({ children, onClick, variant = 'primary', className = '', disabled = false }) => {
+  const baseStyle = "py-4 px-8 rounded-full font-bold text-lg transition-all duration-300 transform active:scale-95 flex items-center justify-center";
+  const variants = {
+    primary: "bg-white text-black hover:bg-gray-100 shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed",
+    primaryDark: "bg-black text-white hover:bg-gray-900 shadow-lg disabled:opacity-50",
+    secondary: "bg-white/10 text-white hover:bg-white/20 backdrop-blur-md border border-white/10",
+    outline: "border-2 border-white/20 text-white hover:bg-white/10",
+    ghost: "bg-transparent text-gray-400 hover:text-white"
+  };
+  return <button onClick={onClick} disabled={disabled} className={`${baseStyle} ${variants[variant]} ${className}`}>{children}</button>;
+};
+
+
+const Input = ({ label, value, onChange, type = "text", placeholder, className = "", autoFocus = false }) => (
+  <div className={`w-full group ${className}`}>
+    {label && <label className="block text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-2 ml-1">{label}</label>}
+    <input type={type} value={value} onChange={onChange} placeholder={placeholder} autoFocus={autoFocus} className="w-full bg-gray-100 border-none rounded-2xl px-4 py-4 text-gray-900 text-lg placeholder-gray-400 focus:ring-2 focus:ring-black focus:bg-white transition-all outline-none" />
+  </div>
+);
+
+
+const DarkInput = ({ label, value, onChange, type = "text", placeholder, className = "", autoFocus = false, style = {} }) => (
+  <div className={`w-full group ${className}`}>
+    {label && <label className="block text-xs font-bold text-white/40 uppercase tracking-[0.2em] mb-3 ml-1 group-focus-within:text-white/80 transition-colors">{label}</label>}
+    <input 
+      type={type} 
+      value={value} 
+      onChange={onChange} 
+      placeholder={placeholder} 
+      autoFocus={autoFocus} 
+      style={style}
+      className="w-full bg-white/5 border border-white/10 rounded-3xl px-6 py-5 text-white text-2xl placeholder-white/20 focus:ring-2 focus:ring-white/30 focus:bg-white/10 focus:border-transparent transition-all outline-none" 
+    />
+  </div>
+);
+
+
+const SelectCard = ({ selected, onClick, title, desc }) => (
+    <button onClick={onClick} className={`w-full text-left p-6 rounded-3xl border transition-all duration-300 group relative overflow-hidden ${selected ? 'bg-white text-black border-white shadow-2xl scale-[1.02]' : 'bg-white/5 text-white border-white/10 hover:bg-white/10 hover:border-white/20'}`}>
+        <div className="relative z-10 flex items-start justify-between">
+            <div><div className="text-lg font-bold mb-1">{title}</div>{desc && <div className={`text-sm leading-relaxed ${selected ? 'text-gray-500' : 'text-gray-400'}`}>{desc}</div>}</div>
+            {selected && <div className="bg-black text-white p-1 rounded-full"><Check size={16} /></div>}
+        </div>
+    </button>
+);
+
+
+const MarkdownText = ({ text }) => {
+  if (!text) return null;
+  const cleanText = text.replace(/\\n/g, '\n'); 
+  const parseInline = (str) => {
+    const parts = [];
+    const regex = /(\*\*[^*]+\*\*)/g;
+    str.split(regex).forEach((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        parts.push(<strong key={i} className="font-bold text-gray-900">{part.slice(2, -2)}</strong>);
+      } else {
+        parts.push(part);
+      }
+    });
+    return parts;
+  };
+  const lines = cleanText.split('\n');
+  return <div className="space-y-2">{lines.map((line, i) => line.trim() && <p key={i}>{parseInline(line)}</p>)}</div>;
+};
+
+
+const CustomTooltip = ({ active, payload, label, unit = 'кг' }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white/80 backdrop-blur-xl p-4 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/20">
+        <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-2">{label}</p>
+        <div className="space-y-1">
+            {payload.map((entry, idx) => (
+            <div key={idx} className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }}></div>
+                <p className="text-sm font-bold text-gray-900">
+                    {entry.name}: <span className="font-mono text-base">{entry.value}</span>
+                    <span className="text-xs text-gray-400 font-medium ml-0.5">{entry.unit || unit}</span>
+                </p>
+            </div>
+            ))}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+
+// --- CALIBRATION VIEW ---
+const CalibrationView = () => (
+    <div className="flex flex-col items-center justify-center h-screen bg-black text-white">
+        <div className="relative w-24 h-24 mb-8">
+            <div className="absolute inset-0 border-t-4 border-white rounded-full animate-spin"></div>
+            <div className="absolute inset-3 border-b-4 border-white/30 rounded-full animate-spin-reverse"></div>
+        </div>
+        <h3 className="text-2xl font-bold mb-2 animate-pulse">Калибровка...</h3>
+        <p className="text-gray-500 text-sm">Рассчитываем MRV и MEV нагрузки</p>
+    </div>
+);
+
+
+// --- ONBOARDING VIEW ---
+const Onboarding = ({ onComplete }) => {
+  const [step, setStep] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [data, setData] = useState({ 
+      gender: null, age: '', height: '', weight: '', fat: '',
+      experienceYears: '', experienceMonths: 0, sleep: 7.5, stress: 'moderate', calories: 'maintenance',
+      goal: 'hypertrophy', trainingDays: 3, priorityMuscles: []
+  });
+  const [cycleData, setCycleData] = useState({ lastPeriod: getIsoDateString(Date.now()), length: 28 });
+
+
+  const steps = [
+      { id: 'landing', title: '', subtitle: '' },
+      { id: 'gender', title: 'Физиология', subtitle: 'Мы учитываем гормональные особенности для точного расчета восстановления.' },
+      { id: 'age', title: 'Жизненный этап', subtitle: 'С возрастом метаболизм и способность к регенерации меняются. Мы адаптируемся.' },
+      { id: 'biometrics', title: 'Биометрия', subtitle: 'Точка отсчета. Эти данные помогут рассчитать твои идеальные рабочие веса.' },
+      { id: 'schedule', title: 'График', subtitle: 'Сколько дней в неделю ты готов посвятить себе? Мы построим микроцикл.' },
+      { id: 'experience', title: 'Бэкграунд', subtitle: 'Сколько лет ты уже тренируешься? Это определит объем нагрузки.' },
+      { id: 'sleep', title: 'Батарейка', subtitle: 'Сон — это легальный допинг. Сколько часов ты спишь в среднем?' },
+      { id: 'stress', title: 'Нагрузка на ЦНС', subtitle: 'Стресс сжигает ресурсы организма так же, как тяжелая тренировка.' },
+      { id: 'goal', title: 'Миссия', subtitle: 'К какой форме мы стремимся прямо сейчас?' },
+      { id: 'priorities', title: 'Акценты', subtitle: 'Выбери до 2-х групп мышц, которые хочешь улучшить в первую очередь.' },
+      { id: 'cycle', title: 'Синхронизация', subtitle: 'Тренируйся в ритме со своим телом для лучших результатов.' }, 
+      { id: 'initial_check', title: 'Синхронизация', subtitle: 'Чтобы план был точным, алгоритму нужно знать контекст.' }
+  ];
+
+
+  const activeSteps = steps.filter(s => !(s.id === 'cycle' && data.gender === 'male'));
+  const currentStepData = activeSteps[step];
+  const progress = ((step) / (activeSteps.length - 1)) * 100;
+
+
+  const nextStep = (skipAnimation = false) => {
+      if(!skipAnimation) setIsAnimating(true);
+      setTimeout(() => {
+          if (step < activeSteps.length - 1) {
+              setStep(s => s + 1);
+          }
+      }, skipAnimation ? 0 : 400);
+      if(!skipAnimation) setTimeout(() => setIsAnimating(false), 400);
+  };
+
+
+  const handleInitialLogChoice = (choice) => {
+      const finalData = { 
+          ...data, 
+          experienceYears: parseFloat(data.experienceYears || 0) + (parseInt(data.experienceMonths || 0) / 12),
+          cycle: data.gender === 'female' ? cycleData : null
+      };
+      
+      if (choice === 'yes') {
+          onComplete(finalData, true);
+      } else {
+          onComplete(finalData, false);
+      }
+  };
+
+
+  const handleChange = (field, value) => setData(prev => ({ ...prev, [field]: value }));
+  
+  const togglePriority = (m) => {
+      const current = data.priorityMuscles;
+      if (current.includes(m)) handleChange('priorityMuscles', current.filter(i => i !== m));
+      else if (current.length < 2) handleChange('priorityMuscles', [...current, m]);
+  };
+  
+  const resetPriorities = () => {
+      handleChange('priorityMuscles', []);
+      nextStep(); 
+  };
+
+
+  const canProceed = () => {
+      switch(currentStepData.id) {
+          case 'landing': return true;
+          case 'gender': return data.gender;
+          case 'age': return data.age > 10;
+          case 'biometrics': return data.height && data.weight;
+          case 'experience': return data.experienceYears !== '';
+          case 'sleep': return true;
+          case 'stress': return true;
+          case 'goal': return true;
+          case 'schedule': return true;
+          case 'priorities': return true; 
+          case 'cycle': return cycleData.lastPeriod && cycleData.length;
+          case 'initial_check': return true;
+          default: return false;
+      }
+  };
+
+
+  const renderContent = () => {
+      switch(currentStepData.id) {
+          case 'landing':
+              return (
+                  <div className="flex flex-col items-center text-center space-y-10 pt-12 animate-fadeIn">
+                      <div className="relative">
+                          <div className="absolute -inset-4 bg-white/20 rounded-full blur-2xl opacity-50"></div>
+                          <div className="relative w-28 h-28 bg-white text-black rounded-full flex items-center justify-center shadow-2xl"><Activity size={48} strokeWidth={1.5} /></div>
+                      </div>
+                      <div className="space-y-6"><h1 className="text-5xl sm:text-6xl font-extrabold tracking-tighter leading-tight">Биоинженерия <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-400 to-white">твоего тела</span></h1><p className="text-lg text-gray-400 max-w-sm mx-auto leading-relaxed">Превращаем твои биологические данные в идеальную, научно обоснованную программу тренировок.</p></div>
+                      <div className="grid grid-cols-3 gap-4 w-full max-w-sm pt-4"><div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex flex-col items-center"><Brain className="mb-2 text-gray-400" size={24}/><span className="text-xs font-bold uppercase tracking-widest text-gray-500">AI Тренер</span></div><div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex flex-col items-center"><Activity className="mb-2 text-gray-400" size={24}/><span className="text-xs font-bold uppercase tracking-widest text-gray-500">Аналитика</span></div><div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex flex-col items-center"><Zap className="mb-2 text-gray-400" size={24}/><span className="text-xs font-bold uppercase tracking-widest text-gray-500">Прогресс</span></div></div>
+                      <div className="w-full max-w-sm pt-4"><Button onClick={() => nextStep(false)} className="w-full py-6 text-xl bg-white text-black hover:bg-gray-200">Начать трансформацию <ArrowRight className="ml-2" size={20}/></Button></div>
+                  </div>
+              );
+          case 'gender': return (<div className="space-y-4 w-full max-w-sm"><SelectCard title="Мужской" desc="Алгоритм для мужской гормональной системы." selected={data.gender === 'male'} onClick={() => handleChange('gender', 'male')} /><SelectCard title="Женский" desc="Учет менструального цикла и фаз восстановления." selected={data.gender === 'female'} onClick={() => handleChange('gender', 'female')} /></div>);
+          case 'age': return (<div className="w-full max-w-xs"><DarkInput autoFocus type="number" label="Полных лет" value={data.age} onChange={e => handleChange('age', e.target.value)} placeholder="25" className="text-center" /></div>);
+          case 'biometrics': return (<div className="space-y-6 w-full max-w-sm"><DarkInput autoFocus type="number" label="Рост (см)" value={data.height} onChange={e => handleChange('height', e.target.value)} placeholder="175" /><DarkInput type="number" label="Вес (кг)" value={data.weight} onChange={e => handleChange('weight', e.target.value)} placeholder="70" /><DarkInput type="number" label="Процент жира (Опционально)" value={data.fat} onChange={e => handleChange('fat', e.target.value)} placeholder="15" /></div>);
+          case 'schedule': return (<div className="w-full max-w-sm space-y-8"><div className="text-center"><span className="text-6xl font-bold">{data.trainingDays}</span><span className="text-xl text-gray-500 ml-2">дн/нед</span></div><input type="range" min="1" max="7" step="1" value={data.trainingDays} onChange={e => handleChange('trainingDays', parseInt(e.target.value))} className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-white" /><p className="text-center text-gray-400 text-sm">Оптимально: 3-4 дня</p></div>);
+          case 'experience': return (<div className="space-y-6 w-full max-w-sm"><div className="flex gap-4"><DarkInput autoFocus type="number" label="Лет" value={data.experienceYears} onChange={e => handleChange('experienceYears', e.target.value)} placeholder="0" /><DarkInput type="number" label="Месяцев" value={data.experienceMonths} onChange={e => handleChange('experienceMonths', e.target.value)} placeholder="0" /></div><div className="text-sm text-gray-500 bg-white/5 p-4 rounded-2xl leading-relaxed"><p>• 0-1 год: Фундамент. Низкий объем.</p><p>• 1-3 года: Прогрессия. Средний объем.</p><p>• 3+ лет: Специализация. Высокий объем.</p></div></div>);
+          case 'sleep': return (<div className="w-full max-w-sm space-y-8"><div className="text-center"><span className="text-6xl font-bold">{data.sleep}</span><span className="text-xl text-gray-500 ml-2">часов</span></div><input type="range" min="4" max="10" step="0.5" value={data.sleep} onChange={e => handleChange('sleep', parseFloat(e.target.value))} className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-white" /><p className="text-center text-gray-400 text-sm">Двигай ползунок</p></div>);
+          case 'stress': return (<div className="space-y-4 w-full max-w-sm">{Object.keys(STRESS_LEVELS).map(key => (<SelectCard key={key} title={STRESS_LEVELS[key].label} desc={STRESS_LEVELS[key].desc} selected={data.stress === key} onClick={() => handleChange('stress', key)} />))}</div>);
+          case 'goal': return (<div className="space-y-4 w-full max-w-sm">{Object.keys(GOALS).map(key => (<SelectCard key={key} title={GOALS[key].label} desc={GOALS[key].description} selected={data.goal === key} onClick={() => handleChange('goal', key)} />))}</div>);
+          case 'priorities': return (
+              <div className="w-full max-w-sm space-y-4">
+                  <div className="grid grid-cols-2 gap-3">{Object.keys(MUSCLE_GROUPS).filter(k => k !== 'cardio').map(key => (<button key={key} onClick={() => togglePriority(key)} className={`p-4 rounded-2xl border text-sm font-bold transition-all duration-300 ${data.priorityMuscles.includes(key) ? 'bg-white text-black border-white shadow-lg scale-105' : 'bg-transparent text-gray-400 border-white/10 hover:border-white/30'}`}>{MUSCLE_GROUPS[key].label}</button>))}</div>
+                  <button onClick={resetPriorities} className="w-full p-4 rounded-2xl bg-white text-black font-bold text-sm hover:bg-gray-200 transition-colors">Пропорциональное развитие всех групп</button>
+              </div>
+          );
+          case 'cycle': return (<div className="space-y-6 w-full max-w-sm"><DarkInput label="Начало месячных" type="date" value={cycleData.lastPeriod} onChange={(e) => setCycleData({...cycleData, lastPeriod: e.target.value})} style={{ colorScheme: 'dark' }} /><DarkInput label="Длина цикла" type="number" value={cycleData.length} onChange={(e) => setCycleData({...cycleData, length: parseInt(e.target.value)})} /></div>);
+          case 'initial_check': return (<div className="w-full max-w-sm space-y-4"><div className="bg-white/10 p-6 rounded-3xl border border-white/10 mb-6"><p className="text-lg text-white leading-relaxed mb-2">Ты уже тренировался на этой неделе?</p><p className="text-sm text-gray-400">Если да, запиши эти тренировки сейчас. Это поможет алгоритму скорректировать план.</p></div><Button onClick={() => handleInitialLogChoice('yes')} variant="primary" className="w-full">Да, записать тренировки</Button><Button onClick={() => handleInitialLogChoice('no')} variant="ghost" className="w-full">Нет, начать с чистого листа</Button></div>);
+          default: return null;
+      }
+  };
+
+
+  return (
+    <div className="min-h-screen bg-black text-white font-sans selection:bg-white/20 flex flex-col relative overflow-hidden">
+        <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-blue-900/20 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-purple-900/20 rounded-full blur-[120px] pointer-events-none" />
+        {step > 0 && currentStepData.id !== 'processing' && (<div className="absolute top-0 left-0 right-0 h-1 bg-white/5"><div className="h-full bg-white transition-all duration-700 ease-out" style={{ width: `${progress}%` }} /></div>)}
+        <div className="flex-1 flex flex-col px-6 py-12 relative z-10 overflow-y-auto custom-scrollbar">
+            {step > 0 && currentStepData.id !== 'processing' && (<button onClick={() => setStep(s => s - 1)} className="absolute top-8 left-6 text-gray-500 hover:text-white transition-colors z-50"><ChevronLeft size={32} /></button>)}
+            <div className="flex-1 flex flex-col justify-center items-center max-w-lg mx-auto w-full min-h-[500px]">
+                <div className={`w-full flex flex-col items-center transition-all duration-500 ease-out transform ${isAnimating ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
+                    {currentStepData.id !== 'landing' && currentStepData.id !== 'processing' && (<div className="text-center mb-10 space-y-3"><h2 className="text-3xl sm:text-4xl font-bold tracking-tight">{currentStepData.title}</h2><p className="text-gray-400 text-base sm:text-lg leading-relaxed max-w-xs mx-auto">{currentStepData.subtitle}</p></div>)}
+                    {renderContent()}
+                </div>
+            </div>
+            {currentStepData.id !== 'landing' && currentStepData.id !== 'processing' && currentStepData.id !== 'initial_check' && (<div className="mt-auto pt-8 flex justify-center pb-safe"><Button onClick={() => nextStep()} disabled={!canProceed()} className="w-full max-w-sm py-5 text-xl">Далее</Button></div>)}
+        </div>
+    </div>
+  );
+};
+
+
+// --- COACH VIEW (UPDATED: MULTI-AGENT) ---
+
+
+const CoachView = ({ user, workouts, onBack }) => {
+    const [activeCoachId, setActiveCoachId] = useState(null);
+    const [chatHistory, setChatHistory] = useState(() => {
+        const saved = localStorage.getItem('kladlift_chat_history');
+        return saved ? JSON.parse(saved) : {};
+    });
+    
+    const [inputValue, setInputValue] = useState('');
+    const [selectedImage, setSelectedImage] = useState(null); // Base64 string
+    const messagesEndRef = useRef(null);
+    const fileInputRef = useRef(null);
+
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [chatHistory, activeCoachId]);
+
+
+    useEffect(() => {
+        localStorage.setItem('kladlift_chat_history', JSON.stringify(chatHistory));
+    }, [chatHistory]);
+
+
+    const handleImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setSelectedImage(reader.result); 
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+
+    const handleSend = async () => {
+        if (!inputValue.trim() && !selectedImage) return;
+        
+        const coachId = activeCoachId;
+        const currentHistory = chatHistory[coachId] || [{ role: 'assistant', text: getInitialGreeting(coachId) }];
+        
+        const userMsg = { role: 'user', text: inputValue, image: selectedImage }; 
+        
+        const newHistory = [...currentHistory, userMsg];
+        setChatHistory(prev => ({ ...prev, [coachId]: newHistory }));
+        
+        setInputValue('');
+        const imageToSend = selectedImage ? selectedImage.split(',')[1] : null; 
+        setSelectedImage(null); 
+
+
+        const aiText = await callGemini([...newHistory], { user, workouts }, coachId, imageToSend);
+        
+        setChatHistory(prev => ({ 
+            ...prev, 
+            [coachId]: [...newHistory, { role: 'assistant', text: aiText }] 
+        }));
+    };
+
+
+    const getInitialGreeting = (id) => {
+        switch(id) {
+            case 'training': return 'Привет! Готов разобрать твою технику или составить план?';
+            case 'nutrition': return 'Привет! Присылай фото еды, посчитаем калории.';
+            case 'motivation': return 'Сложный день? Давай вернем твой фокус.';
+            case 'recovery': return 'Как спалось? Обсудим твое восстановление.';
+            default: return 'Привет!';
+        }
+    };
+
+
+    if (!activeCoachId) {
+        return (
+            <div className="flex flex-col h-screen bg-gray-50 animate-slideUp text-gray-900">
+                <div className="p-6 border-b border-gray-200 bg-white">
+                    <div className="flex items-center gap-3">
+                        <button onClick={onBack} className="p-2 -ml-2 rounded-full hover:bg-gray-100"><ChevronLeft size={24} /></button>
+                        <h1 className="text-2xl font-bold">Команда KladLift</h1>
+                    </div>
+                    <p className="text-gray-500 mt-1">Твой персональный штаб экспертов.</p>
+                </div>
+                <div className="flex-1 p-6 overflow-y-auto grid grid-cols-1 gap-4">
+                    {Object.entries(COACH_PERSONAS).map(([id, coach]) => {
+                        const Icon = coach.icon;
+                        return (
+                            <button key={id} onClick={() => setActiveCoachId(id)} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 text-left flex items-center gap-5 hover:shadow-md transition-all active:scale-[0.98]">
+                                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${coach.bgLight} ${coach.textColor}`}>
+                                    <Icon size={32} />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-900">{coach.name}</h3>
+                                    <p className="text-gray-500 text-sm mt-1 leading-snug">{coach.desc}</p>
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    }
+
+
+    const activeCoach = COACH_PERSONAS[activeCoachId];
+    const history = chatHistory[activeCoachId] || [{ role: 'assistant', text: getInitialGreeting(activeCoachId) }];
+
+
+    return (
+        <div className="flex flex-col h-screen bg-[#F5F5F7] animate-slideInRight text-gray-900">
+            <div className="flex items-center p-4 bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-20">
+                <button onClick={() => setActiveCoachId(null)} className="p-2 -ml-2 mr-2 rounded-full hover:bg-gray-100 text-gray-600">
+                    <ChevronLeft size={24} />
+                </button>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${activeCoach.bgLight} ${activeCoach.textColor}`}>
+                    <activeCoach.icon size={16} />
+                </div>
+                <span className="font-bold text-lg">{activeCoach.name}</span>
+            </div>
+
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                {history.map((msg, idx) => (
+                    <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[85%] p-4 rounded-2xl text-sm shadow-sm ${msg.role === 'user' ? `${activeCoach.color} text-white` : 'bg-white text-gray-800'}`}>
+                            {msg.image && (
+                                <div className="mb-3 rounded-xl overflow-hidden">
+                                    <img src={msg.image} alt="User upload" className="w-full h-auto object-cover" />
+                                </div>
+                            )}
+                            {msg.role === 'assistant' ? <MarkdownText text={msg.text} /> : msg.text}
+                        </div>
+                    </div>
+                ))}
+                <div ref={messagesEndRef} />
+            </div>
+
+
+            <div className="p-4 bg-white border-t border-gray-100">
+                {selectedImage && (
+                    <div className="mb-3 flex items-center gap-3 bg-gray-50 p-2 rounded-xl border border-gray-200">
+                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-200">
+                            <img src={selectedImage} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                        <span className="text-sm text-gray-500 flex-1 truncate">Изображение добавлено</span>
+                        <button onClick={() => setSelectedImage(null)} className="p-1 bg-gray-200 rounded-full text-gray-600"><X size={14}/></button>
+                    </div>
+                )}
+                <div className="flex gap-2 items-end">
+                    {activeCoachId === 'nutrition' && (
+                        <>
+                            <input 
+                                type="file" 
+                                accept="image/*" 
+                                ref={fileInputRef} 
+                                className="hidden" 
+                                onChange={handleImageUpload} 
+                            />
+                            <button 
+                                onClick={() => fileInputRef.current.click()} 
+                                className="p-3 bg-gray-100 rounded-2xl text-gray-500 hover:bg-gray-200 transition-colors"
+                            >
+                                <Camera size={24} />
+                            </button>
+                        </>
+                    )}
+                    <div className="flex-1 bg-gray-100 rounded-2xl flex items-center px-2">
+                        <input 
+                            className="w-full bg-transparent p-3 outline-none text-gray-900 placeholder-gray-400" 
+                            placeholder={`Спроси ${activeCoach.name.toLowerCase()}a...`} 
+                            value={inputValue} 
+                            onChange={e => setInputValue(e.target.value)} 
+                            onKeyPress={(e) => e.key === 'Enter' && handleSend()} 
+                        />
+                    </div>
+                    <button 
+                        onClick={handleSend} 
+                        disabled={!inputValue.trim() && !selectedImage}
+                        className={`p-3 rounded-2xl text-white transition-all ${inputValue.trim() || selectedImage ? activeCoach.color : 'bg-gray-300'}`}
+                    >
+                        <Send size={24} />
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+// --- WORKOUT LOGGER (STEVE JOBS EDITION) ---
+
+
+const WorkoutLogger = ({ onSave, onCancel, isInitial }) => {
+    const [search, setSearch] = useState('');
+    const [activeCategory, setActiveCategory] = useState('legs');
+    const [selectedExercise, setSelectedExercise] = useState(null);
+    const [currentSets, setCurrentSets] = useState([{ weight: '', reps: '' }]);
+    const [date, setDate] = useState(getIsoDateString(Date.now()));
+    const [exercises, setExercises] = useState([]);
+
+
+    const getVisualForExercise = (ex) => {
+        const name = ex.name.toLowerCase();
+        if (name.includes('жим') && name.includes('лежа')) return 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&q=80';
+        if (name.includes('присед')) return 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=800&q=80';
+        if (name.includes('тяга') && name.includes('стан')) return 'https://images.unsplash.com/photo-1603287681836-d174d7a63381?w=800&q=80';
+        return MUSCLE_GROUPS[ex.muscle]?.image || 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80';
+    };
+
+
+    const filteredDB = useMemo(() => {
+        let res = FULL_EXERCISE_DB;
+        if (search) {
+            res = res.filter(ex => ex.name.toLowerCase().includes(search.toLowerCase()));
+        } else {
+            res = res.filter(ex => ex.muscle === activeCategory);
+        }
+        return res;
+    }, [search, activeCategory]);
+
+
+    const updateCurrentSet = (index, field, value) => {
+        const newSets = [...currentSets];
+        newSets[index][field] = value;
+        setCurrentSets(newSets);
+    };
+
+
+    const addNewSetLine = () => {
+        setCurrentSets([...currentSets, { weight: currentSets[currentSets.length - 1].weight || '', reps: currentSets[currentSets.length - 1].reps || '' }]);
+    };
+
+
+    const removeSetLine = (index) => {
+        if (currentSets.length > 1) setCurrentSets(currentSets.filter((_, i) => i !== index));
+    };
+
+
+    const addExerciseToWorkout = () => {
+        const validSets = currentSets.map(s => ({ weight: parseFloat(s.weight) || 0, reps: parseInt(s.reps) })).filter(s => !isNaN(s.reps) && s.reps > 0);
+        if (validSets.length === 0 || !selectedExercise) return;
+        
+        setExercises([...exercises, { ...selectedExercise, sets: validSets }]);
+        setSelectedExercise(null);
+        setCurrentSets([{ weight: '', reps: '' }]);
+    };
+
+
+    const handleSave = () => { onSave(exercises, new Date(date).getTime()); };
+
+
+    // Detail View (Product Page)
+    if (selectedExercise) {
+        return (
+            <div className="fixed inset-0 bg-white z-50 overflow-y-auto animate-slideUp flex flex-col text-gray-900">
+                <div className="relative h-96 w-full bg-gray-100 shrink-0">
+                    <img src={getVisualForExercise(selectedExercise)} className="w-full h-full object-cover" alt={selectedExercise.name} />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                    
+                    <button onClick={() => setSelectedExercise(null)} className="absolute top-6 right-6 bg-white/20 backdrop-blur-md p-3 rounded-full text-white hover:bg-white hover:text-black transition-all shadow-lg z-10">
+                        <X size={24} />
+                    </button>
+
+
+                    <div className="absolute bottom-0 left-0 right-0 p-8">
+                         {/* Muscle Anatomy Overlay */}
+                         <div className="absolute right-8 bottom-8 w-24 h-32 opacity-80">
+                            <MuscleTarget muscle={selectedExercise.muscle} />
+                         </div>
+                         
+                         <span className="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-widest bg-white/20 backdrop-blur-md text-white mb-3 inline-block">
+                            {MUSCLE_GROUPS[selectedExercise.muscle].label}
+                         </span>
+                         <h2 className="text-4xl font-bold text-white leading-tight pr-24 shadow-sm">{selectedExercise.name}</h2>
+                    </div>
+                </div>
+
+
+                <div className="p-8 flex-1 flex flex-col -mt-6 bg-white rounded-t-[2.5rem] relative z-10">
+                     <div className="flex gap-4 mb-8">
+                        <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(selectedExercise.name + ' техника')}`} target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl font-bold bg-red-50 text-red-600 hover:bg-red-100 transition-colors">
+                            <Youtube size={24} /> Техника
+                        </a>
+                         <button className="p-4 rounded-2xl bg-gray-100 text-gray-500 hover:bg-gray-200">
+                            <Info size={24} />
+                         </button>
+                     </div>
+
+
+                     {/* Sets */}
+                     <div className="space-y-4 mb-8">
+                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Подходы</h3>
+                         {currentSets.map((set, idx) => (
+                             <div key={idx} className="flex items-center gap-4 animate-fadeIn">
+                                 <div className="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center font-bold text-lg">{idx + 1}</div>
+                                 <div className="flex-1 flex gap-4">
+                                     <div className="flex-1 relative">
+                                        <input type="number" value={set.weight} onChange={(e) => updateCurrentSet(idx, 'weight', e.target.value)} className="w-full bg-gray-50 p-4 rounded-2xl text-2xl font-bold text-center outline-none focus:ring-2 focus:ring-black transition-all" placeholder="0" autoFocus={idx === currentSets.length - 1} />
+                                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 pointer-events-none">KG</span>
+                                     </div>
+                                     <div className="flex-1 relative">
+                                        <input type="number" value={set.reps} onChange={(e) => updateCurrentSet(idx, 'reps', e.target.value)} className="w-full bg-gray-50 p-4 rounded-2xl text-2xl font-bold text-center outline-none focus:ring-2 focus:ring-black transition-all" placeholder="0" />
+                                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 pointer-events-none">REPS</span>
+                                     </div>
+                                 </div>
+                                 {currentSets.length > 1 && <button onClick={() => removeSetLine(idx)} className="p-4 rounded-2xl bg-gray-50 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"><Trash2 size={20} /></button>}
+                             </div>
+                         ))}
+                         <button onClick={addNewSetLine} className="w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl text-gray-400 font-bold hover:border-black hover:text-black transition-all flex items-center justify-center gap-2">
+                             <Plus size={20} /> Добавить сет
+                         </button>
+                     </div>
+
+
+                     <div className="mt-auto sticky bottom-0 bg-white pt-4 pb-8 border-t border-gray-100">
+                         <Button onClick={addExerciseToWorkout} variant="primaryDark" className="w-full py-5 text-xl shadow-2xl">
+                             Сохранить результат
+                         </Button>
+                     </div>
+                </div>
+            </div>
+        );
+    }
+
+
+    // Grid View
+    return (
+        <div className="p-6 pb-32 max-w-5xl mx-auto animate-fadeIn bg-[#F5F5F7] min-h-screen text-gray-900">
+             {/* Header */}
+            <div className="sticky top-0 z-30 bg-[#F5F5F7]/90 backdrop-blur-lg pt-6 pb-4 -mx-6 px-6 mb-6 border-b border-gray-200/50">
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-4xl font-extrabold tracking-tight text-black">Запись</h1>
+                    <button onClick={onCancel} className="p-3 bg-white rounded-full shadow-sm text-gray-400 hover:text-black transition-colors"><X size={24} /></button>
+                </div>
+                
+                {/* Search */}
+                <div className="relative mb-6 group">
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                    <input 
+                        className="w-full bg-white pl-14 pr-6 py-4 rounded-3xl text-lg font-medium shadow-sm border-none outline-none placeholder-gray-400 group-focus-within:shadow-md transition-all" 
+                        placeholder="Поиск упражнения..." 
+                        value={search} 
+                        onChange={(e) => setSearch(e.target.value)} 
+                    />
+                </div>
+
+
+                {/* Filters */}
+                {!search && (
+                    <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide -mx-6 px-6">
+                        {Object.keys(MUSCLE_GROUPS).map(key => (
+                            <button 
+                                key={key} 
+                                onClick={() => setActiveCategory(key)}
+                                className={`px-6 py-3 rounded-full text-sm font-bold whitespace-nowrap transition-all ${activeCategory === key ? 'bg-black text-white shadow-lg scale-105' : 'bg-white text-gray-500 hover:bg-gray-100'}`}
+                            >
+                                {MUSCLE_GROUPS[key].label}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+
+            {/* Current Workout Summary */}
+            {exercises.length > 0 && (
+                <div className="mb-8 bg-white p-6 rounded-[2rem] shadow-xl shadow-gray-200 border border-white">
+                    <div className="flex justify-between items-center mb-4">
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Сводка</span>
+                        <span className="bg-black text-white text-xs font-bold px-3 py-1 rounded-full">{exercises.length}</span>
+                    </div>
+                    <div className="space-y-2">
+                        {exercises.map((ex, i) => (
+                            <div key={i} className="flex justify-between items-center p-3 bg-gray-50 rounded-2xl">
+                                <span className="font-bold text-gray-800 truncate mr-4">{ex.name}</span>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xs font-bold text-gray-500">{ex.sets.length} sets</span>
+                                    <button onClick={() => setExercises(exercises.filter((_, idx) => idx !== i))} className="text-gray-300 hover:text-red-500"><Trash2 size={16} /></button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+
+            {/* Exercise Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {filteredDB.map(ex => (
+                    <div 
+                        key={ex.id} 
+                        onClick={() => setSelectedExercise(ex)} 
+                        className="bg-white rounded-[2rem] p-3 shadow-sm hover:shadow-2xl transition-all duration-500 group cursor-pointer transform hover:-translate-y-1"
+                    >
+                        <div className="relative h-56 w-full rounded-[1.5rem] overflow-hidden bg-gray-200 mb-4">
+                            <img src={getVisualForExercise(ex)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={ex.name} />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80"></div>
+                            <div className="absolute bottom-4 right-4 bg-white/20 backdrop-blur-md p-2 rounded-full text-white group-hover:scale-110 transition-transform">
+                                <Plus size={24} />
+                            </div>
+                            <div className="absolute top-4 left-4">
+                                <span className="px-3 py-1 bg-black/40 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-lg border border-white/10">
+                                    {MUSCLE_GROUPS[ex.muscle].label}
+                                </span>
+                            </div>
+                            {/* Mini Anatomy Icon Overlay */}
+                            <div className="absolute bottom-4 left-4 w-8 h-12 opacity-80">
+                                <MuscleTarget muscle={ex.muscle} />
+                            </div>
+                        </div>
+                        <div className="px-2 pb-2">
+                            <h3 className="font-bold text-xl text-gray-900 leading-tight group-hover:text-blue-600 transition-colors">{ex.name}</h3>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+
+            {/* Floating Finish Button */}
+            {exercises.length > 0 && (
+                <div className="fixed bottom-8 left-0 right-0 z-40 flex justify-center px-6">
+                    <Button onClick={handleSave} variant="primaryDark" className="w-full max-w-md shadow-2xl shadow-black/40 py-6 text-xl flex items-center justify-between px-8 rounded-3xl scale-100 active:scale-95 transition-transform border border-white/10">
+                        <span className="font-bold">Завершить тренировку</span>
+                        <div className="flex items-center gap-2">
+                           <span className="bg-white/20 px-3 py-1 rounded-xl text-sm font-mono">{exercises.length}</span>
+                           <ArrowRight size={24} />
+                        </div>
+                    </Button>
+                </div>
+            )}
+        </div>
+    );
+};
+
+
+// ... (Rest of the application: Dashboard, History, Coach, etc. remains identical)
+// Re-implementing main components to ensure file completeness
+
+
+const Dashboard = ({ user, workouts, bodyLogs, onLogClick, onUpdateBody, onDeleteBodyLog, onOpenHistory, onOpenCoach, onOpenCycle }) => {
+    const [timeRange, setTimeRange] = useState('this_week');
+    const program = useMemo(() => calculateFullProgram({...user, sex: user.gender}), [user]);
+    const filteredWorkouts = useMemo(() => { 
+        const { start, end } = getRangeFilter(timeRange);
+        return workouts.filter(w => w.date >= start && w.date <= end); 
+    }, [workouts, timeRange]);
+    const stats = useMemo(() => { 
+        const actualVolume = { legs: 0, back: 0, chest: 0, shoulders: 0, arms: 0, abs: 0 }; 
+        filteredWorkouts.forEach(w => w.exercises.forEach(ex => { if (actualVolume[ex.muscle] !== undefined) actualVolume[ex.muscle] += ex.sets.length; })); 
+        return { actualVolume }; 
+    }, [filteredWorkouts]);
+    
+    const cyclePhase = useMemo(() => user.gender === 'female' && user.cycle ? getCyclePhaseForDate(Date.now(), user.cycle.lastPeriod, user.cycle.length) : null, [user]);
+    const bodyChartData = useMemo(() => bodyLogs.sort((a,b) => a.date - b.date).map(log => ({ date: new Date(log.date).toLocaleDateString('ru-RU', {day:'numeric', month:'short'}), weight: parseFloat(log.weight), fat: parseFloat(log.fat) })), [bodyLogs]);
+    const [showBodyModal, setShowBodyModal] = useState(false);
+    const [selectedMuscle, setSelectedMuscle] = useState(null);
+    const hasFatData = user.fat && bodyChartData.some(d => d.fat > 0);
+
+
+    return (
+        <div className="p-6 pb-24 max-w-4xl mx-auto space-y-6 animate-fadeIn text-gray-900">
+            <header className="flex justify-between items-end mb-6">
+                <div><h1 className="text-3xl font-bold tracking-tight">KladLift</h1><p className="text-gray-500 text-sm font-medium">Твоя система</p></div>
+                <div className="flex gap-3">
+                    <button onClick={onOpenHistory} className="w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors"><Clock size={20} /></button>
+                    <div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center font-bold">{user.gender === 'male' ? 'M' : 'Ж'}</div>
+                </div>
+            </header>
+            
+            <div className="bg-black text-white p-6 rounded-3xl shadow-xl relative overflow-hidden flex flex-col md:flex-row gap-6">
+                <div className="relative z-10 flex-1">
+                    <div className="flex items-center gap-2 mb-2 text-gray-400 text-xs font-bold uppercase tracking-wider"><Target size={14}/> Цель</div>
+                    <h2 className="text-2xl font-bold mb-1">{GOALS[user.goal]?.label}</h2>
+                    <p className="text-gray-400 text-sm mb-4">{program.trainingParams.goalDescription}</p>
+                    <div className="flex gap-6">
+                        <div><div className="text-2xl font-bold">{program.meta.standardSets}</div><div className="text-[10px] text-gray-500 uppercase">База (сеты)</div></div>
+                        <div><div className="text-2xl font-bold text-green-400">x{program.meta.recoveryMultiplier.toFixed(2)}</div><div className="text-[10px] text-gray-500 uppercase">Фактор восст.</div></div>
+                    </div>
+                </div>
+                {cyclePhase && (<div className="relative z-10 flex flex-col justify-center bg-white/10 p-4 rounded-2xl md:w-1/3 cursor-pointer hover:bg-white/20 transition-colors" onClick={onOpenCycle}><div className="flex items-center gap-2 mb-1 text-pink-300 font-bold text-sm"><Activity size={16}/> {cyclePhase.name}</div><div className="text-xs text-gray-300 leading-tight mb-2">{cyclePhase.desc}</div><div className="mt-auto pt-2 border-t border-white/10 text-[10px] uppercase font-bold text-gray-400">Совет: {cyclePhase.rec}</div></div>)}
+            </div>
+
+
+            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-lg">Недельный объем</h3><div className="flex gap-1"><button onClick={() => setTimeRange('this_week')} className={`px-3 py-1 text-xs rounded-lg transition-colors ${timeRange === 'this_week' ? 'bg-black text-white' : 'bg-gray-100 text-gray-500'}`}>Тек. неделя</button><button onClick={() => setTimeRange('last_week')} className={`px-3 py-1 text-xs rounded-lg transition-colors ${timeRange === 'last_week' ? 'bg-black text-white' : 'bg-gray-100 text-gray-500'}`}>Пред. неделя</button></div></div>
+                <div className="space-y-4">
+                    {Object.keys(MUSCLE_GROUPS).map(key => {
+                        if (key === 'cardio') return null;
+                        const actual = stats.actualVolume[key] || 0;
+                        const target = program.weeklyVolume[key] || 10;
+                        const pct = Math.min((actual/target)*100, 120);
+                        let barColor = '#34C759'; 
+                        if (actual < target * 0.5) barColor = '#F59E0B'; 
+                        if (actual > target * 1.1) barColor = '#EF4444'; 
+                        return (
+                            <div key={key} onClick={() => setSelectedMuscle(key)} className="cursor-pointer group">
+                                <div className="flex justify-between text-sm mb-1"><span className="font-medium flex items-center gap-1">{MUSCLE_GROUPS[key].label} <ChevronRight size={12} className="opacity-0 group-hover:opacity-100 transition-opacity"/></span><span className="text-gray-400 font-mono">{actual} / {target}</span></div>
+                                <div className="h-2 bg-gray-100 rounded-full overflow-hidden relative"><div className="h-full rounded-full transition-all duration-1000" style={{width: `${(pct/120)*100}%`, backgroundColor: barColor}}></div></div>
+                            </div>
+                        )
+                    })}
+                </div>
+            </div>
+
+
+            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col relative overflow-hidden">
+                <div className="flex justify-between items-start mb-2 relative z-10"><h3 className="text-lg font-semibold flex items-center gap-2"><Scale className="w-5 h-5 text-gray-400" /> Тело</h3><button onClick={() => setShowBodyModal(true)} className="bg-gray-50 hover:bg-gray-100 p-2 rounded-full transition-colors text-gray-600"><Plus size={18} /></button></div>
+                <div className="flex gap-8 mb-4 relative z-10">
+                    <div><div className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Вес</div><div className="text-3xl font-bold text-gray-900 tracking-tight">{user.weight} <span className="text-lg text-gray-400 font-normal">кг</span></div></div>
+                    {user.fat && <div><div className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Жир</div><div className="text-3xl font-bold text-gray-900 tracking-tight">{user.fat} <span className="text-lg text-gray-400 font-normal">%</span></div></div>}
+                </div>
+                <div className="h-[150px] w-full relative z-0 -ml-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={bodyChartData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
+                            <defs>
+                                <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#000000" stopOpacity={0.1}/><stop offset="95%" stopColor="#000000" stopOpacity={0}/></linearGradient>
+                                <linearGradient id="colorFat" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#F59E0B" stopOpacity={0.1}/><stop offset="95%" stopColor="#F59E0B" stopOpacity={0}/></linearGradient>
+                            </defs>
+                            <XAxis dataKey="date" hide />
+                            <YAxis yAxisId="weight" hide domain={['dataMin - 2', 'dataMax + 2']} />
+                            <YAxis yAxisId="fat" orientation="right" hide domain={['dataMin - 2', 'dataMax + 2']} />
+                            <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#000', strokeWidth: 1, strokeDasharray: '5 5', opacity: 0.2 }} />
+                            <Area yAxisId="weight" type="monotone" dataKey="weight" name="Вес" unit=" кг" stroke="#000000" strokeWidth={3} fill="url(#colorWeight)" activeDot={{ r: 6, strokeWidth: 0 }} />
+                            {hasFatData && <Area yAxisId="fat" type="monotone" dataKey="fat" name="Жир" unit=" %" stroke="#F59E0B" strokeWidth={3} strokeDasharray="4 4" fill="url(#colorFat)" activeDot={{ r: 6, strokeWidth: 0 }} />}
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+
+            <button onClick={onLogClick} className="w-full py-4 bg-black text-white rounded-2xl font-bold shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2"><Plus size={20}/> Записать тренировку</button>
+
+
+            {showBodyModal && <BodyStatsManager currentWeight={user.weight} currentFat={user.fat} logs={bodyLogs} onClose={() => setShowBodyModal(false)} onSave={(w, f, d) => onUpdateBody(w, f, d)} onDelete={onDeleteBodyLog} />}
+            {selectedMuscle && <MuscleDetailModal muscle={selectedMuscle} workouts={filteredWorkouts} stats={stats} onClose={() => setSelectedMuscle(null)} user={user} />}
+        </div>
+    );
+};
+
+
+const HistoryView = ({ workouts, onEdit, onDelete, onBack }) => {
+  return (
+    <div className="p-6 pb-24 max-w-4xl mx-auto animate-slideUp text-gray-900">
+      <div className="flex items-center mb-8"><button onClick={onBack} className="p-2 -ml-2 mr-2 rounded-full hover:bg-gray-100 text-gray-600"><ChevronLeft size={24} /></button><h1 className="text-3xl font-bold tracking-tight text-gray-900">История</h1></div>
+      <div className="space-y-4">{workouts.sort((a,b) => b.date - a.date).map(workout => (<div key={workout.id} onClick={() => onEdit(workout)} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex justify-between items-center group cursor-pointer hover:border-gray-300 transition-colors"><div><div className="flex items-center gap-2 mb-1"><Calendar size={16} className="text-gray-400" /><span className="font-semibold text-gray-900">{formatFullDate(workout.date)}</span></div><div className="text-sm text-gray-500">{workout.exercises.length} упражнений • {workout.exercises.reduce((acc, ex) => acc + ex.sets.length, 0)} подходов</div></div><div className="flex gap-2"><button onClick={(e) => { e.stopPropagation(); onDelete(workout.id); }} className="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-100"><Trash2 size={18} /></button></div></div>))}</div>
+    </div>
+  );
+};
+
+
+const Progress = ({ workouts, userCycle }) => {
+  const [selectedGroup, setSelectedGroup] = useState('legs');
+  const [timeRange, setTimeRange] = useState('month');
+  const availableExercises = useMemo(() => { const set = new Set(); workouts.forEach(w => w.exercises.forEach(ex => { if (ex.muscle === selectedGroup) set.add(ex.id); })); return Array.from(set).map(id => FULL_EXERCISE_DB.find(e => e.id === id)).filter(Boolean); }, [workouts, selectedGroup]);
+  const [selectedExerciseId, setSelectedExerciseId] = useState(null);
+  
+  useEffect(() => { if (availableExercises.length > 0 && !selectedExerciseId) setSelectedExerciseId(availableExercises[0].id); }, [availableExercises, selectedGroup]);
+
+
+  const chartData = useMemo(() => { 
+      if (!selectedExerciseId) return []; 
+      const { start, end } = getRangeFilter(timeRange); 
+      const filteredWorkouts = workouts.filter(w => w.date >= start && w.date <= end); 
+      return filteredWorkouts.map(w => { 
+          const exData = w.exercises.find(e => e.id === selectedExerciseId); 
+          if (!exData) return null;
+          const maxWeight = exData.sets.length > 0 ? Math.max(...exData.sets.map(s => s.weight)) : 0;
+          const phase = userCycle ? getCyclePhaseForDate(w.date, userCycle.lastPeriod, userCycle.length) : null;
+          return { date: w.date, displayDate: formatDate(w.date), weight: maxWeight, phaseColor: phase ? phase.color : '#e5e7eb', phaseName: phase ? phase.name : '' }; 
+      }).filter(Boolean).sort((a, b) => a.date - b.date); 
+  }, [workouts, selectedExerciseId, timeRange, userCycle]);
+
+
+  const statsChange = useMemo(() => { if (chartData.length < 2) return null; const start = chartData[0].weight; const current = chartData[chartData.length - 1].weight; const diff = current - start; if (start === 0) return { diff, text: `+ ${diff} кг`, isPositive: true }; const percentage = ((diff / start) * 100).toFixed(1); return { diff, percentage, text: `${percentage}%`, isPositive: diff >= 0 }; }, [chartData]);
+  const renderPhaseBackgrounds = () => { if (!chartData.length || !userCycle) return null; return chartData.map((entry, index) => ( <ReferenceArea key={index} x1={entry.displayDate} x2={entry.displayDate} y1={0} y2="max" strokeOpacity={0} fill={entry.phaseColor} fillOpacity={0.15} /> )); };
+  
+  const timeRanges = [ 
+    { id: 'this_week', label: 'Эта неделя' }, 
+    { id: 'last_week', label: 'Прошлая нед.' },
+    { id: 'last_2_weeks', label: '14 дней' },
+    { id: 'month', label: 'Месяц' }, 
+    { id: '3_months', label: '3 мес.' }, 
+    { id: '6_months', label: 'Полгода' },
+    { id: 'year', label: 'Год' }, 
+    { id: 'all', label: 'Всё время' } 
+  ];
+
+
+  return (
+    <div className="p-6 pb-24 max-w-4xl mx-auto animate-fadeIn text-gray-900">
+       <div className="flex justify-between items-end mb-8"><h1 className="text-3xl font-bold tracking-tight text-gray-900">Прогресс</h1></div>
+       <div className="flex overflow-x-auto gap-3 pb-4 mb-6 scrollbar-hide">{Object.keys(MUSCLE_GROUPS).map(key => (<button key={key} onClick={() => {setSelectedGroup(key); setSelectedExerciseId(null);}} className={`px-5 py-2 rounded-full whitespace-nowrap text-sm font-semibold transition-all ${selectedGroup === key ? 'bg-black text-white shadow-md' : 'bg-white text-gray-500 border border-gray-200 hover:border-gray-400'}`}>{MUSCLE_GROUPS[key].label}</button>))}</div>
+       
+       {availableExercises.length > 0 ? (
+           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+               <div className="lg:col-span-1 space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar">
+                   {availableExercises.map(ex => (
+                       <button key={ex.id} onClick={() => setSelectedExerciseId(ex.id)} className={`w-full text-left p-4 rounded-2xl transition-all flex justify-between items-center ${selectedExerciseId === ex.id ? 'bg-white border-2 border-black shadow-sm' : 'bg-gray-50 border border-transparent hover:bg-white'}`}>
+                           <div className="flex items-center gap-3">
+                               <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center text-gray-300">{getInitials(ex.name)}</div>
+                               <div className={`font-medium ${selectedExerciseId === ex.id ? 'text-gray-900' : 'text-gray-600'}`}>{ex.name}</div>
+                           </div>
+                           {selectedExerciseId === ex.id && <ChevronRight className="w-4 h-4" />}
+                       </button>
+                   ))}
+               </div>
+               <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm h-[450px] flex flex-col">
+                   <div className="flex overflow-x-auto gap-2 pb-4 mb-2 scrollbar-hide border-b border-gray-100">{timeRanges.map(r => (<button key={r.id} onClick={() => setTimeRange(r.id)} className={`px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${timeRange === r.id ? 'bg-black text-white' : 'bg-gray-100 text-gray-500'}`}>{r.label}</button>))}</div>
+                   {chartData.length > 0 ? (
+                       <>
+                           <div className="mb-6 mt-4">
+                               <h3 className="text-sm text-gray-400 uppercase tracking-wider font-bold">Рабочий вес (Максимум)</h3>
+                               <div className="flex items-baseline gap-2">
+                                   <span className="text-4xl font-bold text-gray-900">{chartData[chartData.length - 1].weight}</span><span className="text-xl text-gray-500">кг</span>
+                                   {statsChange && (<span className={`text-sm font-medium ml-2 flex items-center ${statsChange.isPositive ? 'text-green-500' : 'text-red-500'}`}>{statsChange.isPositive ? <ArrowUp className="w-3 h-3 mr-1" /> : <ArrowDown className="w-3 h-3 mr-1" />}{statsChange.text}</span>)}
+                               </div>
+                           </div>
+                           <div className="flex-1 w-full min-h-0 relative">
+                               <ResponsiveContainer width="100%" height="100%">
+                                   <AreaChart data={chartData}>
+                                       <defs><linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={statsChange?.isPositive ? "#000" : "#EF4444"} stopOpacity={0.1}/><stop offset="95%" stopColor={statsChange?.isPositive ? "#000" : "#EF4444"} stopOpacity={0}/></linearGradient></defs>
+                                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                                       <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 10}} dy={10} />
+                                       <YAxis axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} domain={['dataMin - 5', 'dataMax + 5']} />
+                                       <Tooltip content={<CustomTooltip />}/>
+                                       {renderPhaseBackgrounds()}
+                                       <Area type="monotone" dataKey="weight" stroke={statsChange?.isPositive ? "#000" : "#EF4444"} strokeWidth={3} fillOpacity={1} fill="url(#colorWeight)" />
+                                   </AreaChart>
+                               </ResponsiveContainer>
+                               <div className="flex justify-center gap-4 mt-4 text-[10px] uppercase font-bold text-gray-400">
+                                   <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-pink-400"></span> Фолликулярная</div>
+                                   <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-400"></span> Овуляция</div>
+                                   <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-400"></span> Лютеиновая</div>
+                               </div>
+                           </div>
+                       </>
+                   ) : <div className="h-full flex items-center justify-center text-gray-400 text-center px-8">Нет данных за этот период.</div>}
+               </div>
+           </div>
+       ) : <div className="text-center text-gray-400 mt-20">Нет упражнений для этой группы</div>}
+    </div>
+  );
+};
+
+
+// Main App Wrapper
+export default function App() {
+  const [view, setView] = useState('loading');
+  const [user, setUser] = useState(null);
+  const [workouts, setWorkouts] = useState([]);
+  const [bodyLogs, setBodyLogs] = useState([]);
+  const [editWorkout, setEditWorkout] = useState(null);
+
+
+  useEffect(() => {
+      const u = localStorage.getItem('core_user');
+      const w = localStorage.getItem('core_workouts');
+      const b = localStorage.getItem('core_body_logs');
+      if(u) { 
+          const userData = JSON.parse(u);
+          if (!userData.experienceYears) { setView('onboarding'); } 
+          else { setUser(userData); setView('dashboard'); }
+          setWorkouts(w ? JSON.parse(w) : []);
+          setBodyLogs(b ? JSON.parse(b) : []);
+      } else { setView('onboarding'); }
+  }, []);
+
+
+  const saveWorkout = (exercises, dateMs) => {
+      const newW = { id: editWorkout ? editWorkout.id : Date.now(), date: dateMs, exercises };
+      let updated;
+      if (editWorkout) { updated = workouts.map(w => w.id === editWorkout.id ? newW : w); } 
+      else { updated = [...workouts, newW]; }
+      updated.sort((a,b) => a.date - b.date);
+      setWorkouts(updated);
+      localStorage.setItem('core_workouts', JSON.stringify(updated));
+      
+      if (view === 'log_initial') {
+          setView('calibration');
+      } else {
+          setView('dashboard');
+      }
+      setEditWorkout(null);
+  };
+
+
+  // Calibration effect handler
+  useEffect(() => {
+      if (view === 'calibration') {
+          const timer = setTimeout(() => {
+              setView('dashboard');
+          }, 2500);
+          return () => clearTimeout(timer);
+      }
+  }, [view]);
+
+
+
+
+  const updateBodyStats = (weight, fat, dateStr) => { 
+      const newLog = { date: dateStr ? new Date(dateStr).getTime() : Date.now(), weight, fat }; 
+      const filtered = bodyLogs.filter(l => getIsoDateString(l.date) !== getIsoDateString(newLog.date));
+      const updated = [...filtered, newLog].sort((a,b) => a.date - b.date);
+      setBodyLogs(updated); localStorage.setItem('core_body_logs', JSON.stringify(updated));
+      if (updated.length > 0) { const latest = updated[updated.length - 1]; const u = { ...user, weight: latest.weight, fat: latest.fat }; setUser(u); localStorage.setItem('core_user', JSON.stringify(u)); }
+  };
+
+
+  const deleteBodyLog = (dateMs) => {
+      const updated = bodyLogs.filter(l => l.date !== dateMs).sort((a,b) => a.date - b.date);
+      setBodyLogs(updated); localStorage.setItem('core_body_logs', JSON.stringify(updated));
+      if (updated.length > 0) { const latest = updated[updated.length - 1]; const u = { ...user, weight: latest.weight, fat: latest.fat }; setUser(u); localStorage.setItem('core_user', JSON.stringify(u)); }
+  };
+
+
+  const deleteWorkout = (id) => {
+      const updated = workouts.filter(w => w.id !== id);
+      setWorkouts(updated); localStorage.setItem('core_workouts', JSON.stringify(updated));
+  };
+
+
+  if (view === 'loading') return <div className="flex h-screen items-center justify-center bg-black text-white">Загрузка...</div>;
+  
+  if (view === 'onboarding') return <Onboarding onComplete={(u, shouldLog)=>{
+      setUser(u); 
+      localStorage.setItem('core_user', JSON.stringify(u)); 
+      setBodyLogs([{date: Date.now(), weight: u.weight, fat: u.fat}]);
+      if (shouldLog) {
+          setView('log_initial'); 
+      } else {
+          setView('calibration');
+      }
+  }} />;
+  
+  if (view === 'calibration') return <CalibrationView />;
+
+
+  return (
+    <div className="min-h-screen bg-[#FAFAFA] text-gray-900 font-sans">
+        <style>{` body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; } .custom-scrollbar::-webkit-scrollbar { display: none; } `}</style>
+        {view === 'dashboard' && <Dashboard user={user} workouts={workouts} bodyLogs={bodyLogs} onLogClick={() => { setEditWorkout(null); setView('log'); }} onUpdateBody={updateBodyStats} onDeleteBodyLog={deleteBodyLog} onOpenHistory={() => setView('history')} onOpenCoach={() => setView('coach')} onOpenCycle={() => setView('cycle')} />}
+        
+        {/* Standard Log View */}
+        {view === 'log' && <WorkoutLogger onSave={saveWorkout} onCancel={() => setView('dashboard')} isInitial={false} initialData={editWorkout} />} 
+        
+        {/* Initial Log View (triggered from Onboarding) */}
+        {view === 'log_initial' && <WorkoutLogger onSave={saveWorkout} onCancel={() => setView('calibration')} isInitial={true} initialData={null} />} 
+
+
+        {view === 'history' && <HistoryView workouts={workouts} onBack={() => setView('dashboard')} onDelete={deleteWorkout} onEdit={(w) => { setEditWorkout(w); setView('log'); }} />}
+        {view === 'coach' && <CoachView user={user} workouts={workouts} onBack={() => setView('dashboard')} />}
+        {view === 'cycle' && <CycleInsightsView cycle={user.cycle} onBack={() => setView('dashboard')} onEdit={() => {}} />}
+        {view === 'progress' && <Progress workouts={workouts} userCycle={user.cycle} />}
+        
+        {/* Navigation Bar */}
+        {view !== 'onboarding' && view !== 'calibration' && view !== 'log' && view !== 'log_initial' && (
+          <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-lg border border-black/5 shadow-2xl rounded-full px-6 py-3 flex gap-8 items-center z-50">
+            <button onClick={() => setView('dashboard')} className={`p-2 rounded-full transition-colors ${view === 'dashboard' ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}><Layout size={24} /></button>
+            <button onClick={() => setView('coach')} className={`p-2 rounded-full transition-colors ${view === 'coach' ? 'text-purple-600' : 'text-gray-400 hover:text-gray-600'}`}><Brain size={24} /></button>
+            <button onClick={() => { setEditWorkout(null); setView('log'); }} className="p-3 rounded-full bg-black text-white shadow-lg hover:scale-105 transition-transform"><Plus size={24} /></button>
+            <button onClick={() => setView('progress')} className={`p-2 rounded-full transition-colors ${view === 'progress' ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}><BarChart2 size={24} /></button>
+          </div>
+        )}
+    </div>
+  );
+}
