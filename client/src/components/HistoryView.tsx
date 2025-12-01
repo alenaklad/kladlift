@@ -11,26 +11,26 @@ interface HistoryViewProps {
 
 export function HistoryView({ workouts, onEdit, onDelete, onBack }: HistoryViewProps) {
   return (
-    <div className="p-6 pb-24 max-w-4xl mx-auto animate-slideUp bg-[#0A0E1A] min-h-screen text-white">
+    <div className="p-6 pb-24 max-w-4xl mx-auto animate-slideUp bg-slate-50 min-h-screen">
       <div className="flex items-center mb-8">
         <button 
           onClick={onBack} 
-          className="p-2 -ml-2 mr-2 rounded-full hover:bg-white/10 text-gray-400"
+          className="p-2 -ml-2 mr-2 rounded-full hover:bg-slate-200 text-slate-500 transition-colors"
           data-testid="button-back"
         >
           <ChevronLeft size={24} />
         </button>
-        <h1 className="text-3xl font-bold tracking-tight text-white">История</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">История</h1>
       </div>
 
       {workouts.length === 0 ? (
-        <div className="bg-[#111827] p-12 rounded-3xl border border-white/5 text-center">
-          <div className="text-gray-500 mb-4">
-            <div className="w-16 h-16 mx-auto mb-4 bg-[#1A1F2E] rounded-full flex items-center justify-center">
-              <Calendar size={32} className="text-gray-600" />
+        <div className="bg-white p-12 rounded-3xl border border-slate-200 text-center shadow-sm">
+          <div className="text-slate-500 mb-4">
+            <div className="w-16 h-16 mx-auto mb-4 bg-slate-100 rounded-full flex items-center justify-center">
+              <Calendar size={32} className="text-slate-400" />
             </div>
-            <h3 className="text-xl font-bold text-gray-300 mb-2">Пока пусто</h3>
-            <p className="text-gray-500">
+            <h3 className="text-xl font-bold text-slate-700 mb-2">Пока пусто</h3>
+            <p className="text-slate-500">
               Запишите свою первую тренировку
             </p>
           </div>
@@ -43,17 +43,17 @@ export function HistoryView({ workouts, onEdit, onDelete, onBack }: HistoryViewP
               <div 
                 key={workout.id} 
                 onClick={() => onEdit(workout)} 
-                className="bg-[#111827] p-5 rounded-3xl border border-white/5 shadow-sm flex justify-between items-center group cursor-pointer hover:border-white/20 transition-colors"
+                className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex justify-between items-center group cursor-pointer hover:border-purple-300 hover:shadow-md transition-all"
                 data-testid={`workout-history-${workout.id}`}
               >
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <Calendar size={16} className="text-gray-500" />
-                    <span className="font-semibold text-white">
+                    <Calendar size={16} className="text-slate-400" />
+                    <span className="font-semibold text-slate-900">
                       {formatFullDate(workout.date)}
                     </span>
                   </div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-slate-500">
                     {workout.exercises.length} упражнений • {workout.exercises.reduce((acc, ex) => acc + ex.sets.length, 0)} подходов
                   </div>
                 </div>
@@ -63,7 +63,7 @@ export function HistoryView({ workouts, onEdit, onDelete, onBack }: HistoryViewP
                       e.stopPropagation(); 
                       onDelete(workout.id); 
                     }} 
-                    className="p-2 bg-red-500/20 text-red-400 rounded-xl hover:bg-red-500/30"
+                    className="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors"
                     data-testid={`button-delete-workout-${workout.id}`}
                   >
                     <Trash2 size={18} />

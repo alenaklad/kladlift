@@ -5,10 +5,9 @@ import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Dumbbell, Mail, Lock, User, ArrowLeft, Loader2 } from "lucide-react";
+import { Mail, Lock, User, ArrowLeft, Loader2, ChevronRight, Sparkles, Activity, Target, TrendingUp } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
 const registerSchema = z.object({
@@ -105,59 +104,94 @@ export function AuthForms({ onSuccess }: AuthFormsProps) {
 
   if (mode === 'landing') {
     return (
-      <div className="min-h-screen bg-[#0A0E1A] text-white flex flex-col">
-        <div className="flex-1 flex flex-col items-center justify-center px-6">
-          <div className="relative mb-8">
-            <div className="absolute -inset-8 bg-white/10 rounded-full blur-3xl"></div>
-            <div className="relative w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-2xl">
-              <Dumbbell size={48} className="text-[#0A0E1A]" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute top-1/2 -left-40 w-96 h-96 bg-blue-500/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute -bottom-20 right-1/4 w-72 h-72 bg-pink-500/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+        </div>
+        
+        {/* Grid pattern overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px]" />
+        
+        <div className="relative z-10 min-h-screen flex flex-col">
+          {/* Header */}
+          <header className="p-6 md:p-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/10">
+                <Activity className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-white/90 font-semibold text-lg tracking-tight">KladLift</span>
             </div>
-          </div>
-          
-          <h1 className="text-5xl font-black tracking-tight mb-4 text-center">
-            KladLift
-          </h1>
-          
-          <p className="text-xl text-gray-400 text-center mb-8 max-w-md">
-            Персональный тренировочный трекер с AI-коучингом и научным подходом
-          </p>
+          </header>
 
-          <div className="space-y-4 mb-12 text-center">
-            <div className="flex items-center gap-3 text-gray-300">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span>Персонализированные программы тренировок</span>
-            </div>
-            <div className="flex items-center gap-3 text-gray-300">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span>AI-тренер для техники и мотивации</span>
-            </div>
-            <div className="flex items-center gap-3 text-gray-300">
-              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-              <span>Синхронизация на всех устройствах</span>
-            </div>
-          </div>
+          {/* Main content */}
+          <main className="flex-1 flex flex-col items-center justify-center px-6 pb-20">
+            <div className="max-w-xl mx-auto text-center">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full mb-8">
+                <Sparkles className="w-4 h-4 text-purple-400" />
+                <span className="text-sm text-white/70">AI-Powered Fitness</span>
+              </div>
 
-          <div className="w-full max-w-sm space-y-4">
-            <Button
-              onClick={() => setMode('login')}
-              className="w-full py-6 bg-white text-[#0A0E1A] rounded-2xl font-bold text-xl hover:bg-gray-100 transition-colors"
-              data-testid="button-login"
-            >
-              Войти
-            </Button>
-            <Button
-              onClick={() => setMode('register')}
-              variant="outline"
-              className="w-full py-6 rounded-2xl font-bold text-xl border-white/20 hover:bg-white/10"
-              data-testid="button-register"
-            >
-              Зарегистрироваться
-            </Button>
-          </div>
-          
-          <p className="text-gray-500 text-sm mt-6 text-center">
-            Создайте аккаунт или войдите, чтобы начать
-          </p>
+              {/* Main headline */}
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-tight mb-6">
+                Тренируйся
+                <span className="block bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
+                  умнее
+                </span>
+              </h1>
+              
+              <p className="text-lg md:text-xl text-white/60 mb-12 max-w-md mx-auto leading-relaxed">
+                Персональный тренер с искусственным интеллектом. 
+                Наука, адаптация, результат.
+              </p>
+
+              {/* Feature pills */}
+              <div className="flex flex-wrap justify-center gap-3 mb-12">
+                <div className="flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full">
+                  <Target className="w-4 h-4 text-green-400" />
+                  <span className="text-sm text-white/80">Персонализация</span>
+                </div>
+                <div className="flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full">
+                  <TrendingUp className="w-4 h-4 text-blue-400" />
+                  <span className="text-sm text-white/80">Прогрессия</span>
+                </div>
+                <div className="flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full">
+                  <Sparkles className="w-4 h-4 text-purple-400" />
+                  <span className="text-sm text-white/80">AI Коучинг</span>
+                </div>
+              </div>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button
+                  onClick={() => setMode('register')}
+                  className="group px-8 py-6 bg-white text-slate-900 hover:bg-white/90 rounded-2xl font-semibold text-lg shadow-2xl shadow-white/10 transition-all duration-300 hover:shadow-white/20 hover:scale-[1.02]"
+                  data-testid="button-register"
+                >
+                  Начать бесплатно
+                  <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                </Button>
+                <Button
+                  onClick={() => setMode('login')}
+                  variant="outline"
+                  className="px-8 py-6 bg-white/5 backdrop-blur-sm border-white/20 text-white hover:bg-white/10 hover:border-white/30 rounded-2xl font-semibold text-lg transition-all duration-300"
+                  data-testid="button-login"
+                >
+                  Войти
+                </Button>
+              </div>
+            </div>
+          </main>
+
+          {/* Footer */}
+          <footer className="p-6 text-center">
+            <p className="text-white/30 text-sm">
+              Присоединяйтесь к тысячам атлетов
+            </p>
+          </footer>
         </div>
       </div>
     );
@@ -165,48 +199,52 @@ export function AuthForms({ onSuccess }: AuthFormsProps) {
 
   if (mode === 'register') {
     return (
-      <div className="min-h-screen bg-[#0A0E1A] text-white flex flex-col items-center justify-center p-6">
-        <Card className="w-full max-w-md bg-[#111827] border-white/10">
-          <CardHeader className="space-y-4">
-            <Button
-              variant="ghost"
-              size="sm"
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex">
+        {/* Left side - Form */}
+        <div className="flex-1 flex flex-col justify-center px-6 py-12 lg:px-20">
+          <div className="max-w-md mx-auto w-full">
+            {/* Back button */}
+            <button
               onClick={() => setMode('landing')}
-              className="w-fit -ml-2 text-gray-400 hover:text-white"
+              className="group flex items-center gap-2 text-slate-500 hover:text-slate-700 mb-8 transition-colors"
               data-testid="button-back"
             >
-              <ArrowLeft size={16} className="mr-2" />
-              Назад
-            </Button>
-            <div>
-              <CardTitle className="text-2xl text-white">Регистрация</CardTitle>
-              <CardDescription className="text-gray-400">
-                Создайте аккаунт для использования KladLift
-              </CardDescription>
+              <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+              <span className="text-sm font-medium">Назад</span>
+            </button>
+
+            {/* Header */}
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-2">
+                Создать аккаунт
+              </h1>
+              <p className="text-slate-500">
+                Начните свой путь к идеальной форме
+              </p>
             </div>
-          </CardHeader>
-          <CardContent>
+
+            {/* Form */}
             <Form {...registerForm}>
-              <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+              <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-5">
                 <FormField
                   control={registerForm.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-300">Email</FormLabel>
+                      <FormLabel className="text-slate-700 font-medium">Email</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                           <Input
                             {...field}
                             type="email"
-                            placeholder="email@example.com"
-                            className="pl-10 bg-[#1A1F2E] border-white/10 text-white placeholder:text-gray-500"
+                            placeholder="you@example.com"
+                            className="pl-11 h-12 bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl focus:border-purple-500 focus:ring-purple-500/20"
                             data-testid="input-email"
                           />
                         </div>
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-red-500" />
                     </FormItem>
                   )}
                 />
@@ -217,19 +255,19 @@ export function AuthForms({ onSuccess }: AuthFormsProps) {
                     name="firstName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-gray-300">Имя</FormLabel>
+                        <FormLabel className="text-slate-700 font-medium">Имя</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                             <Input
                               {...field}
                               placeholder="Иван"
-                              className="pl-10 bg-[#1A1F2E] border-white/10 text-white placeholder:text-gray-500"
+                              className="pl-11 h-12 bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl focus:border-purple-500 focus:ring-purple-500/20"
                               data-testid="input-firstName"
                             />
                           </div>
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="text-red-500" />
                       </FormItem>
                     )}
                   />
@@ -238,16 +276,16 @@ export function AuthForms({ onSuccess }: AuthFormsProps) {
                     name="lastName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-gray-300">Фамилия</FormLabel>
+                        <FormLabel className="text-slate-700 font-medium">Фамилия</FormLabel>
                         <FormControl>
                           <Input
                             {...field}
                             placeholder="Иванов"
-                            className="bg-[#1A1F2E] border-white/10 text-white placeholder:text-gray-500"
+                            className="h-12 bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl focus:border-purple-500 focus:ring-purple-500/20"
                             data-testid="input-lastName"
                           />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="text-red-500" />
                       </FormItem>
                     )}
                   />
@@ -258,20 +296,20 @@ export function AuthForms({ onSuccess }: AuthFormsProps) {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-300">Пароль</FormLabel>
+                      <FormLabel className="text-slate-700 font-medium">Пароль</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                           <Input
                             {...field}
                             type="password"
                             placeholder="Минимум 6 символов"
-                            className="pl-10 bg-[#1A1F2E] border-white/10 text-white placeholder:text-gray-500"
+                            className="pl-11 h-12 bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl focus:border-purple-500 focus:ring-purple-500/20"
                             data-testid="input-password"
                           />
                         </div>
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-red-500" />
                     </FormItem>
                   )}
                 />
@@ -281,27 +319,27 @@ export function AuthForms({ onSuccess }: AuthFormsProps) {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-300">Подтвердите пароль</FormLabel>
+                      <FormLabel className="text-slate-700 font-medium">Подтвердите пароль</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                           <Input
                             {...field}
                             type="password"
                             placeholder="Повторите пароль"
-                            className="pl-10 bg-[#1A1F2E] border-white/10 text-white placeholder:text-gray-500"
+                            className="pl-11 h-12 bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl focus:border-purple-500 focus:ring-purple-500/20"
                             data-testid="input-confirmPassword"
                           />
                         </div>
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-red-500" />
                     </FormItem>
                   )}
                 />
 
                 <Button
                   type="submit"
-                  className="w-full py-6 bg-white text-[#0A0E1A] rounded-xl font-bold text-lg hover:bg-gray-100"
+                  className="w-full h-12 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-xl font-semibold text-base shadow-lg shadow-purple-500/25 transition-all duration-300 hover:shadow-purple-500/40"
                   disabled={registerMutation.isPending}
                   data-testid="button-submit-register"
                 >
@@ -315,12 +353,12 @@ export function AuthForms({ onSuccess }: AuthFormsProps) {
                   )}
                 </Button>
 
-                <p className="text-center text-gray-400 text-sm">
+                <p className="text-center text-slate-500 text-sm pt-2">
                   Уже есть аккаунт?{" "}
                   <button
                     type="button"
                     onClick={() => setMode('login')}
-                    className="text-white hover:underline"
+                    className="text-purple-600 hover:text-purple-700 font-medium"
                     data-testid="link-to-login"
                   >
                     Войти
@@ -328,55 +366,102 @@ export function AuthForms({ onSuccess }: AuthFormsProps) {
                 </p>
               </form>
             </Form>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+
+        {/* Right side - Visual */}
+        <div className="hidden lg:flex flex-1 bg-gradient-to-br from-purple-600 via-purple-700 to-slate-900 relative overflow-hidden">
+          <div className="absolute inset-0">
+            <div className="absolute top-20 right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+            <div className="absolute bottom-40 left-20 w-80 h-80 bg-pink-500/20 rounded-full blur-3xl" />
+          </div>
+          <div className="relative z-10 flex flex-col justify-center p-16">
+            <div className="max-w-md">
+              <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-8 border border-white/10">
+                <Activity className="w-8 h-8 text-white" />
+              </div>
+              <h2 className="text-4xl font-bold text-white mb-4 tracking-tight">
+                Трансформируй своё тело
+              </h2>
+              <p className="text-white/70 text-lg leading-relaxed">
+                Персонализированные программы тренировок, основанные на науке и адаптированные под ваши цели.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
+  // Login form
   return (
-    <div className="min-h-screen bg-[#0A0E1A] text-white flex flex-col items-center justify-center p-6">
-      <Card className="w-full max-w-md bg-[#111827] border-white/10">
-        <CardHeader className="space-y-4">
-          <Button
-            variant="ghost"
-            size="sm"
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex">
+      {/* Left side - Visual */}
+      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute top-40 left-20 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 right-20 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl" />
+        </div>
+        <div className="relative z-10 flex flex-col justify-center p-16">
+          <div className="max-w-md">
+            <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-8 border border-white/10">
+              <Activity className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-4xl font-bold text-white mb-4 tracking-tight">
+              С возвращением
+            </h2>
+            <p className="text-white/70 text-lg leading-relaxed">
+              Продолжайте свой путь к совершенству. Каждая тренировка приближает вас к цели.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Right side - Form */}
+      <div className="flex-1 flex flex-col justify-center px-6 py-12 lg:px-20">
+        <div className="max-w-md mx-auto w-full">
+          {/* Back button */}
+          <button
             onClick={() => setMode('landing')}
-            className="w-fit -ml-2 text-gray-400 hover:text-white"
+            className="group flex items-center gap-2 text-slate-500 hover:text-slate-700 mb-8 transition-colors"
             data-testid="button-back"
           >
-            <ArrowLeft size={16} className="mr-2" />
-            Назад
-          </Button>
-          <div>
-            <CardTitle className="text-2xl text-white">Вход</CardTitle>
-            <CardDescription className="text-gray-400">
-              Войдите в свой аккаунт KladLift
-            </CardDescription>
+            <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+            <span className="text-sm font-medium">Назад</span>
+          </button>
+
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-2">
+              Вход в аккаунт
+            </h1>
+            <p className="text-slate-500">
+              Введите данные для входа в KladLift
+            </p>
           </div>
-        </CardHeader>
-        <CardContent>
+
+          {/* Form */}
           <Form {...loginForm}>
-            <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+            <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-5">
               <FormField
                 control={loginForm.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Email</FormLabel>
+                    <FormLabel className="text-slate-700 font-medium">Email</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                         <Input
                           {...field}
                           type="email"
-                          placeholder="email@example.com"
-                          className="pl-10 bg-[#1A1F2E] border-white/10 text-white placeholder:text-gray-500"
+                          placeholder="you@example.com"
+                          className="pl-11 h-12 bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl focus:border-purple-500 focus:ring-purple-500/20"
                           data-testid="input-email"
                         />
                       </div>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-red-500" />
                   </FormItem>
                 )}
               />
@@ -386,27 +471,27 @@ export function AuthForms({ onSuccess }: AuthFormsProps) {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Пароль</FormLabel>
+                    <FormLabel className="text-slate-700 font-medium">Пароль</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                         <Input
                           {...field}
                           type="password"
                           placeholder="Введите пароль"
-                          className="pl-10 bg-[#1A1F2E] border-white/10 text-white placeholder:text-gray-500"
+                          className="pl-11 h-12 bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl focus:border-purple-500 focus:ring-purple-500/20"
                           data-testid="input-password"
                         />
                       </div>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-red-500" />
                   </FormItem>
                 )}
               />
 
               <Button
                 type="submit"
-                className="w-full py-6 bg-white text-[#0A0E1A] rounded-xl font-bold text-lg hover:bg-gray-100"
+                className="w-full h-12 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-xl font-semibold text-base shadow-lg shadow-purple-500/25 transition-all duration-300 hover:shadow-purple-500/40"
                 disabled={loginMutation.isPending}
                 data-testid="button-submit-login"
               >
@@ -420,12 +505,12 @@ export function AuthForms({ onSuccess }: AuthFormsProps) {
                 )}
               </Button>
 
-              <p className="text-center text-gray-400 text-sm">
+              <p className="text-center text-slate-500 text-sm pt-2">
                 Нет аккаунта?{" "}
                 <button
                   type="button"
                   onClick={() => setMode('register')}
-                  className="text-white hover:underline"
+                  className="text-purple-600 hover:text-purple-700 font-medium"
                   data-testid="link-to-register"
                 >
                   Зарегистрироваться
@@ -433,8 +518,8 @@ export function AuthForms({ onSuccess }: AuthFormsProps) {
               </p>
             </form>
           </Form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

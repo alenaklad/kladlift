@@ -36,7 +36,6 @@ export function Progress({ workouts, userCycle }: ProgressProps) {
   const [timeRange, setTimeRange] = useState('month');
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
 
-  // Fetch exercises from database
   const { data: dbExercises = [] } = useQuery<SelectCustomExercise[]>({
     queryKey: ['/api/exercises']
   });
@@ -45,16 +44,13 @@ export function Progress({ workouts, userCycle }: ProgressProps) {
     queryKey: ['/api/user-exercises']
   });
 
-  // Combine all exercises into a lookup map, with static fallback
   const exerciseLookup = useMemo(() => {
     const map = new Map<string, ExerciseType>();
     
-    // First, populate from static database as fallback
     FULL_EXERCISE_DB.forEach(ex => {
       map.set(ex.id, ex);
     });
     
-    // Override/add from API data if available
     dbExercises.forEach(ex => {
       map.set(ex.id, {
         id: ex.id,
@@ -156,9 +152,9 @@ export function Progress({ workouts, userCycle }: ProgressProps) {
   ];
 
   return (
-    <div className="p-6 pb-24 max-w-4xl mx-auto animate-fadeIn bg-[#0A0E1A] min-h-screen text-white">
+    <div className="p-6 pb-24 max-w-4xl mx-auto animate-fadeIn bg-slate-50 min-h-screen">
       <div className="flex justify-between items-end mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-white">Прогресс</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Прогресс</h1>
       </div>
 
       <div className="flex overflow-x-auto gap-3 pb-4 mb-6 scrollbar-hide">
@@ -171,8 +167,8 @@ export function Progress({ workouts, userCycle }: ProgressProps) {
             }}
             className={`px-5 py-2 rounded-full whitespace-nowrap text-sm font-semibold transition-all ${
               selectedGroup === key 
-                ? 'bg-white text-[#0A0E1A] shadow-md' 
-                : 'bg-[#1A1F2E] text-gray-400 border border-white/5 hover:border-white/20'
+                ? 'bg-slate-900 text-white shadow-md' 
+                : 'bg-white text-slate-500 border border-slate-200 hover:border-slate-300'
             }`}
             data-testid={`button-muscle-${key}`}
           >
@@ -190,12 +186,12 @@ export function Progress({ workouts, userCycle }: ProgressProps) {
                 onClick={() => setSelectedExerciseId(ex.id)} 
                 className={`w-full text-left p-4 rounded-2xl transition-all flex justify-between items-center ${
                   selectedExerciseId === ex.id 
-                    ? 'bg-[#1A1F2E] border-2 border-white/30 shadow-sm' 
-                    : 'bg-[#111827] border border-white/5 hover:border-white/20'
+                    ? 'bg-white border-2 border-purple-500 shadow-md' 
+                    : 'bg-white border border-slate-200 hover:border-slate-300'
                 }`}
                 data-testid={`button-exercise-${ex.id}`}
               >
-                <span className="font-medium text-gray-200 truncate">{ex.name}</span>
+                <span className="font-medium text-slate-700 truncate">{ex.name}</span>
                 <span 
                   className="w-2 h-2 rounded-full" 
                   style={{ backgroundColor: MUSCLE_GROUPS[ex.muscle]?.color }}
@@ -204,19 +200,19 @@ export function Progress({ workouts, userCycle }: ProgressProps) {
             ))}
           </div>
 
-          <div className="lg:col-span-2 bg-[#111827] p-6 rounded-3xl border border-white/5 shadow-sm h-[450px] flex flex-col">
+          <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm h-[450px] flex flex-col">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h3 className="font-bold text-lg text-white">
+                <h3 className="font-bold text-lg text-slate-900">
                   {(selectedExerciseId && exerciseLookup.get(selectedExerciseId)?.name) || 'Выберите упражнение'}
                 </h3>
                 {statsChange && (
                   <div className={`flex items-center gap-1 text-sm mt-1 ${
-                    statsChange.isPositive ? 'text-green-400' : 'text-red-400'
+                    statsChange.isPositive ? 'text-green-600' : 'text-red-600'
                   }`}>
                     {statsChange.isPositive ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
                     <span className="font-bold">{statsChange.text}</span>
-                    <span className="text-gray-500 ml-1">за период</span>
+                    <span className="text-slate-500 ml-1">за период</span>
                   </div>
                 )}
               </div>
@@ -229,8 +225,8 @@ export function Progress({ workouts, userCycle }: ProgressProps) {
                   onClick={() => setTimeRange(range.id)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
                     timeRange === range.id 
-                      ? 'bg-white text-[#0A0E1A]' 
-                      : 'bg-[#1A1F2E] text-gray-400 hover:bg-[#252A3A]'
+                      ? 'bg-slate-900 text-white' 
+                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                   }`}
                   data-testid={`button-range-${range.id}`}
                 >
@@ -245,8 +241,8 @@ export function Progress({ workouts, userCycle }: ProgressProps) {
                   <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
                     <defs>
                       <linearGradient id="colorProgress" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#ffffff" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="#ffffff" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#7C3AED" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="#7C3AED" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     {userCycle && renderPhaseBackgrounds()}
@@ -266,26 +262,26 @@ export function Progress({ workouts, userCycle }: ProgressProps) {
                     <Tooltip 
                       contentStyle={{ 
                         borderRadius: '16px', 
-                        border: 'none', 
-                        boxShadow: '0 8px 30px rgba(0,0,0,0.4)',
+                        border: '1px solid #E2E8F0', 
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
                         padding: '12px 16px',
-                        backgroundColor: '#1A1F2E',
-                        color: '#fff'
+                        backgroundColor: '#fff',
+                        color: '#1E293B'
                       }} 
                       formatter={(value: number) => [`${value} кг`, 'Макс. вес']}
                     />
                     <Area 
                       type="monotone" 
                       dataKey="weight" 
-                      stroke="#ffffff" 
+                      stroke="#7C3AED" 
                       strokeWidth={3} 
                       fill="url(#colorProgress)" 
-                      activeDot={{ r: 8, strokeWidth: 0, fill: '#fff' }} 
+                      activeDot={{ r: 8, strokeWidth: 0, fill: '#7C3AED' }} 
                     />
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex items-center justify-center h-full text-gray-500">
+                <div className="flex items-center justify-center h-full text-slate-500">
                   <p>Нет данных за выбранный период</p>
                 </div>
               )}
@@ -293,13 +289,13 @@ export function Progress({ workouts, userCycle }: ProgressProps) {
           </div>
         </div>
       ) : (
-        <div className="bg-[#111827] p-12 rounded-3xl border border-white/5 text-center">
-          <div className="text-gray-500 mb-4">
-            <div className="w-16 h-16 mx-auto mb-4 bg-[#1A1F2E] rounded-full flex items-center justify-center">
-              <ArrowUp size={32} className="text-gray-600" />
+        <div className="bg-white p-12 rounded-3xl border border-slate-200 text-center shadow-sm">
+          <div className="text-slate-500 mb-4">
+            <div className="w-16 h-16 mx-auto mb-4 bg-slate-100 rounded-full flex items-center justify-center">
+              <ArrowUp size={32} className="text-slate-400" />
             </div>
-            <h3 className="text-xl font-bold text-gray-300 mb-2">Нет данных</h3>
-            <p className="text-gray-500">
+            <h3 className="text-xl font-bold text-slate-700 mb-2">Нет данных</h3>
+            <p className="text-slate-500">
               Запишите тренировки для {MUSCLE_GROUPS[selectedGroup].label.toLowerCase()}, 
               чтобы увидеть прогресс
             </p>

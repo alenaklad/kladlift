@@ -31,10 +31,10 @@ const COACH_ICONS = {
 };
 
 const COACH_COLORS = {
-  training: { bg: 'bg-blue-500/20', text: 'text-blue-400' },
-  nutrition: { bg: 'bg-green-500/20', text: 'text-green-400' },
-  motivation: { bg: 'bg-orange-500/20', text: 'text-orange-400' },
-  recovery: { bg: 'bg-purple-500/20', text: 'text-purple-400' }
+  training: { bg: 'bg-blue-50', text: 'text-blue-600', iconBg: 'bg-blue-100' },
+  nutrition: { bg: 'bg-green-50', text: 'text-green-600', iconBg: 'bg-green-100' },
+  motivation: { bg: 'bg-orange-50', text: 'text-orange-600', iconBg: 'bg-orange-100' },
+  recovery: { bg: 'bg-purple-50', text: 'text-purple-600', iconBg: 'bg-purple-100' }
 };
 
 export function CoachView({ user, workouts, onBack }: CoachViewProps) {
@@ -142,19 +142,19 @@ export function CoachView({ user, workouts, onBack }: CoachViewProps) {
 
   if (!activeCoachId) {
     return (
-      <div className="flex flex-col h-screen bg-[#0A0E1A] animate-slideUp text-white">
-        <div className="p-6 border-b border-white/5 bg-[#111827]">
+      <div className="flex flex-col h-screen bg-slate-50 animate-slideUp">
+        <div className="p-6 border-b border-slate-200 bg-white">
           <div className="flex items-center gap-3">
             <button 
               onClick={onBack} 
-              className="p-2 -ml-2 rounded-full hover:bg-white/10 text-gray-300"
+              className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors"
               data-testid="button-back"
             >
               <ChevronLeft size={24} />
             </button>
-            <h1 className="text-2xl font-bold text-white">Команда KladLift</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Команда KladLift</h1>
           </div>
-          <p className="text-gray-400 mt-1">Твой персональный штаб экспертов.</p>
+          <p className="text-slate-500 mt-1">Твой персональный штаб экспертов.</p>
         </div>
         <div className="flex-1 p-6 overflow-y-auto grid grid-cols-1 gap-4">
           {(Object.entries(COACH_PERSONAS) as [CoachPersonaId, typeof COACH_PERSONAS[CoachPersonaId]][]).map(([id, coach]) => {
@@ -164,15 +164,15 @@ export function CoachView({ user, workouts, onBack }: CoachViewProps) {
               <button 
                 key={id} 
                 onClick={() => setActiveCoachId(id)} 
-                className="bg-[#111827] p-6 rounded-3xl shadow-sm border border-white/5 text-left flex items-center gap-5 hover:border-white/20 transition-all active:scale-[0.98]"
+                className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 text-left flex items-center gap-5 hover:border-purple-300 hover:shadow-md transition-all active:scale-[0.98]"
                 data-testid={`button-coach-${id}`}
               >
-                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${colors.bg} ${colors.text}`}>
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${colors.iconBg} ${colors.text}`}>
                   <Icon size={32} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white">{coach.name}</h3>
-                  <p className="text-gray-400 text-sm mt-1 leading-snug">{coach.desc}</p>
+                  <h3 className="text-xl font-bold text-slate-900">{coach.name}</h3>
+                  <p className="text-slate-500 text-sm mt-1 leading-snug">{coach.desc}</p>
                 </div>
               </button>
             );
@@ -191,21 +191,21 @@ export function CoachView({ user, workouts, onBack }: CoachViewProps) {
   }];
 
   return (
-    <div className="flex flex-col h-screen bg-[#0A0E1A] animate-slideInRight text-white">
-      <div className="flex items-center p-4 bg-[#111827]/90 backdrop-blur-md border-b border-white/5 sticky top-0 z-20">
+    <div className="flex flex-col h-screen bg-slate-50 animate-slideInRight">
+      <div className="flex items-center p-4 bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-20">
         <button 
           onClick={() => setActiveCoachId(null)} 
-          className="p-2 -ml-2 mr-2 rounded-full hover:bg-white/10 text-gray-400"
+          className="p-2 -ml-2 mr-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors"
           data-testid="button-back-to-coaches"
         >
           <ChevronLeft size={24} />
         </button>
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${colors.bg} ${colors.text}`}>
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${colors.iconBg} ${colors.text}`}>
           <Icon size={16} />
         </div>
         <div>
-          <h2 className="font-bold text-white">{activeCoach.name}</h2>
-          <p className="text-xs text-gray-500">Онлайн</p>
+          <h2 className="font-bold text-slate-900">{activeCoach.name}</h2>
+          <p className="text-xs text-green-500">Онлайн</p>
         </div>
       </div>
 
@@ -218,8 +218,8 @@ export function CoachView({ user, workouts, onBack }: CoachViewProps) {
             <div 
               className={`max-w-[80%] p-4 rounded-3xl ${
                 msg.role === 'user' 
-                  ? 'bg-white text-[#0A0E1A] rounded-br-lg' 
-                  : 'bg-[#1A1F2E] text-gray-200 rounded-bl-lg shadow-sm border border-white/5'
+                  ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-br-lg shadow-md' 
+                  : 'bg-white text-slate-700 rounded-bl-lg shadow-sm border border-slate-200'
               }`}
               data-testid={`message-${msg.role}-${idx}`}
             >
@@ -236,11 +236,11 @@ export function CoachView({ user, workouts, onBack }: CoachViewProps) {
         ))}
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-[#1A1F2E] p-4 rounded-3xl rounded-bl-lg shadow-sm border border-white/5">
+            <div className="bg-white p-4 rounded-3xl rounded-bl-lg shadow-sm border border-slate-200">
               <div className="flex gap-1">
-                <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
               </div>
             </div>
           </div>
@@ -248,7 +248,7 @@ export function CoachView({ user, workouts, onBack }: CoachViewProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-4 bg-[#111827] border-t border-white/5">
+      <div className="p-4 bg-white border-t border-slate-200">
         {selectedImage && (
           <div className="mb-3 relative inline-block">
             <img 
@@ -275,7 +275,7 @@ export function CoachView({ user, workouts, onBack }: CoachViewProps) {
           />
           <button 
             onClick={() => fileInputRef.current?.click()}
-            className="p-3 bg-[#1A1F2E] rounded-full text-gray-400 hover:bg-[#252A3A] transition-colors"
+            className="p-3 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 transition-colors"
             data-testid="button-upload-image"
           >
             <Camera size={20} />
@@ -286,13 +286,13 @@ export function CoachView({ user, workouts, onBack }: CoachViewProps) {
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Напишите сообщение..."
-            className="flex-1 bg-[#1A1F2E] rounded-full px-5 py-3 outline-none text-white placeholder-gray-500 focus:ring-2 focus:ring-white/20 transition-all"
+            className="flex-1 bg-slate-100 rounded-full px-5 py-3 outline-none text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-purple-500/20 focus:bg-white focus:border focus:border-purple-500 transition-all"
             data-testid="input-chat-message"
           />
           <button 
             onClick={handleSend}
             disabled={!inputValue.trim() && !selectedImage}
-            className="p-3 bg-white text-[#0A0E1A] rounded-full disabled:opacity-40 hover:bg-gray-100 transition-colors"
+            className="p-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-full disabled:opacity-40 hover:from-purple-700 hover:to-purple-800 transition-colors shadow-md"
             data-testid="button-send-message"
           >
             <Send size={20} />

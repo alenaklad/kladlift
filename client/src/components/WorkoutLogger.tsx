@@ -35,19 +35,15 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: Worko
   const [activeCategory, setActiveCategory] = useState<MuscleGroup>('legs');
   const [search, setSearch] = useState('');
 
-  // Fetch exercises from database (public exercises)
   const { data: dbExercises = [], isLoading: dbLoading } = useQuery<SelectCustomExercise[]>({
     queryKey: ['/api/exercises']
   });
 
-  // Fetch user's personal exercises
   const { data: userExercises = [], isLoading: userLoading } = useQuery<SelectUserExercise[]>({
     queryKey: ['/api/user-exercises']
   });
 
-  // Combine database exercises and user exercises, fallback to static DB if API fails
   const allExercises = useMemo(() => {
-    // If we have database exercises, use them (combined with user exercises)
     if (dbExercises.length > 0) {
       const combined: ExerciseType[] = [
         ...dbExercises.map(ex => ({
@@ -67,7 +63,6 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: Worko
       ];
       return combined;
     }
-    // Fallback to static database if API hasn't loaded yet or failed
     return FULL_EXERCISE_DB;
   }, [dbExercises, userExercises]);
 
@@ -122,7 +117,7 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: Worko
 
   if (selectedExercise) {
     return (
-      <div className="fixed inset-0 bg-[#0A0E1A] z-50 flex flex-col animate-slideInRight">
+      <div className="fixed inset-0 bg-slate-50 z-50 flex flex-col animate-slideInRight">
         <div 
           className="relative h-64 flex items-end p-6"
           style={{ 
@@ -137,7 +132,7 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: Worko
               setSelectedExercise(null);
               setCurrentSets([{ weight: 0, reps: 0 }]);
             }}
-            className="absolute top-6 left-6 p-3 bg-black/30 backdrop-blur-md rounded-full text-white z-10"
+            className="absolute top-6 left-6 p-3 bg-white/20 backdrop-blur-md rounded-full text-white z-10 hover:bg-white/30 transition-colors"
             data-testid="button-back-from-exercise"
           >
             <ChevronLeft size={24} />
@@ -158,8 +153,8 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: Worko
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 pb-32 bg-[#0A0E1A]">
-          <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+        <div className="flex-1 overflow-y-auto p-6 pb-32 bg-slate-50">
+          <p className="text-slate-600 text-sm mb-6 leading-relaxed">
             {selectedExercise.technique}
           </p>
 
@@ -168,23 +163,23 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: Worko
               href={`https://www.youtube.com/results?search_query=${encodeURIComponent(selectedExercise.name + ' техника')}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 py-4 bg-red-500/20 text-red-400 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-red-500/30 transition-colors"
+              className="flex-1 py-4 bg-red-50 text-red-600 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-red-100 transition-colors border border-red-100"
               data-testid="link-youtube"
             >
               <Youtube size={24} /> Техника
             </a>
-            <button className="p-4 rounded-2xl bg-[#1A1F2E] text-gray-400 hover:bg-[#252A3A]">
+            <button className="p-4 rounded-2xl bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors">
               <Info size={24} />
             </button>
           </div>
 
           <div className="space-y-4 mb-8">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em] mb-2">
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] mb-2">
               Подходы
             </h3>
             {currentSets.map((set, idx) => (
               <div key={idx} className="flex items-center gap-4 animate-fadeIn">
-                <div className="w-12 h-12 rounded-full bg-white text-[#0A0E1A] flex items-center justify-center font-bold text-lg">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-purple-700 text-white flex items-center justify-center font-bold text-lg shadow-md">
                   {idx + 1}
                 </div>
                 <div className="flex-1 flex gap-4">
@@ -193,12 +188,12 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: Worko
                       type="number" 
                       value={set.weight || ''} 
                       onChange={(e) => updateCurrentSet(idx, 'weight', e.target.value)} 
-                      className="w-full bg-[#1A1F2E] p-4 rounded-2xl text-2xl font-bold text-center text-white outline-none focus:ring-2 focus:ring-white/30 transition-all" 
+                      className="w-full bg-white border border-slate-200 p-4 rounded-2xl text-2xl font-bold text-center text-slate-900 outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all shadow-sm" 
                       placeholder="0" 
                       autoFocus={idx === currentSets.length - 1}
                       data-testid={`input-weight-${idx}`}
                     />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500 pointer-events-none">
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">
                       KG
                     </span>
                   </div>
@@ -207,11 +202,11 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: Worko
                       type="number" 
                       value={set.reps || ''} 
                       onChange={(e) => updateCurrentSet(idx, 'reps', e.target.value)} 
-                      className="w-full bg-[#1A1F2E] p-4 rounded-2xl text-2xl font-bold text-center text-white outline-none focus:ring-2 focus:ring-white/30 transition-all" 
+                      className="w-full bg-white border border-slate-200 p-4 rounded-2xl text-2xl font-bold text-center text-slate-900 outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all shadow-sm" 
                       placeholder="0" 
                       data-testid={`input-reps-${idx}`}
                     />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500 pointer-events-none">
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">
                       REPS
                     </span>
                   </div>
@@ -219,7 +214,7 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: Worko
                 {currentSets.length > 1 && (
                   <button 
                     onClick={() => removeSetLine(idx)} 
-                    className="p-4 rounded-2xl bg-[#1A1F2E] text-gray-400 hover:text-red-500 hover:bg-red-500/20 transition-colors"
+                    className="p-4 rounded-2xl bg-slate-100 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                     data-testid={`button-remove-set-${idx}`}
                   >
                     <Trash2 size={20} />
@@ -229,17 +224,17 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: Worko
             ))}
             <button 
               onClick={addNewSetLine} 
-              className="w-full py-4 border-2 border-dashed border-white/10 rounded-2xl text-gray-400 font-bold hover:border-white/30 hover:text-white transition-all flex items-center justify-center gap-2"
+              className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-bold hover:border-purple-500 hover:text-purple-600 transition-all flex items-center justify-center gap-2"
               data-testid="button-add-set"
             >
               <Plus size={20} /> Добавить сет
             </button>
           </div>
 
-          <div className="mt-auto sticky bottom-0 bg-[#0A0E1A] pt-4 pb-8 border-t border-white/10">
+          <div className="mt-auto sticky bottom-0 bg-slate-50 pt-4 pb-8 border-t border-slate-200">
             <button 
               onClick={addExerciseToWorkout} 
-              className="w-full py-5 bg-white text-[#0A0E1A] rounded-2xl font-bold text-xl shadow-2xl hover:bg-gray-100 transition-colors"
+              className="w-full py-5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-2xl font-bold text-xl shadow-lg shadow-purple-500/25 hover:from-purple-700 hover:to-purple-800 transition-colors"
               data-testid="button-save-exercise"
             >
               Сохранить результат
@@ -251,13 +246,13 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: Worko
   }
 
   return (
-    <div className="p-6 pb-32 max-w-5xl mx-auto animate-fadeIn bg-[#0A0E1A] min-h-screen text-white">
-      <div className="sticky top-0 z-30 bg-[#0A0E1A]/90 backdrop-blur-lg pt-6 pb-4 -mx-6 px-6 mb-6 border-b border-white/5">
+    <div className="p-6 pb-32 max-w-5xl mx-auto animate-fadeIn bg-slate-50 min-h-screen">
+      <div className="sticky top-0 z-30 bg-slate-50/90 backdrop-blur-lg pt-6 pb-4 -mx-6 px-6 mb-6 border-b border-slate-200">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-4xl font-extrabold tracking-tight text-white">Запись</h1>
+          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">Запись</h1>
           <button 
             onClick={onCancel} 
-            className="p-3 bg-[#1A1F2E] rounded-full shadow-sm text-gray-400 hover:text-white transition-colors"
+            className="p-3 bg-white border border-slate-200 rounded-full shadow-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
             data-testid="button-cancel-workout"
           >
             <X size={24} />
@@ -265,9 +260,9 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: Worko
         </div>
 
         <div className="relative mb-6 group">
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
           <input 
-            className="w-full bg-[#1A1F2E] pl-14 pr-6 py-4 rounded-3xl text-lg font-medium shadow-sm border border-white/5 outline-none placeholder-gray-500 text-white group-focus-within:border-white/20 transition-all" 
+            className="w-full bg-white pl-14 pr-6 py-4 rounded-3xl text-lg font-medium shadow-sm border border-slate-200 outline-none placeholder-slate-400 text-slate-900 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all" 
             placeholder="Поиск упражнения..." 
             value={search} 
             onChange={(e) => setSearch(e.target.value)} 
@@ -283,8 +278,8 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: Worko
                 onClick={() => setActiveCategory(key)}
                 className={`px-6 py-3 rounded-full text-sm font-bold whitespace-nowrap transition-all ${
                   activeCategory === key 
-                    ? 'bg-white text-[#0A0E1A] shadow-lg scale-105' 
-                    : 'bg-[#1A1F2E] text-gray-400 hover:bg-[#252A3A]'
+                    ? 'bg-slate-900 text-white shadow-lg scale-105' 
+                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
                 }`}
                 data-testid={`button-category-${key}`}
               >
@@ -296,10 +291,10 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: Worko
       </div>
 
       {exercises.length > 0 && (
-        <div className="mb-8 bg-[#111827] p-6 rounded-[2rem] shadow-xl border border-white/5">
+        <div className="mb-8 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200">
           <div className="flex justify-between items-center mb-4">
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Сводка</span>
-            <span className="bg-white text-[#0A0E1A] text-xs font-bold px-3 py-1 rounded-full">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Сводка</span>
+            <span className="bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full">
               {exercises.length}
             </span>
           </div>
@@ -307,15 +302,15 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: Worko
             {exercises.map((ex, i) => (
               <div 
                 key={i} 
-                className="flex justify-between items-center p-3 bg-[#1A1F2E] rounded-2xl"
+                className="flex justify-between items-center p-3 bg-slate-50 rounded-2xl"
                 data-testid={`workout-summary-exercise-${i}`}
               >
-                <span className="font-bold text-white truncate mr-4">{ex.name}</span>
+                <span className="font-bold text-slate-900 truncate mr-4">{ex.name}</span>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold text-gray-400">{ex.sets.length} sets</span>
+                  <span className="text-xs font-bold text-slate-500">{ex.sets.length} sets</span>
                   <button 
                     onClick={() => setExercises(exercises.filter((_, idx) => idx !== i))} 
-                    className="text-gray-500 hover:text-red-500"
+                    className="text-slate-400 hover:text-red-500 transition-colors"
                     data-testid={`button-remove-exercise-${i}`}
                   >
                     <Trash2 size={16} />
@@ -332,17 +327,17 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: Worko
           <div 
             key={ex.id} 
             onClick={() => setSelectedExercise(ex)} 
-            className="bg-[#111827] rounded-[2rem] p-3 shadow-sm border border-white/5 hover:border-white/20 transition-all duration-500 group cursor-pointer transform hover:-translate-y-1"
+            className="bg-white rounded-[2rem] p-3 shadow-sm border border-slate-200 hover:border-purple-300 hover:shadow-md transition-all duration-500 group cursor-pointer transform hover:-translate-y-1"
             data-testid={`exercise-card-${ex.id}`}
           >
-            <div className="relative h-56 w-full rounded-[1.5rem] overflow-hidden bg-[#1A1F2E] mb-4">
+            <div className="relative h-56 w-full rounded-[1.5rem] overflow-hidden bg-slate-100 mb-4">
               <img 
                 src={getVisualForExercise(ex)} 
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                 alt={ex.name} 
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80"></div>
-              <div className="absolute bottom-4 right-4 bg-white/20 backdrop-blur-md p-2 rounded-full text-white group-hover:scale-110 transition-transform">
+              <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-md p-2 rounded-full text-purple-600 group-hover:scale-110 transition-transform shadow-lg">
                 <Plus size={24} />
               </div>
               <div className="absolute top-4 left-4">
@@ -355,7 +350,7 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: Worko
               </div>
             </div>
             <div className="px-2 pb-2">
-              <h3 className="font-bold text-xl text-white leading-tight group-hover:text-blue-400 transition-colors">
+              <h3 className="font-bold text-xl text-slate-900 leading-tight group-hover:text-purple-600 transition-colors">
                 {ex.name}
               </h3>
             </div>
@@ -367,7 +362,7 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: Worko
         <div className="fixed bottom-8 left-0 right-0 z-40 flex justify-center px-6">
           <button 
             onClick={handleSave} 
-            className="w-full max-w-md shadow-2xl shadow-black/40 py-6 text-xl flex items-center justify-between px-8 rounded-3xl bg-black text-white font-bold scale-100 active:scale-95 transition-transform border border-white/10"
+            className="w-full max-w-md shadow-2xl shadow-purple-500/30 py-6 text-xl flex items-center justify-between px-8 rounded-3xl bg-gradient-to-r from-purple-600 to-purple-700 text-white font-bold scale-100 active:scale-95 transition-transform"
             data-testid="button-finish-workout"
           >
             <span className="font-bold">Завершить тренировку</span>

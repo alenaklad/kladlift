@@ -24,7 +24,9 @@ import {
   Check, 
   X as XIcon,
   Shield,
-  User as UserIcon
+  User as UserIcon,
+  BarChart3,
+  AlertCircle
 } from 'lucide-react';
 import type { User, SelectCustomExercise, SelectUserExercise } from '@shared/schema';
 
@@ -39,13 +41,13 @@ interface AdminStats {
 }
 
 const MUSCLE_GROUPS = [
-  { id: 'legs', name: 'Ноги' },
-  { id: 'back', name: 'Спина' },
-  { id: 'chest', name: 'Грудь' },
-  { id: 'shoulders', name: 'Плечи' },
-  { id: 'arms', name: 'Руки' },
-  { id: 'abs', name: 'Пресс' },
-  { id: 'cardio', name: 'Кардио' }
+  { id: 'legs', name: 'Ноги', color: 'bg-green-100 text-green-700 border-green-200' },
+  { id: 'back', name: 'Спина', color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  { id: 'chest', name: 'Грудь', color: 'bg-red-100 text-red-700 border-red-200' },
+  { id: 'shoulders', name: 'Плечи', color: 'bg-orange-100 text-orange-700 border-orange-200' },
+  { id: 'arms', name: 'Руки', color: 'bg-purple-100 text-purple-700 border-purple-200' },
+  { id: 'abs', name: 'Пресс', color: 'bg-gray-100 text-gray-700 border-gray-200' },
+  { id: 'cardio', name: 'Кардио', color: 'bg-pink-100 text-pink-700 border-pink-200' }
 ];
 
 const EXERCISE_TYPES = [
@@ -180,104 +182,154 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
     }
   };
 
+  const getMuscleGroupStyle = (muscleId: string) => {
+    return MUSCLE_GROUPS.find(g => g.id === muscleId)?.color || 'bg-gray-100 text-gray-700 border-gray-200';
+  };
+
   return (
-    <div className="min-h-screen bg-[#0A0E1A] text-white">
-      <div className="sticky top-0 z-10 bg-[#0A0E1A] border-b border-white/5 px-4 py-4">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={onBack} data-testid="button-admin-back">
-            <ArrowLeft size={24} />
+    <div className="min-h-screen bg-slate-50">
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-white border-b border-slate-200 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center gap-4">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onBack} 
+            className="text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+            data-testid="button-admin-back"
+          >
+            <ArrowLeft size={20} />
           </Button>
           <div>
-            <h1 className="text-xl font-bold">Админ-панель</h1>
-            <p className="text-sm text-gray-500">Управление приложением</p>
+            <h1 className="text-xl font-bold text-slate-900">Админ-панель</h1>
+            <p className="text-sm text-slate-500">Управление приложением KladLift</p>
           </div>
         </div>
       </div>
 
-      <div className="p-4">
+      {/* Content */}
+      <div className="max-w-7xl mx-auto p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full bg-[#111827] mb-4">
-            <TabsTrigger value="stats" className="flex-1" data-testid="tab-stats">
+          <TabsList className="bg-white border border-slate-200 p-1 mb-6">
+            <TabsTrigger 
+              value="stats" 
+              className="data-[state=active]:bg-slate-900 data-[state=active]:text-white px-4"
+              data-testid="tab-stats"
+            >
+              <BarChart3 size={16} className="mr-2" />
               Статистика
             </TabsTrigger>
-            <TabsTrigger value="users" className="flex-1" data-testid="tab-users">
+            <TabsTrigger 
+              value="users" 
+              className="data-[state=active]:bg-slate-900 data-[state=active]:text-white px-4"
+              data-testid="tab-users"
+            >
+              <Users size={16} className="mr-2" />
               Пользователи
             </TabsTrigger>
-            <TabsTrigger value="exercises" className="flex-1" data-testid="tab-exercises">
+            <TabsTrigger 
+              value="exercises" 
+              className="data-[state=active]:bg-slate-900 data-[state=active]:text-white px-4"
+              data-testid="tab-exercises"
+            >
+              <Dumbbell size={16} className="mr-2" />
               Упражнения
             </TabsTrigger>
-            <TabsTrigger value="moderation" className="flex-1" data-testid="tab-moderation">
+            <TabsTrigger 
+              value="moderation" 
+              className="data-[state=active]:bg-slate-900 data-[state=active]:text-white px-4 relative"
+              data-testid="tab-moderation"
+            >
+              <AlertCircle size={16} className="mr-2" />
               Модерация
               {submissions.length > 0 && (
-                <Badge variant="destructive" className="ml-2">{submissions.length}</Badge>
+                <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
+                  {submissions.length}
+                </span>
               )}
             </TabsTrigger>
           </TabsList>
 
+          {/* Stats Tab */}
           <TabsContent value="stats">
             {statsLoading ? (
-              <div className="flex justify-center py-8">
-                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="flex justify-center py-12">
+                <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-900 rounded-full animate-spin" />
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="bg-[#111827] border-white/10">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card className="bg-white border-slate-200 shadow-sm">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium text-gray-400">
+                    <CardTitle className="text-sm font-medium text-slate-600">
                       Всего пользователей
                     </CardTitle>
-                    <Users className="h-4 w-4 text-gray-500" />
+                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                      <Users className="h-5 w-5 text-blue-600" />
+                    </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold" data-testid="stat-total-users">
+                    <div className="text-3xl font-bold text-slate-900" data-testid="stat-total-users">
                       {stats?.totalUsers || 0}
                     </div>
+                    <p className="text-sm text-slate-500 mt-1">зарегистрировано</p>
                   </CardContent>
                 </Card>
 
-                <Card className="bg-[#111827] border-white/10">
+                <Card className="bg-white border-slate-200 shadow-sm">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium text-gray-400">
+                    <CardTitle className="text-sm font-medium text-slate-600">
                       Всего тренировок
                     </CardTitle>
-                    <Dumbbell className="h-4 w-4 text-gray-500" />
+                    <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+                      <Dumbbell className="h-5 w-5 text-green-600" />
+                    </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold" data-testid="stat-total-workouts">
+                    <div className="text-3xl font-bold text-slate-900" data-testid="stat-total-workouts">
                       {stats?.totalWorkouts || 0}
                     </div>
+                    <p className="text-sm text-slate-500 mt-1">записано</p>
                   </CardContent>
                 </Card>
 
-                <Card className="bg-[#111827] border-white/10">
+                <Card className="bg-white border-slate-200 shadow-sm">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium text-gray-400">
+                    <CardTitle className="text-sm font-medium text-slate-600">
                       Активных сегодня
                     </CardTitle>
-                    <Clock className="h-4 w-4 text-gray-500" />
+                    <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
+                      <Clock className="h-5 w-5 text-purple-600" />
+                    </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold" data-testid="stat-active-today">
+                    <div className="text-3xl font-bold text-slate-900" data-testid="stat-active-today">
                       {stats?.activeToday || 0}
                     </div>
+                    <p className="text-sm text-slate-500 mt-1">пользователей</p>
                   </CardContent>
                 </Card>
               </div>
             )}
           </TabsContent>
 
+          {/* Users Tab */}
           <TabsContent value="users">
             {usersLoading ? (
-              <div className="flex justify-center py-8">
-                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="flex justify-center py-12">
+                <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-900 rounded-full animate-spin" />
               </div>
             ) : (
-              <ScrollArea className="h-[calc(100vh-200px)]">
-                <div className="space-y-2">
-                  {users.map((user) => (
-                    <Card key={user.id} className="bg-[#111827] border-white/10">
-                      <CardContent className="flex items-center justify-between p-4">
-                        <div className="flex items-center gap-3">
+              <Card className="bg-white border-slate-200 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg font-semibold text-slate-900">
+                    Пользователи ({users.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="divide-y divide-slate-100">
+                    {users.map((user) => (
+                      <div key={user.id} className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors">
+                        <div className="flex items-center gap-4">
                           {user.profileImageUrl ? (
                             <img
                               src={user.profileImageUrl}
@@ -285,51 +337,57 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
                               className="w-10 h-10 rounded-full object-cover"
                             />
                           ) : (
-                            <div className="w-10 h-10 bg-[#1A1F2E] rounded-full flex items-center justify-center">
-                              <UserIcon size={20} className="text-gray-500" />
+                            <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
+                              <UserIcon size={20} className="text-slate-400" />
                             </div>
                           )}
                           <div>
-                            <p className="font-medium" data-testid={`user-name-${user.id}`}>
-                              {user.firstName || user.email || 'Пользователь'}
+                            <p className="font-medium text-slate-900" data-testid={`user-name-${user.id}`}>
+                              {user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Пользователь'}
                             </p>
-                            <p className="text-sm text-gray-500">{user.email}</p>
+                            <p className="text-sm text-slate-500">{user.email}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Select
-                            value={user.role || 'user'}
-                            onValueChange={(role) => setRoleMutation.mutate({ userId: user.id, role })}
+                        <Select
+                          value={user.role || 'user'}
+                          onValueChange={(role) => setRoleMutation.mutate({ userId: user.id, role })}
+                        >
+                          <SelectTrigger 
+                            className="w-40 bg-white border-slate-200 text-slate-700" 
+                            data-testid={`select-role-${user.id}`}
                           >
-                            <SelectTrigger className="w-32 bg-[#1A1F2E] border-white/10" data-testid={`select-role-${user.id}`}>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="user">
-                                <div className="flex items-center gap-2">
-                                  <UserIcon size={14} />
-                                  Пользователь
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="admin">
-                                <div className="flex items-center gap-2">
-                                  <Shield size={14} />
-                                  Админ
-                                </div>
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </ScrollArea>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white border-slate-200">
+                            <SelectItem value="user" className="text-slate-700">
+                              <div className="flex items-center gap-2">
+                                <UserIcon size={14} className="text-slate-500" />
+                                Пользователь
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="admin" className="text-slate-700">
+                              <div className="flex items-center gap-2">
+                                <Shield size={14} className="text-purple-600" />
+                                Админ
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </TabsContent>
 
+          {/* Exercises Tab */}
           <TabsContent value="exercises">
-            <div className="mb-4">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">База упражнений</h2>
+                <p className="text-sm text-slate-500">{exercises.length} упражнений в базе</p>
+              </div>
               <Dialog open={isExerciseDialogOpen} onOpenChange={setIsExerciseDialogOpen}>
                 <DialogTrigger asChild>
                   <Button
@@ -337,42 +395,46 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
                       setEditingExercise(null);
                       resetExerciseForm();
                     }}
+                    className="bg-slate-900 hover:bg-slate-800 text-white"
                     data-testid="button-add-exercise"
                   >
                     <Plus size={16} className="mr-2" />
                     Добавить упражнение
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-[#111827] border-white/10 max-w-lg max-h-[90vh] overflow-y-auto">
+                <DialogContent className="bg-white border-slate-200 max-w-lg max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>
+                    <DialogTitle className="text-slate-900">
                       {editingExercise ? 'Редактировать упражнение' : 'Новое упражнение'}
                     </DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4 mt-4">
                     <div>
-                      <Label>Название *</Label>
+                      <Label className="text-slate-700">Название *</Label>
                       <Input
                         value={exerciseForm.name}
                         onChange={(e) => setExerciseForm({ ...exerciseForm, name: e.target.value })}
                         placeholder="Название упражнения"
-                        className="bg-[#1A1F2E] border-white/10"
+                        className="mt-1.5 bg-white border-slate-200 text-slate-900 placeholder:text-slate-400"
                         data-testid="input-exercise-name"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label>Группа мышц *</Label>
+                        <Label className="text-slate-700">Группа мышц *</Label>
                         <Select
                           value={exerciseForm.muscle}
                           onValueChange={(value) => setExerciseForm({ ...exerciseForm, muscle: value })}
                         >
-                          <SelectTrigger className="bg-[#1A1F2E] border-white/10" data-testid="select-exercise-muscle">
+                          <SelectTrigger 
+                            className="mt-1.5 bg-white border-slate-200 text-slate-700" 
+                            data-testid="select-exercise-muscle"
+                          >
                             <SelectValue placeholder="Выберите" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-white border-slate-200">
                             {MUSCLE_GROUPS.map((group) => (
-                              <SelectItem key={group.id} value={group.id}>
+                              <SelectItem key={group.id} value={group.id} className="text-slate-700">
                                 {group.name}
                               </SelectItem>
                             ))}
@@ -380,17 +442,20 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
                         </Select>
                       </div>
                       <div>
-                        <Label>Тип *</Label>
+                        <Label className="text-slate-700">Тип *</Label>
                         <Select
                           value={exerciseForm.type}
                           onValueChange={(value) => setExerciseForm({ ...exerciseForm, type: value })}
                         >
-                          <SelectTrigger className="bg-[#1A1F2E] border-white/10" data-testid="select-exercise-type">
+                          <SelectTrigger 
+                            className="mt-1.5 bg-white border-slate-200 text-slate-700" 
+                            data-testid="select-exercise-type"
+                          >
                             <SelectValue placeholder="Выберите" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-white border-slate-200">
                             {EXERCISE_TYPES.map((type) => (
-                              <SelectItem key={type.id} value={type.id}>
+                              <SelectItem key={type.id} value={type.id} className="text-slate-700">
                                 {type.name}
                               </SelectItem>
                             ))}
@@ -399,37 +464,42 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
                       </div>
                     </div>
                     <div>
-                      <Label>Техника выполнения *</Label>
+                      <Label className="text-slate-700">Техника выполнения *</Label>
                       <Textarea
                         value={exerciseForm.technique}
                         onChange={(e) => setExerciseForm({ ...exerciseForm, technique: e.target.value })}
                         placeholder="Описание техники выполнения"
-                        className="bg-[#1A1F2E] border-white/10 min-h-[100px]"
+                        className="mt-1.5 bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 min-h-[100px]"
                         data-testid="input-exercise-technique"
                       />
                     </div>
                     <div>
-                      <Label>Фото</Label>
-                      <ObjectUploader
-                        accept="image"
-                        currentUrl={exerciseForm.imageUrl}
-                        onUploadComplete={(url) => setExerciseForm({ ...exerciseForm, imageUrl: url })}
-                        label="Загрузить фото"
-                      />
+                      <Label className="text-slate-700">Фото</Label>
+                      <div className="mt-1.5">
+                        <ObjectUploader
+                          accept="image"
+                          currentUrl={exerciseForm.imageUrl}
+                          onUploadComplete={(url) => setExerciseForm({ ...exerciseForm, imageUrl: url })}
+                          label="Загрузить фото"
+                        />
+                      </div>
                     </div>
                     <div>
-                      <Label>Видео</Label>
-                      <ObjectUploader
-                        accept="video"
-                        currentUrl={exerciseForm.videoUrl}
-                        onUploadComplete={(url) => setExerciseForm({ ...exerciseForm, videoUrl: url })}
-                        label="Загрузить видео"
-                      />
+                      <Label className="text-slate-700">Видео</Label>
+                      <div className="mt-1.5">
+                        <ObjectUploader
+                          accept="video"
+                          currentUrl={exerciseForm.videoUrl}
+                          onUploadComplete={(url) => setExerciseForm({ ...exerciseForm, videoUrl: url })}
+                          label="Загрузить видео"
+                        />
+                      </div>
                     </div>
-                    <div className="flex justify-end gap-2 pt-4">
+                    <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                       <Button
                         variant="outline"
                         onClick={() => setIsExerciseDialogOpen(false)}
+                        className="border-slate-200 text-slate-700 hover:bg-slate-50"
                         data-testid="button-cancel-exercise"
                       >
                         Отмена
@@ -437,6 +507,7 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
                       <Button
                         onClick={handleSaveExercise}
                         disabled={createExerciseMutation.isPending || updateExerciseMutation.isPending}
+                        className="bg-slate-900 hover:bg-slate-800 text-white"
                         data-testid="button-save-exercise"
                       >
                         {createExerciseMutation.isPending || updateExerciseMutation.isPending
@@ -450,51 +521,53 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
             </div>
 
             {exercisesLoading ? (
-              <div className="flex justify-center py-8">
-                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="flex justify-center py-12">
+                <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-900 rounded-full animate-spin" />
               </div>
             ) : (
-              <ScrollArea className="h-[calc(100vh-260px)]">
-                <div className="space-y-2">
+              <Card className="bg-white border-slate-200 shadow-sm">
+                <CardContent className="p-0">
                   {exercises.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      Нет упражнений в базе
+                    <div className="text-center py-12 text-slate-500">
+                      <Dumbbell className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+                      <p>Нет упражнений в базе</p>
                     </div>
                   ) : (
-                    exercises.map((exercise) => (
-                      <Card key={exercise.id} className="bg-[#111827] border-white/10">
-                        <CardContent className="flex items-center justify-between p-4">
+                    <div className="divide-y divide-slate-100">
+                      {exercises.map((exercise) => (
+                        <div key={exercise.id} className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors">
                           <div className="flex items-center gap-4">
                             {exercise.imageUrl ? (
                               <img
                                 src={exercise.imageUrl}
                                 alt={exercise.name}
-                                className="w-12 h-12 rounded object-cover"
+                                className="w-12 h-12 rounded-lg object-cover"
                               />
                             ) : (
-                              <div className="w-12 h-12 bg-[#1A1F2E] rounded flex items-center justify-center">
-                                <Dumbbell size={20} className="text-gray-500" />
+                              <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
+                                <Dumbbell size={20} className="text-slate-400" />
                               </div>
                             )}
                             <div>
-                              <p className="font-medium" data-testid={`exercise-name-${exercise.id}`}>
+                              <p className="font-medium text-slate-900" data-testid={`exercise-name-${exercise.id}`}>
                                 {exercise.name}
                               </p>
-                              <div className="flex gap-2 mt-1">
-                                <Badge variant="secondary" className="text-xs">
+                              <div className="flex gap-2 mt-1.5">
+                                <span className={`text-xs px-2 py-0.5 rounded-full border ${getMuscleGroupStyle(exercise.muscle)}`}>
                                   {MUSCLE_GROUPS.find((g) => g.id === exercise.muscle)?.name || exercise.muscle}
-                                </Badge>
-                                <Badge variant="outline" className="text-xs">
+                                </span>
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
                                   {EXERCISE_TYPES.find((t) => t.id === exercise.type)?.name || exercise.type}
-                                </Badge>
+                                </span>
                               </div>
                             </div>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-1">
                             <Button
                               size="icon"
                               variant="ghost"
                               onClick={() => handleEditExercise(exercise)}
+                              className="text-slate-500 hover:text-slate-900 hover:bg-slate-100"
                               data-testid={`button-edit-exercise-${exercise.id}`}
                             >
                               <Edit size={16} />
@@ -502,101 +575,99 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
                             <Button
                               size="icon"
                               variant="ghost"
-                              className="text-red-500 hover:text-red-400"
+                              className="text-slate-500 hover:text-red-600 hover:bg-red-50"
                               onClick={() => deleteExerciseMutation.mutate(exercise.id)}
                               data-testid={`button-delete-exercise-${exercise.id}`}
                             >
                               <Trash2 size={16} />
                             </Button>
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))
+                        </div>
+                      ))}
+                    </div>
                   )}
-                </div>
-              </ScrollArea>
+                </CardContent>
+              </Card>
             )}
           </TabsContent>
 
+          {/* Moderation Tab */}
           <TabsContent value="moderation">
             {submissionsLoading ? (
-              <div className="flex justify-center py-8">
-                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="flex justify-center py-12">
+                <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-900 rounded-full animate-spin" />
               </div>
             ) : (
-              <ScrollArea className="h-[calc(100vh-200px)]">
-                <div className="space-y-4">
-                  {submissions.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      Нет заявок на модерацию
-                    </div>
-                  ) : (
-                    submissions.map((submission) => (
-                      <Card key={submission.id} className="bg-[#111827] border-white/10">
-                        <CardContent className="p-4">
+              <div>
+                {submissions.length === 0 ? (
+                  <Card className="bg-white border-slate-200 shadow-sm">
+                    <CardContent className="py-12 text-center">
+                      <Check className="w-12 h-12 mx-auto mb-4 text-green-500" />
+                      <p className="text-slate-600">Нет заявок на модерацию</p>
+                      <p className="text-sm text-slate-400 mt-1">Все упражнения проверены</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {submissions.map((submission) => (
+                      <Card key={submission.id} className="bg-white border-slate-200 shadow-sm">
+                        <CardContent className="p-6">
                           <div className="flex items-start gap-4">
                             {submission.imageUrl ? (
                               <img
                                 src={submission.imageUrl}
                                 alt={submission.name}
-                                className="w-20 h-20 rounded object-cover"
+                                className="w-20 h-20 rounded-lg object-cover"
                               />
                             ) : (
-                              <div className="w-20 h-20 bg-[#1A1F2E] rounded flex items-center justify-center">
-                                <Dumbbell size={24} className="text-gray-500" />
+                              <div className="w-20 h-20 bg-slate-100 rounded-lg flex items-center justify-center">
+                                <Dumbbell size={28} className="text-slate-400" />
                               </div>
                             )}
-                            <div className="flex-1">
-                              <h3 className="font-bold text-lg" data-testid={`submission-name-${submission.id}`}>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-lg text-slate-900" data-testid={`submission-name-${submission.id}`}>
                                 {submission.name}
                               </h3>
-                              <div className="flex gap-2 mt-1 mb-2">
-                                <Badge variant="secondary">
+                              <div className="flex gap-2 mt-2">
+                                <span className={`text-xs px-2 py-0.5 rounded-full border ${getMuscleGroupStyle(submission.muscle)}`}>
                                   {MUSCLE_GROUPS.find((g) => g.id === submission.muscle)?.name || submission.muscle}
-                                </Badge>
-                                <Badge variant="outline">
+                                </span>
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
                                   {EXERCISE_TYPES.find((t) => t.id === submission.type)?.name || submission.type}
-                                </Badge>
+                                </span>
                               </div>
-                              <p className="text-sm text-gray-400 line-clamp-3">
+                              <p className="text-sm text-slate-600 mt-3 line-clamp-2">
                                 {submission.technique}
                               </p>
-                              {submission.videoUrl && (
-                                <video
-                                  src={submission.videoUrl}
-                                  controls
-                                  className="w-full mt-2 rounded max-h-40"
-                                />
-                              )}
                             </div>
-                          </div>
-                          <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-white/5">
-                            <Button
-                              variant="outline"
-                              className="text-red-500 border-red-500/50 hover:bg-red-500/10"
-                              onClick={() => rejectSubmissionMutation.mutate({ id: submission.id })}
-                              disabled={rejectSubmissionMutation.isPending}
-                              data-testid={`button-reject-${submission.id}`}
-                            >
-                              <XIcon size={16} className="mr-2" />
-                              Отклонить
-                            </Button>
-                            <Button
-                              className="bg-green-600 hover:bg-green-700"
-                              onClick={() => approveSubmissionMutation.mutate({ id: submission.id })}
-                              disabled={approveSubmissionMutation.isPending}
-                              data-testid={`button-approve-${submission.id}`}
-                            >
-                              <Check size={16} className="mr-2" />
-                              Одобрить
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => rejectSubmissionMutation.mutate({ id: submission.id })}
+                                className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                                data-testid={`button-reject-${submission.id}`}
+                              >
+                                <XIcon size={16} className="mr-1" />
+                                Отклонить
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => approveSubmissionMutation.mutate({ id: submission.id })}
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                                data-testid={`button-approve-${submission.id}`}
+                              >
+                                <Check size={16} className="mr-1" />
+                                Одобрить
+                              </Button>
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
-                    ))
-                  )}
-                </div>
-              </ScrollArea>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </TabsContent>
         </Tabs>

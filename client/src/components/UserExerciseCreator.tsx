@@ -154,16 +154,16 @@ export function UserExerciseCreator({ onBack }: UserExerciseCreatorProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0E1A] text-white">
-      <div className="sticky top-0 z-10 bg-[#0A0E1A] border-b border-white/5 px-4 py-4">
+    <div className="min-h-screen bg-slate-50">
+      <div className="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 py-4 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={onBack} data-testid="button-exercises-back">
+            <Button variant="ghost" size="icon" onClick={onBack} data-testid="button-exercises-back" className="text-slate-500 hover:text-slate-900">
               <ArrowLeft size={24} />
             </Button>
             <div>
-              <h1 className="text-xl font-bold">Мои упражнения</h1>
-              <p className="text-sm text-gray-500">Создавайте свои упражнения</p>
+              <h1 className="text-xl font-bold text-slate-900">Мои упражнения</h1>
+              <p className="text-sm text-slate-500">Создавайте свои упражнения</p>
             </div>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -174,36 +174,37 @@ export function UserExerciseCreator({ onBack }: UserExerciseCreatorProps) {
                   resetForm();
                 }}
                 data-testid="button-create-exercise"
+                className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
               >
                 <Plus size={16} className="mr-2" />
                 Создать
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-[#111827] border-white/10 max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogContent className="bg-white border-slate-200 max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>
+                <DialogTitle className="text-slate-900">
                   {editingExercise ? 'Редактировать упражнение' : 'Новое упражнение'}
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4 mt-4">
                 <div>
-                  <Label>Название *</Label>
+                  <Label className="text-slate-700">Название *</Label>
                   <Input
                     value={exerciseForm.name}
                     onChange={(e) => setExerciseForm({ ...exerciseForm, name: e.target.value })}
                     placeholder="Название упражнения"
-                    className="bg-[#1A1F2E] border-white/10"
+                    className="bg-white border-slate-200"
                     data-testid="input-user-exercise-name"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Группа мышц *</Label>
+                    <Label className="text-slate-700">Группа мышц *</Label>
                     <Select
                       value={exerciseForm.muscle}
                       onValueChange={(value) => setExerciseForm({ ...exerciseForm, muscle: value })}
                     >
-                      <SelectTrigger className="bg-[#1A1F2E] border-white/10" data-testid="select-user-exercise-muscle">
+                      <SelectTrigger className="bg-white border-slate-200" data-testid="select-user-exercise-muscle">
                         <SelectValue placeholder="Выберите" />
                       </SelectTrigger>
                       <SelectContent>
@@ -216,12 +217,12 @@ export function UserExerciseCreator({ onBack }: UserExerciseCreatorProps) {
                     </Select>
                   </div>
                   <div>
-                    <Label>Тип *</Label>
+                    <Label className="text-slate-700">Тип *</Label>
                     <Select
                       value={exerciseForm.type}
                       onValueChange={(value) => setExerciseForm({ ...exerciseForm, type: value })}
                     >
-                      <SelectTrigger className="bg-[#1A1F2E] border-white/10" data-testid="select-user-exercise-type">
+                      <SelectTrigger className="bg-white border-slate-200" data-testid="select-user-exercise-type">
                         <SelectValue placeholder="Выберите" />
                       </SelectTrigger>
                       <SelectContent>
@@ -235,17 +236,17 @@ export function UserExerciseCreator({ onBack }: UserExerciseCreatorProps) {
                   </div>
                 </div>
                 <div>
-                  <Label>Техника выполнения *</Label>
+                  <Label className="text-slate-700">Техника выполнения *</Label>
                   <Textarea
                     value={exerciseForm.technique}
                     onChange={(e) => setExerciseForm({ ...exerciseForm, technique: e.target.value })}
                     placeholder="Описание техники выполнения"
-                    className="bg-[#1A1F2E] border-white/10 min-h-[100px]"
+                    className="bg-white border-slate-200 min-h-[100px]"
                     data-testid="input-user-exercise-technique"
                   />
                 </div>
                 <div>
-                  <Label>Фото (опционально)</Label>
+                  <Label className="text-slate-700">Фото (опционально)</Label>
                   <ObjectUploader
                     accept="image"
                     currentUrl={exerciseForm.imageUrl}
@@ -254,7 +255,7 @@ export function UserExerciseCreator({ onBack }: UserExerciseCreatorProps) {
                   />
                 </div>
                 <div>
-                  <Label>Видео (опционально)</Label>
+                  <Label className="text-slate-700">Видео (опционально)</Label>
                   <ObjectUploader
                     accept="video"
                     currentUrl={exerciseForm.videoUrl}
@@ -274,6 +275,7 @@ export function UserExerciseCreator({ onBack }: UserExerciseCreatorProps) {
                     onClick={handleSave}
                     disabled={createMutation.isPending || updateMutation.isPending}
                     data-testid="button-save-user-exercise"
+                    className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
                   >
                     {createMutation.isPending || updateMutation.isPending
                       ? 'Сохранение...'
@@ -289,24 +291,24 @@ export function UserExerciseCreator({ onBack }: UserExerciseCreatorProps) {
       <div className="p-4">
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
           <ScrollArea className="h-[calc(100vh-140px)]">
             <div className="space-y-3">
               {exercises.length === 0 ? (
                 <div className="text-center py-12">
-                  <Dumbbell size={48} className="mx-auto text-gray-600 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-400 mb-2">
+                  <Dumbbell size={48} className="mx-auto text-slate-300 mb-4" />
+                  <h3 className="text-lg font-medium text-slate-600 mb-2">
                     Нет своих упражнений
                   </h3>
-                  <p className="text-sm text-gray-500 mb-4">
+                  <p className="text-sm text-slate-500 mb-4">
                     Создайте упражнение и отправьте на модерацию для публикации
                   </p>
                 </div>
               ) : (
                 exercises.map((exercise) => (
-                  <Card key={exercise.id} className="bg-[#111827] border-white/10">
+                  <Card key={exercise.id} className="bg-white border-slate-200 shadow-sm">
                     <CardContent className="p-4">
                       <div className="flex items-start gap-4">
                         {exercise.imageUrl ? (
@@ -316,14 +318,14 @@ export function UserExerciseCreator({ onBack }: UserExerciseCreatorProps) {
                             className="w-16 h-16 rounded object-cover flex-shrink-0"
                           />
                         ) : (
-                          <div className="w-16 h-16 bg-[#1A1F2E] rounded flex items-center justify-center flex-shrink-0">
-                            <Dumbbell size={24} className="text-gray-500" />
+                          <div className="w-16 h-16 bg-slate-100 rounded flex items-center justify-center flex-shrink-0">
+                            <Dumbbell size={24} className="text-slate-400" />
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
                             <div>
-                              <h3 className="font-medium truncate" data-testid={`user-exercise-name-${exercise.id}`}>
+                              <h3 className="font-medium text-slate-900 truncate" data-testid={`user-exercise-name-${exercise.id}`}>
                                 {exercise.name}
                               </h3>
                               <div className="flex flex-wrap gap-1 mt-1">
@@ -342,18 +344,18 @@ export function UserExerciseCreator({ onBack }: UserExerciseCreatorProps) {
                               </div>
                             </div>
                           </div>
-                          <p className="text-sm text-gray-400 mt-2 line-clamp-2">
+                          <p className="text-sm text-slate-500 mt-2 line-clamp-2">
                             {exercise.technique}
                           </p>
                           {exercise.reviewNotes && (
-                            <div className="mt-2 p-2 bg-[#1A1F2E] rounded text-sm">
-                              <span className="text-gray-500">Комментарий модератора: </span>
-                              <span className="text-gray-400">{exercise.reviewNotes}</span>
+                            <div className="mt-2 p-2 bg-slate-50 rounded text-sm border border-slate-100">
+                              <span className="text-slate-500">Комментарий модератора: </span>
+                              <span className="text-slate-600">{exercise.reviewNotes}</span>
                             </div>
                           )}
                         </div>
                       </div>
-                      <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-white/5">
+                      <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-slate-100">
                         {canEdit(exercise) && (
                           <>
                             <Button
@@ -361,6 +363,7 @@ export function UserExerciseCreator({ onBack }: UserExerciseCreatorProps) {
                               variant="ghost"
                               onClick={() => handleEdit(exercise)}
                               data-testid={`button-edit-user-exercise-${exercise.id}`}
+                              className="text-slate-600 hover:text-slate-900"
                             >
                               <Edit size={14} className="mr-1" />
                               Редактировать
@@ -368,7 +371,7 @@ export function UserExerciseCreator({ onBack }: UserExerciseCreatorProps) {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="text-red-500 hover:text-red-400"
+                              className="text-red-500 hover:text-red-600 hover:bg-red-50"
                               onClick={() => deleteMutation.mutate(exercise.id)}
                               data-testid={`button-delete-user-exercise-${exercise.id}`}
                             >
@@ -383,19 +386,20 @@ export function UserExerciseCreator({ onBack }: UserExerciseCreatorProps) {
                             onClick={() => submitMutation.mutate(exercise.id)}
                             disabled={submitMutation.isPending}
                             data-testid={`button-submit-user-exercise-${exercise.id}`}
+                            className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
                           >
                             <Send size={14} className="mr-1" />
                             Отправить на модерацию
                           </Button>
                         )}
                         {exercise.status === 'pending' && (
-                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <div className="flex items-center gap-2 text-sm text-slate-500">
                             <Clock size={14} />
                             Ожидает проверки
                           </div>
                         )}
                         {exercise.status === 'approved' && (
-                          <div className="flex items-center gap-2 text-sm text-green-500">
+                          <div className="flex items-center gap-2 text-sm text-green-600">
                             <Check size={14} />
                             Добавлено в общую базу
                           </div>

@@ -1,17 +1,34 @@
-# Design Guidelines: Персональный тренировочный трекер
+# Design Guidelines: Персональный тренировочный трекер (KladLift)
 
 ## Design Approach
-**Reference-Based Implementation**: Exact pixel-perfect recreation of provided React code. This is a feature-rich fitness application with established visual design that must be preserved exactly as specified.
+**Split Theme System**: Dark theme for landing/authentication pages (Jony Ive minimalist style), light theme for authenticated app experience. This creates a premium, sophisticated first impression while maintaining a clean, productive workspace for daily training use.
 
 ## Core Design Principles
-- **Dark Theme Primary**: Deep backgrounds (#0A0E1A, #111827) with vibrant accent colors
+- **Dual Theme Strategy**: Dark landing/auth pages, light authenticated app
+- **Jony Ive Aesthetic**: Minimalist, premium, refined gradients on auth pages
 - **Data Visualization Focus**: Charts, graphs, and progress tracking as primary UI elements
-- **Muscle Group Color System**: Consistent color coding throughout (see below)
+- **Muscle Group Color System**: Consistent color coding throughout (optimized for light backgrounds)
 - **Russian Language**: All UI text, labels, and copy in Russian
 
 ## Color System
 
-### Muscle Group Palette (Critical - Use Exact Values)
+### Landing/Auth Pages (Dark Theme)
+- **Background**: Gradient from slate-900 via purple-900 to slate-900
+- **Text**: White primary, slate-400 secondary
+- **Accents**: Purple gradients (purple-600 to purple-700)
+- **Cards/Surfaces**: slate-800/50 with backdrop blur
+- **Borders**: Subtle white/20 borders
+
+### Authenticated App (Light Theme)
+- **Background**: slate-50 (#F8FAFC)
+- **Cards/Surfaces**: White (#FFFFFF) with slate-200 borders
+- **Text Primary**: slate-900 (#0F172A)
+- **Text Secondary**: slate-500 (#64748B)
+- **Text Tertiary**: slate-400 (#94A3B8)
+- **Accents**: Purple gradients (purple-600 to purple-700)
+- **Shadows**: Subtle slate shadows
+
+### Muscle Group Palette (Critical - Optimized for Light Backgrounds)
 ```
 legs: #34C759 (green) - bg: #E8F5E9, text: #1B5E20
 back: #007AFF (blue) - bg: #E3F2FD, text: #0D47A1
@@ -21,11 +38,7 @@ arms: #AF52DE (purple) - bg: #F3E5F5, text: #4A148C
 abs: #8E8E93 (gray) - bg: #F5F5F5, text: #424242
 cardio: #FF3B30 (bright red) - bg: #FFEBEE, text: #C62828
 ```
-
-### Backgrounds & Surfaces
-- Primary dark: #0A0E1A, #111827
-- Card surfaces: #1F2937, #374151
-- Overlays: rgba(0,0,0,0.5)
+Note: These colors feature light pastel backgrounds (bg) with dark text colors for optimal contrast on white/light surfaces.
 
 ### Cycle Phase Colors (Female tracking)
 - Menstrual: #EF4444 (red)
@@ -36,9 +49,9 @@ cardio: #FF3B30 (bright red) - bg: #FFEBEE, text: #C62828
 ## Typography
 - **System Fonts**: -apple-system, BlinkMacSystemFont, Segoe UI
 - **Hierarchy**: 
-  - Headers: font-semibold, text-lg to text-2xl
-  - Body: text-sm to text-base
-  - Labels: text-xs, uppercase tracking-wide
+  - Headers: font-semibold/font-bold, text-lg to text-2xl, slate-900
+  - Body: text-sm to text-base, slate-700
+  - Labels: text-xs, uppercase tracking-wide, slate-500
   - Numbers/Stats: font-bold, larger sizes for emphasis
 
 ## Layout System
@@ -56,43 +69,45 @@ cardio: #FF3B30 (bright red) - bg: #FFEBEE, text: #C62828
 ## Component Library
 
 ### Navigation
-- **Bottom Tab Bar** (Mobile iOS style): Fixed bottom, 5 tabs with icons (Dashboard, Workouts, Exercises, Analytics, Profile)
-- **Top Header**: Logo/title left, icons/actions right
+- **Bottom Tab Bar** (Mobile iOS style): Fixed bottom, 4-5 tabs with icons
+- **Top Header**: Logo/title left, user info/actions right
+- **Background**: White with border-b border-slate-200
 
-### Cards
-- Rounded corners (rounded-xl, rounded-2xl)
-- Dark backgrounds with subtle borders
-- Drop shadows for depth
-- Hover states with scale transforms
+### Cards (Light Theme)
+- Background: white
+- Borders: border border-slate-200
+- Rounded corners: rounded-2xl, rounded-3xl
+- Shadows: shadow-sm for subtle depth
+- Hover states: hover:shadow-md, hover:border-purple-300
 
 ### Buttons
-- **Primary**: Gradient backgrounds (blue-to-purple), white text, rounded-lg
-- **Secondary**: Dark gray backgrounds, lighter text
-- **Icon Buttons**: Circular, background on hover
-- **Sizes**: Small (px-3 py-2), Medium (px-4 py-3), Large (px-6 py-4)
+- **Primary**: Gradient from purple-600 to purple-700, white text, rounded-full
+- **Secondary**: slate-100 background, slate-700 text
+- **Ghost**: Transparent, slate-500 text, hover:bg-slate-100
+- **Icon Buttons**: Circular, rounded-full, hover:bg-slate-100
 
-### Forms
-- Dark input backgrounds (#1F2937)
-- Light text (#E5E7EB)
-- Focus states with blue ring
-- Select dropdowns with custom styling
+### Forms (Light Theme)
+- Input backgrounds: slate-100 or white
+- Borders: border-slate-200
+- Text: slate-900
+- Placeholder: slate-400
+- Focus states: ring-2 ring-purple-500/20, border-purple-500
 
 ### Data Visualization
 - **Charts**: Recharts library with muscle group color coding
-- **Progress Bars**: Gradient fills matching muscle colors
-- **Stat Cards**: Large numbers with descriptive labels below
+- **Backgrounds**: White cards on slate-50 page background
+- **Tooltips**: White background, slate-700 text, shadow-lg
 
 ### Modals & Overlays
-- Full-screen overlays on mobile
-- Centered modals on desktop (max-w-2xl, max-w-4xl)
-- Backdrop blur effect
-- Slide-up animation on mobile
+- Backdrop: bg-black/40 backdrop-blur-sm
+- Modal surface: bg-white with rounded-3xl
+- Headers: Can use muscle group colors for context
 
-### AI Chat Interface
-- Message bubbles: User (blue gradient, right-aligned), Bot (dark gray, left-aligned)
-- Avatar circles with initials
-- Input bar at bottom with send button
-- Scrollable message history
+### AI Chat Interface (Light Theme)
+- **User messages**: Purple gradient (purple-600 to purple-700), white text, right-aligned
+- **Bot messages**: White/slate-50 background, slate-700 text, left-aligned, border border-slate-200
+- **Input bar**: slate-100 background, white on focus
+- **Send button**: Purple gradient
 
 ## Special Features
 
@@ -100,50 +115,34 @@ cardio: #FF3B30 (bright red) - bg: #FFEBEE, text: #C62828
 - SVG-based human figure
 - Interactive highlighting by muscle group
 - Color-coded to match muscle group palette
-- Displays in profile and exercise selection
 
-### Calendar View
-- Month grid layout
-- Dots/indicators for workout days
-- Color coding by workout type/muscle focus
+### Exercise Cards (Light Theme)
+- White background with muscle group accent elements
+- Muscle badges use pastel bg colors with dark text
+- Clean, readable typography
 
-### Exercise Cards
-- Muscle group color accent bar on left
-- Exercise name, type (compound/isolation)
-- Technique description text
-- Image thumbnails using Unsplash URLs
-
-### Cycle Phase Tracker (Female Users)
+### Cycle Phase Tracker
 - Phase indicator bar with 4 segments
-- Current phase highlighted
-- Recommendations panel with sleep/strain/stress guidance
-- Color-coded by phase
-
-## Images
-- **Hero**: No traditional hero section - this is a dashboard app
-- **Exercise Images**: Use provided Unsplash URLs for muscle group imagery
-- **Thumbnails**: Small square images (w-12 h-12 to w-16 h-16) for exercises
-- **Background**: Subtle gradient overlays, no large background images
+- Color-coded by phase against light backgrounds
+- White/light card surfaces
 
 ## Animations
-- **Minimal**: Smooth transitions on hover (transform scale 1.02)
-- **Page transitions**: Fade in/out
+- **Minimal**: Smooth transitions on hover
+- **Page transitions**: Fade in, slide up
 - **Chart animations**: Recharts built-in smooth rendering
-- No elaborate scroll animations
+- **Scaling**: active:scale-[0.98] on buttons/cards
 
 ## Mobile-First Considerations
 - Bottom navigation (iOS-style tab bar)
 - Full-width cards on mobile
-- Swipeable modals
 - Touch-friendly tap targets (min 44px)
-- Responsive grid: 1 col mobile → 2 cols tablet → 3 cols desktop
+- Safe area padding for notched devices
 
 ## Critical Implementation Notes
-1. **Exact Color Matching**: Use provided hex values precisely
-2. **Icon Library**: Lucide React (already imported)
-3. **Chart Library**: Recharts for all data visualizations
-4. **State Management**: React hooks (useState, useEffect, useMemo)
-5. **Data Persistence**: localStorage for user data and workout history
-6. **Russian UI**: All labels, buttons, descriptions in Russian language
-
-This design is fully specified in the provided code - implement exactly as shown with no creative deviations.
+1. **Theme Switching**: Landing/auth = dark, Authenticated app = light
+2. **Muscle Colors**: Use bg values on light surfaces, color values for accents/charts
+3. **Icon Library**: Lucide React
+4. **Chart Library**: Recharts with light theme styling
+5. **State Management**: React hooks + TanStack Query
+6. **Data Persistence**: PostgreSQL via Drizzle ORM
+7. **Russian UI**: All labels, buttons, descriptions in Russian language

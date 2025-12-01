@@ -31,13 +31,13 @@ type AppView = 'dashboard' | 'log' | 'progress' | 'coach' | 'history' | 'admin' 
 
 function CalibrationView() {
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-black text-white">
+    <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-purple-600 via-purple-700 to-slate-900 text-white">
       <div className="relative w-24 h-24 mb-8">
         <div className="absolute inset-0 border-t-4 border-white rounded-full animate-spin"></div>
         <div className="absolute inset-3 border-b-4 border-white/30 rounded-full animate-spin-reverse"></div>
       </div>
       <h3 className="text-2xl font-bold mb-2 animate-pulse">Калибровка...</h3>
-      <p className="text-gray-500 text-sm">Рассчитываем MRV и MEV нагрузки</p>
+      <p className="text-white/60 text-sm">Рассчитываем MRV и MEV нагрузки</p>
     </div>
   );
 }
@@ -169,8 +169,8 @@ function AuthenticatedApp() {
 
   if (userLoading || isOnboarded === null) {
     return (
-      <div className="flex items-center justify-center h-screen bg-black">
-        <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+      <div className="flex items-center justify-center h-screen bg-slate-50">
+        <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -229,14 +229,14 @@ function AuthenticatedApp() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0E1A]">
+    <div className="min-h-screen bg-slate-50">
       {/* User header with logout */}
       <div className="fixed top-0 right-0 p-4 z-50 flex items-center gap-3">
         {authUser && (
           <>
             <button
               onClick={() => setView('my-exercises')}
-              className="p-2 bg-[#1A1F2E] rounded-full text-gray-400 hover:text-white hover:bg-[#252A3A] transition-colors"
+              className="p-2 bg-white border border-slate-200 rounded-full text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors shadow-sm"
               data-testid="button-my-exercises"
               title="Мои упражнения"
             >
@@ -245,26 +245,26 @@ function AuthenticatedApp() {
             {isAdmin && (
               <button
                 onClick={() => setView('admin')}
-                className="p-2 bg-[#1A1F2E] rounded-full text-gray-400 hover:text-white hover:bg-[#252A3A] transition-colors"
+                className="p-2 bg-white border border-slate-200 rounded-full text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors shadow-sm"
                 data-testid="button-admin-panel"
                 title="Админ-панель"
               >
                 <Shield size={18} />
               </button>
             )}
-            <div className="flex items-center gap-2 text-gray-400 text-sm">
+            <div className="flex items-center gap-2 text-slate-600 text-sm">
               {authUser.profileImageUrl ? (
                 <img 
                   src={authUser.profileImageUrl} 
                   alt="" 
-                  className="w-8 h-8 rounded-full object-cover"
+                  className="w-8 h-8 rounded-full object-cover border border-slate-200"
                 />
               ) : (
-                <div className="w-8 h-8 bg-[#1A1F2E] rounded-full flex items-center justify-center">
-                  <UserIcon size={16} />
+                <div className="w-8 h-8 bg-white border border-slate-200 rounded-full flex items-center justify-center shadow-sm">
+                  <UserIcon size={16} className="text-slate-500" />
                 </div>
               )}
-              <span className="hidden sm:block">{authUser.firstName || authUser.email}</span>
+              <span className="hidden sm:block font-medium">{authUser.firstName || authUser.email}</span>
             </div>
             <button
               onClick={async () => {
@@ -275,7 +275,7 @@ function AuthenticatedApp() {
                   console.error('Logout failed:', error);
                 }
               }}
-              className="p-2 bg-[#1A1F2E] rounded-full text-gray-400 hover:text-white hover:bg-[#252A3A] transition-colors"
+              className="p-2 bg-white border border-slate-200 rounded-full text-slate-500 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-colors shadow-sm"
               data-testid="button-logout"
               title="Выйти"
             >
@@ -306,11 +306,11 @@ function AuthenticatedApp() {
         />
       )}
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#111827] border-t border-white/5 px-6 py-4 pb-safe z-50">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-6 py-4 pb-safe z-50 shadow-lg">
         <div className="flex justify-around items-center max-w-md mx-auto">
           <button 
             onClick={() => setView('dashboard')}
-            className={`flex flex-col items-center gap-1 ${view === 'dashboard' ? 'text-white' : 'text-gray-500'}`}
+            className={`flex flex-col items-center gap-1 transition-colors ${view === 'dashboard' ? 'text-purple-600' : 'text-slate-400 hover:text-slate-600'}`}
             data-testid="nav-dashboard"
           >
             <Home size={24} />
@@ -318,7 +318,7 @@ function AuthenticatedApp() {
           </button>
           <button 
             onClick={() => setView('log')}
-            className={`flex flex-col items-center gap-1 ${view === 'log' ? 'text-white' : 'text-gray-500'}`}
+            className="flex flex-col items-center gap-1 transition-colors text-slate-400 hover:text-slate-600"
             data-testid="nav-log"
           >
             <Dumbbell size={24} />
@@ -326,7 +326,7 @@ function AuthenticatedApp() {
           </button>
           <button 
             onClick={() => setView('progress')}
-            className={`flex flex-col items-center gap-1 ${view === 'progress' ? 'text-white' : 'text-gray-500'}`}
+            className={`flex flex-col items-center gap-1 transition-colors ${view === 'progress' ? 'text-purple-600' : 'text-slate-400 hover:text-slate-600'}`}
             data-testid="nav-progress"
           >
             <BarChart2 size={24} />
@@ -334,7 +334,7 @@ function AuthenticatedApp() {
           </button>
           <button 
             onClick={() => setView('coach')}
-            className={`flex flex-col items-center gap-1 ${view === 'coach' ? 'text-white' : 'text-gray-500'}`}
+            className="flex flex-col items-center gap-1 transition-colors text-slate-400 hover:text-slate-600"
             data-testid="nav-coach"
           >
             <MessageCircle size={24} />
@@ -351,7 +351,7 @@ function AppRouter() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#0A0E1A]">
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
         <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
