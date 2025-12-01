@@ -11,13 +11,15 @@ import {
 } from 'recharts';
 import { ArrowUp, ArrowDown } from 'lucide-react';
 import { 
-  MUSCLE_GROUPS, 
+  MUSCLE_GROUPS,
+  getCardioType,
   type Workout, 
   type CycleData,
   type MuscleGroup,
   type SelectCustomExercise,
   type SelectUserExercise,
-  type Exercise as ExerciseType
+  type Exercise as ExerciseType,
+  type CardioType
 } from '@shared/schema';
 import { 
   getRangeFilter, 
@@ -31,10 +33,16 @@ interface ProgressProps {
   userCycle?: CycleData;
 }
 
+type CardioMetric = 'duration' | 'distance' | 'speed' | 'steps' | 'jumps';
+
 export function Progress({ workouts, userCycle }: ProgressProps) {
   const [selectedGroup, setSelectedGroup] = useState<MuscleGroup>('legs');
   const [timeRange, setTimeRange] = useState('month');
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
+  const [cardioMetric, setCardioMetric] = useState<CardioMetric>('duration');
+
+  const selectedCardioType = selectedExerciseId ? getCardioType(selectedExerciseId) : null;
+  const isCardio = selectedGroup === 'cardio';
 
   const { data: dbExercises = [] } = useQuery<SelectCustomExercise[]>({
     queryKey: ['/api/exercises']
@@ -90,39 +98,104 @@ export function Progress({ workouts, userCycle }: ProgressProps) {
     }
   }, [availableExercises, selectedGroup]);
 
+  const [displayUnit, setDisplayUnit] = useState<'km' | 'mi'>('km');
+
   const chartData = useMemo(() => {
     if (!selectedExerciseId) return [];
     const { start, end } = getRangeFilter(timeRange);
     const filteredWorkouts = workouts.filter(w => w.date >= start && w.date <= end);
+    const cardioType = getCardioType(selectedExerciseId);
+
+    const MI_TO_KM = 1.60934;
+    const KM_TO_MI = 1 / MI_TO_KM;
 
     return filteredWorkouts.map(w => {
       const exData = w.exercises.find(e => e.id === selectedExerciseId);
       if (!exData) return null;
-      const maxWeight = exData.sets.length > 0 
-        ? Math.max(...exData.sets.map(s => s.weight)) 
-        : 0;
+      
       const phase = userCycle 
         ? getCyclePhaseForDate(w.date, userCycle.lastPeriod, userCycle.length) 
         : null;
+
+      if (cardioType) {
+        const set = exData.sets[0] || {};
+        const duration = set.duration || 0;
+        const rawDistance = set.distance || 0;
+        const originalUnit = set.distanceUnit || 'km';
+        const steps = set.steps || 0;
+        const jumps = set.jumps || 0;
+        
+        let normalizedDistance = rawDistance;
+        if (displayUnit === 'km' && originalUnit === 'mi') {
+          normalizedDistance = rawDistance * MI_TO_KM;
+        } else if (displayUnit === 'mi' && originalUnit === 'km') {
+          normalizedDistance = rawDistance * KM_TO_MI;
+        }
+        
+        const speed = duration > 0 && normalizedDistance > 0 
+          ? (normalizedDistance / (duration / 60)) 
+          : 0;
+        
+        return {
+          date: w.date,
+          displayDate: formatDate(w.date),
+          value: cardioMetric === 'duration' ? duration 
+               : cardioMetric === 'distance' ? normalizedDistance 
+               : cardioMetric === 'speed' ? speed 
+               : cardioMetric === 'steps' ? steps 
+               : cardioMetric === 'jumps' ? jumps : 0,
+          duration,
+          distance: normalizedDistance,
+          speed,
+          steps,
+          jumps,
+          distanceUnit: displayUnit,
+          phaseColor: phase ? phase.color : '#e5e7eb',
+          phaseName: phase ? phase.name : '',
+          isCardio: true
+        };
+      }
+
+      const maxWeight = exData.sets.length > 0 
+        ? Math.max(...exData.sets.map(s => s.weight || 0)) 
+        : 0;
       return {
         date: w.date,
         displayDate: formatDate(w.date),
+        value: maxWeight,
         weight: maxWeight,
         phaseColor: phase ? phase.color : '#e5e7eb',
-        phaseName: phase ? phase.name : ''
+        phaseName: phase ? phase.name : '',
+        isCardio: false
       };
     }).filter(Boolean).sort((a, b) => (a?.date || 0) - (b?.date || 0));
-  }, [workouts, selectedExerciseId, timeRange, userCycle]);
+  }, [workouts, selectedExerciseId, timeRange, userCycle, cardioMetric, displayUnit]);
 
   const statsChange = useMemo(() => {
     if (chartData.length < 2) return null;
-    const start = chartData[0]?.weight || 0;
-    const current = chartData[chartData.length - 1]?.weight || 0;
+    const firstEntry = chartData[0];
+    const lastEntry = chartData[chartData.length - 1];
+    const start = firstEntry?.value || 0;
+    const current = lastEntry?.value || 0;
     const diff = current - start;
-    if (start === 0) return { diff, text: `+ ${diff} кг`, isPositive: true };
+    
+    const getUnit = () => {
+      if (!firstEntry?.isCardio) return 'кг';
+      const unitLabel = displayUnit === 'km' ? 'км' : 'ми';
+      switch (cardioMetric) {
+        case 'duration': return 'мин';
+        case 'distance': return unitLabel;
+        case 'speed': return `${unitLabel}/ч`;
+        case 'steps': return 'ступ.';
+        case 'jumps': return 'прыж.';
+        default: return '';
+      }
+    };
+    
+    if (start === 0) return { diff, text: `+ ${diff.toFixed(1)} ${getUnit()}`, isPositive: true };
     const percentage = ((diff / start) * 100).toFixed(1);
     return { diff, percentage, text: `${percentage}%`, isPositive: diff >= 0 };
-  }, [chartData]);
+  }, [chartData, cardioMetric, displayUnit]);
 
   const renderPhaseBackgrounds = () => {
     if (!chartData.length || !userCycle) return null;
@@ -235,6 +308,102 @@ export function Progress({ workouts, userCycle }: ProgressProps) {
               ))}
             </div>
 
+            {selectedCardioType && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide">
+                  <button
+                    onClick={() => setCardioMetric('duration')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
+                      cardioMetric === 'duration' 
+                        ? 'bg-purple-600 text-white' 
+                        : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
+                    }`}
+                    data-testid="button-metric-duration"
+                  >
+                    Время
+                  </button>
+                  {selectedCardioType === 'distance' && (
+                    <>
+                      <button
+                        onClick={() => setCardioMetric('distance')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
+                          cardioMetric === 'distance' 
+                            ? 'bg-purple-600 text-white' 
+                            : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
+                        }`}
+                        data-testid="button-metric-distance"
+                      >
+                        Дистанция
+                      </button>
+                      <button
+                        onClick={() => setCardioMetric('speed')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
+                          cardioMetric === 'speed' 
+                            ? 'bg-purple-600 text-white' 
+                            : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
+                        }`}
+                        data-testid="button-metric-speed"
+                      >
+                        Скорость
+                      </button>
+                    </>
+                  )}
+                  {selectedCardioType === 'stepper' && (
+                    <button
+                      onClick={() => setCardioMetric('steps')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
+                        cardioMetric === 'steps' 
+                          ? 'bg-purple-600 text-white' 
+                          : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
+                      }`}
+                      data-testid="button-metric-steps"
+                    >
+                      Ступеньки
+                    </button>
+                  )}
+                  {selectedCardioType === 'jumprope' && (
+                    <button
+                      onClick={() => setCardioMetric('jumps')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
+                        cardioMetric === 'jumps' 
+                          ? 'bg-purple-600 text-white' 
+                          : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
+                      }`}
+                      data-testid="button-metric-jumps"
+                    >
+                      Прыжки
+                    </button>
+                  )}
+                </div>
+                {selectedCardioType === 'distance' && (cardioMetric === 'distance' || cardioMetric === 'speed') && (
+                  <div className="flex gap-1 ml-auto">
+                    <button
+                      onClick={() => setDisplayUnit('km')}
+                      className={`px-2 py-1 rounded text-xs font-semibold transition-colors ${
+                        displayUnit === 'km' 
+                          ? 'bg-slate-700 text-white' 
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                      data-testid="button-display-km"
+                    >
+                      км
+                    </button>
+                    <button
+                      onClick={() => setDisplayUnit('mi')}
+                      className={`px-2 py-1 rounded text-xs font-semibold transition-colors ${
+                        displayUnit === 'mi' 
+                          ? 'bg-slate-700 text-white' 
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                      data-testid="button-display-mi"
+                    >
+                      ми
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="flex-1 w-full">
               {chartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -268,11 +437,32 @@ export function Progress({ workouts, userCycle }: ProgressProps) {
                         backgroundColor: '#fff',
                         color: '#1E293B'
                       }} 
-                      formatter={(value: number) => [`${value} кг`, 'Макс. вес']}
+                      formatter={(value: number, name: string, props: any) => {
+                        const entry = props.payload;
+                        if (entry?.isCardio) {
+                          const labels: Record<CardioMetric, string> = {
+                            duration: 'Время',
+                            distance: 'Дистанция',
+                            speed: 'Скорость',
+                            steps: 'Ступеньки',
+                            jumps: 'Прыжки'
+                          };
+                          const unitLabel = displayUnit === 'km' ? 'км' : 'ми';
+                          const units: Record<CardioMetric, string> = {
+                            duration: 'мин',
+                            distance: unitLabel,
+                            speed: `${unitLabel}/ч`,
+                            steps: '',
+                            jumps: ''
+                          };
+                          return [`${value.toFixed(1)} ${units[cardioMetric]}`, labels[cardioMetric]];
+                        }
+                        return [`${value} кг`, 'Макс. вес'];
+                      }}
                     />
                     <Area 
                       type="monotone" 
-                      dataKey="weight" 
+                      dataKey="value" 
                       stroke="#7C3AED" 
                       strokeWidth={3} 
                       fill="url(#colorProgress)" 
