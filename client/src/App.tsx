@@ -26,8 +26,9 @@ import { HistoryView } from "@/components/HistoryView";
 import { AdminPanel } from "@/components/AdminPanel";
 import { UserExerciseCreator } from "@/components/UserExerciseCreator";
 import { AuthForms } from "@/components/AuthForms";
+import { CycleView } from "@/components/CycleView";
 
-type AppView = 'dashboard' | 'log' | 'progress' | 'coach' | 'history' | 'admin' | 'my-exercises';
+type AppView = 'dashboard' | 'log' | 'progress' | 'coach' | 'history' | 'admin' | 'my-exercises' | 'cycle';
 
 function CalibrationView() {
   return (
@@ -139,13 +140,21 @@ function AuthenticatedApp() {
     }
   };
 
-  const handleSaveWorkout = async (exercises: WorkoutExercise[]) => {
-    const workout: Omit<Workout, 'id'> = {
-      date: Date.now(),
-      exercises
-    };
-    
-    await saveWorkoutMutation.mutateAsync(workout);
+  const handleSaveWorkout = async (exercises: WorkoutExercise[], date: number) => {
+    if (editingWorkout) {
+      await apiRequest('PATCH', `/api/workouts/${editingWorkout.id}`, { exercises, date });
+      queryClient.invalidateQueries({ queryKey: ['/api/workouts'] });
+      toast({
+        title: "Тренировка обновлена",
+        description: "Изменения сохранены"
+      });
+    } else {
+      const workout: Omit<Workout, 'id'> = {
+        date,
+        exercises
+      };
+      await saveWorkoutMutation.mutateAsync(workout);
+    }
     setView('dashboard');
     setEditingWorkout(null);
   };
@@ -192,6 +201,7 @@ function AuthenticatedApp() {
           setEditingWorkout(null);
         }}
         initialExercises={editingWorkout?.exercises}
+        initialDate={editingWorkout?.date}
       />
     );
   }
@@ -226,6 +236,10 @@ function AuthenticatedApp() {
 
   if (view === 'my-exercises') {
     return <UserExerciseCreator onBack={() => setView('dashboard')} />;
+  }
+
+  if (view === 'cycle') {
+    return <CycleView user={userProfile} onBack={() => setView('dashboard')} />;
   }
 
   return (
@@ -295,7 +309,7 @@ function AuthenticatedApp() {
           onDeleteBodyLog={(id) => deleteBodyLogMutation.mutate(id)}
           onOpenHistory={() => setView('history')}
           onOpenCoach={() => setView('coach')}
-          onOpenCycle={() => {}}
+          onOpenCycle={() => setView('cycle')}
         />
       )}
       

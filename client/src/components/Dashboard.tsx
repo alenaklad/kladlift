@@ -10,10 +10,12 @@ import {
 import { 
   Target, 
   Clock, 
-  ChevronRight, 
+  ChevronRight,
+  ChevronLeft,
   Plus, 
   Scale, 
-  Activity 
+  Activity,
+  Calendar
 } from 'lucide-react';
 import { 
   GOALS, 
@@ -76,6 +78,36 @@ interface DashboardProps {
   onOpenCycle: () => void;
 }
 
+function getWeekRange(weekOffset: number): { start: number; end: number; label: string } {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dayOfWeek = today.getDay();
+  const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  
+  const thisMonday = new Date(today);
+  thisMonday.setDate(today.getDate() - daysToMonday);
+  
+  const targetMonday = new Date(thisMonday);
+  targetMonday.setDate(thisMonday.getDate() + weekOffset * 7);
+  
+  const targetSunday = new Date(targetMonday);
+  targetSunday.setDate(targetMonday.getDate() + 6);
+  targetSunday.setHours(23, 59, 59, 999);
+  
+  const formatDate = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+  const label = weekOffset === 0 
+    ? 'Эта неделя' 
+    : weekOffset === -1 
+      ? 'Прошлая неделя'
+      : `${formatDate(targetMonday)} — ${formatDate(targetSunday)}`;
+  
+  return {
+    start: targetMonday.getTime(),
+    end: targetSunday.getTime(),
+    label
+  };
+}
+
 export function Dashboard({
   user,
   workouts,
@@ -87,7 +119,7 @@ export function Dashboard({
   onOpenCoach,
   onOpenCycle
 }: DashboardProps) {
-  const [timeRange, setTimeRange] = useState('this_week');
+  const [weekOffset, setWeekOffset] = useState(0);
   const [showBodyModal, setShowBodyModal] = useState(false);
   const [selectedMuscle, setSelectedMuscle] = useState<string | null>(null);
 
@@ -96,10 +128,11 @@ export function Dashboard({
     [user]
   );
 
+  const weekRange = useMemo(() => getWeekRange(weekOffset), [weekOffset]);
+
   const filteredWorkouts = useMemo(() => {
-    const { start, end } = getRangeFilter(timeRange);
-    return workouts.filter(w => w.date >= start && w.date <= end);
-  }, [workouts, timeRange]);
+    return workouts.filter(w => w.date >= weekRange.start && w.date <= weekRange.end);
+  }, [workouts, weekRange]);
 
   const stats = useMemo(() => {
     const actualVolume: Record<string, number> = { 
@@ -212,28 +245,39 @@ export function Dashboard({
       <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-bold text-lg text-slate-900">Недельный объем</h3>
-          <div className="flex gap-1">
+          <div className="flex items-center gap-2">
             <button 
-              onClick={() => setTimeRange('this_week')} 
-              className={`px-3 py-1 text-xs rounded-lg transition-colors ${
-                timeRange === 'this_week' 
-                  ? 'bg-slate-900 text-white' 
-                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-              }`}
-              data-testid="button-this-week"
+              onClick={() => setWeekOffset(prev => prev - 1)} 
+              className="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-colors"
+              data-testid="button-prev-week"
             >
-              Тек. неделя
+              <ChevronLeft size={16} />
             </button>
+            <div className="flex flex-col items-center min-w-[120px]">
+              <span className="text-sm font-bold text-slate-900" data-testid="text-week-label">
+                {weekRange.label}
+              </span>
+              {weekOffset !== 0 && (
+                <button 
+                  onClick={() => setWeekOffset(0)}
+                  className="text-[10px] text-purple-600 hover:text-purple-700 font-medium"
+                  data-testid="button-reset-week"
+                >
+                  Вернуться к текущей
+                </button>
+              )}
+            </div>
             <button 
-              onClick={() => setTimeRange('last_week')} 
-              className={`px-3 py-1 text-xs rounded-lg transition-colors ${
-                timeRange === 'last_week' 
-                  ? 'bg-slate-900 text-white' 
-                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+              onClick={() => setWeekOffset(prev => Math.min(prev + 1, 0))} 
+              disabled={weekOffset >= 0}
+              className={`p-2 rounded-full transition-colors ${
+                weekOffset >= 0 
+                  ? 'bg-slate-50 text-slate-300 cursor-not-allowed' 
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
               }`}
-              data-testid="button-last-week"
+              data-testid="button-next-week"
             >
-              Пред. неделя
+              <ChevronRight size={16} />
             </button>
           </div>
         </div>

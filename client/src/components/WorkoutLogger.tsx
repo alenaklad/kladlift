@@ -8,7 +8,8 @@ import {
   ArrowRight, 
   ChevronLeft,
   Info,
-  Youtube
+  Youtube,
+  Calendar
 } from 'lucide-react';
 import { 
   MUSCLE_GROUPS, 
@@ -23,19 +24,32 @@ import { getVisualForExercise, FULL_EXERCISE_DB } from '@/lib/exercises';
 import { MuscleTarget } from './MuscleTarget';
 
 interface WorkoutLoggerProps {
-  onSave: (exercises: WorkoutExercise[]) => void;
+  onSave: (exercises: WorkoutExercise[], date: number) => void;
   onCancel: () => void;
   initialExercises?: WorkoutExercise[];
+  initialDate?: number;
 }
 
 type ExerciseWithImage = ExerciseType & { imageUrl?: string | null };
 
-export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: WorkoutLoggerProps) {
+function formatDateForInput(timestamp: number): string {
+  const date = new Date(timestamp);
+  return date.toISOString().split('T')[0];
+}
+
+function parseInputDate(dateStr: string): number {
+  const date = new Date(dateStr);
+  date.setHours(12, 0, 0, 0);
+  return date.getTime();
+}
+
+export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initialDate }: WorkoutLoggerProps) {
   const [exercises, setExercises] = useState<WorkoutExercise[]>(initialExercises);
   const [selectedExercise, setSelectedExercise] = useState<ExerciseWithImage | null>(null);
   const [currentSets, setCurrentSets] = useState<SetData[]>([{ weight: 0, reps: 0 }]);
   const [activeCategory, setActiveCategory] = useState<MuscleGroup>('legs');
   const [search, setSearch] = useState('');
+  const [workoutDate, setWorkoutDate] = useState<number>(initialDate || Date.now());
 
   const { data: dbExercises = [], isLoading: dbLoading } = useQuery<SelectCustomExercise[]>({
     queryKey: ['/api/exercises']
@@ -83,7 +97,7 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: Worko
 
   const handleSave = () => {
     if (exercises.length > 0) {
-      onSave(exercises);
+      onSave(exercises, workoutDate);
     }
   };
 
@@ -252,7 +266,7 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: Worko
   return (
     <div className="p-6 pb-32 max-w-5xl mx-auto animate-fadeIn bg-slate-50 min-h-screen">
       <div className="sticky top-0 z-30 bg-slate-50/90 backdrop-blur-lg pt-6 pb-4 -mx-6 px-6 mb-6 border-b border-slate-200">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-4">
           <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">Запись</h1>
           <button 
             onClick={onCancel} 
@@ -261,6 +275,18 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: Worko
           >
             <X size={24} />
           </button>
+        </div>
+
+        <div className="flex items-center gap-3 mb-6 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+          <Calendar size={20} className="text-purple-600" />
+          <label className="text-sm font-medium text-slate-600">Дата тренировки:</label>
+          <input
+            type="date"
+            value={formatDateForInput(workoutDate)}
+            onChange={(e) => setWorkoutDate(parseInputDate(e.target.value))}
+            className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-base font-bold text-slate-900 outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all"
+            data-testid="input-workout-date"
+          />
         </div>
 
         <div className="relative mb-6 group">
