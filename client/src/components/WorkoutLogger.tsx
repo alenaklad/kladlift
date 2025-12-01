@@ -194,9 +194,20 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
 
   if (selectedExercise) {
     return (
-      <div className="fixed inset-0 bg-slate-50 z-50 flex flex-col animate-slideInRight">
+      <div className="fixed inset-0 bg-slate-50 z-50 flex flex-col md:flex-row animate-slideInRight">
+        <button 
+          onClick={() => {
+            setSelectedExercise(null);
+            setCurrentSets([{ weight: 0, reps: 0 }]);
+          }}
+          className="absolute top-6 left-6 p-3 bg-white/20 backdrop-blur-md rounded-full text-white z-20 hover:bg-white/30 transition-colors md:bg-slate-100 md:text-slate-600 md:hover:bg-slate-200"
+          data-testid="button-back-from-exercise"
+        >
+          <ChevronLeft size={24} />
+        </button>
+
         <div 
-          className="relative h-64 flex items-end p-6"
+          className="relative h-64 flex items-end p-6 md:hidden"
           style={{ 
             backgroundImage: `url(${getVisualForExercise(selectedExercise)})`,
             backgroundSize: 'cover',
@@ -204,16 +215,6 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
           }}
         >
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-          <button 
-            onClick={() => {
-              setSelectedExercise(null);
-              setCurrentSets([{ weight: 0, reps: 0 }]);
-            }}
-            className="absolute top-6 left-6 p-3 bg-white/20 backdrop-blur-md rounded-full text-white z-10 hover:bg-white/30 transition-colors"
-            data-testid="button-back-from-exercise"
-          >
-            <ChevronLeft size={24} />
-          </button>
           <div className="relative z-10">
             <span 
               className="inline-block px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest mb-2"
@@ -230,7 +231,36 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 pb-32 bg-slate-50">
+        <div className="hidden md:flex md:w-1/2 lg:w-2/5 md:p-8 md:items-center md:justify-center md:bg-slate-100">
+          <div className="relative w-full max-w-lg">
+            <div className="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl">
+              <img 
+                src={getVisualForExercise(selectedExercise)} 
+                alt={selectedExercise.name}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+              <div className="absolute top-4 left-4">
+                <span 
+                  className="inline-block px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg"
+                  style={{ 
+                    backgroundColor: MUSCLE_GROUPS[selectedExercise.muscle]?.bg,
+                    color: MUSCLE_GROUPS[selectedExercise.muscle]?.text
+                  }}
+                >
+                  {MUSCLE_GROUPS[selectedExercise.muscle]?.label}
+                </span>
+              </div>
+              <div className="absolute bottom-6 left-6 right-6">
+                <h1 className="text-2xl lg:text-3xl font-extrabold text-white leading-tight drop-shadow-lg">
+                  {selectedExercise.name}
+                </h1>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 pb-32 bg-slate-50 md:w-1/2 lg:w-3/5 md:pt-20">
           <p className="text-slate-600 text-sm mb-6 leading-relaxed">
             {selectedExercise.technique}
           </p>
