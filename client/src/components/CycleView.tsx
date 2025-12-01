@@ -1,11 +1,12 @@
-import { useMemo } from 'react';
-import { ArrowLeft, Calendar, Moon, Sun, Zap, Heart, Activity, Info } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { ArrowLeft, Calendar, Moon, Sun, Zap, Heart, Activity, Info, Plus, X } from 'lucide-react';
 import type { UserProfile } from '@shared/schema';
 import { getCyclePhaseForDate } from '@/lib/training';
 
 interface CycleViewProps {
   user: UserProfile;
   onBack: () => void;
+  onUpdatePeriod: (date: string) => void;
 }
 
 const PHASES_INFO = [
@@ -103,7 +104,13 @@ const PHASES_INFO = [
   }
 ];
 
-export function CycleView({ user, onBack }: CycleViewProps) {
+export function CycleView({ user, onBack, onUpdatePeriod }: CycleViewProps) {
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
+
   const cyclePhase = useMemo(() => 
     user.gender === 'female' && user.cycle 
       ? getCyclePhaseForDate(Date.now(), user.cycle.lastPeriod, user.cycle.length) 
@@ -112,6 +119,11 @@ export function CycleView({ user, onBack }: CycleViewProps) {
   );
 
   const currentPhaseInfo = PHASES_INFO.find(p => p.id === cyclePhase?.id);
+
+  const handleSavePeriod = () => {
+    onUpdatePeriod(selectedDate);
+    setShowDatePicker(false);
+  };
 
   if (!user.cycle || user.gender !== 'female') {
     return (
@@ -279,7 +291,58 @@ export function CycleView({ user, onBack }: CycleViewProps) {
             <span>Последняя менструация: <strong>{new Date(user.cycle.lastPeriod).toLocaleDateString('ru-RU')}</strong></span>
           </div>
         </div>
+
+        <button
+          onClick={() => setShowDatePicker(true)}
+          className="w-full mt-6 py-4 bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:from-pink-600 hover:to-pink-700 transition-all shadow-lg"
+          data-testid="button-start-period"
+        >
+          <Plus size={20} />
+          Отметить начало месячных
+        </button>
       </div>
+
+      {showDatePicker && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center animate-fadeIn p-6">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden">
+            <div className="p-6 border-b border-slate-200 flex justify-between items-center">
+              <h3 className="text-lg font-bold text-slate-900">Начало цикла</h3>
+              <button 
+                onClick={() => setShowDatePicker(false)}
+                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                data-testid="button-close-period-modal"
+              >
+                <X size={20} className="text-slate-500" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-slate-600">
+                Укажите дату, когда начались месячные. Это поможет точнее рассчитать фазы вашего цикла.
+              </p>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  Дата начала
+                </label>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  max={new Date().toISOString().split('T')[0]}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-lg font-bold text-center text-slate-900 outline-none focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 transition-all"
+                  data-testid="input-period-date"
+                />
+              </div>
+              <button
+                onClick={handleSavePeriod}
+                className="w-full py-4 bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-xl font-bold hover:from-pink-600 hover:to-pink-700 transition-colors"
+                data-testid="button-save-period"
+              >
+                Сохранить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

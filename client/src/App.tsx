@@ -7,13 +7,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   BarChart2, 
-  Dumbbell, 
-  MessageCircle, 
+  Plus,
+  Brain,
   Home,
   LogOut,
   User as UserIcon,
-  Shield,
-  PlusCircle
+  Shield
 } from "lucide-react";
 import type { UserProfile, Workout, BodyLog, WorkoutExercise, User } from "@shared/schema";
 
@@ -24,11 +23,11 @@ import { Progress } from "@/components/Progress";
 import { CoachView } from "@/components/CoachView";
 import { HistoryView } from "@/components/HistoryView";
 import { AdminPanel } from "@/components/AdminPanel";
-import { UserExerciseCreator } from "@/components/UserExerciseCreator";
 import { AuthForms } from "@/components/AuthForms";
 import { CycleView } from "@/components/CycleView";
+import { GoalDetailsView } from "@/components/GoalDetailsView";
 
-type AppView = 'dashboard' | 'log' | 'progress' | 'coach' | 'history' | 'admin' | 'my-exercises' | 'cycle';
+type AppView = 'dashboard' | 'log' | 'progress' | 'coach' | 'history' | 'admin' | 'cycle' | 'goal';
 
 function CalibrationView() {
   return (
@@ -234,12 +233,32 @@ function AuthenticatedApp() {
     return <AdminPanel onBack={() => setView('dashboard')} />;
   }
 
-  if (view === 'my-exercises') {
-    return <UserExerciseCreator onBack={() => setView('dashboard')} />;
+  if (view === 'cycle') {
+    return (
+      <CycleView 
+        user={userProfile} 
+        onBack={() => setView('dashboard')} 
+        onUpdatePeriod={async (date: string) => {
+          if (userProfile.cycle) {
+            await saveUserMutation.mutateAsync({
+              ...userProfile,
+              cycle: {
+                ...userProfile.cycle,
+                lastPeriod: date
+              }
+            });
+            toast({
+              title: "Цикл обновлён",
+              description: "Дата начала месячных сохранена"
+            });
+          }
+        }}
+      />
+    );
   }
 
-  if (view === 'cycle') {
-    return <CycleView user={userProfile} onBack={() => setView('dashboard')} />;
+  if (view === 'goal') {
+    return <GoalDetailsView user={userProfile} onBack={() => setView('dashboard')} />;
   }
 
   return (
@@ -248,14 +267,6 @@ function AuthenticatedApp() {
       <div className="fixed top-0 right-0 p-4 z-50 flex items-center gap-3">
         {authUser && (
           <>
-            <button
-              onClick={() => setView('my-exercises')}
-              className="p-2 bg-white border border-slate-200 rounded-full text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors shadow-sm"
-              data-testid="button-my-exercises"
-              title="Мои упражнения"
-            >
-              <PlusCircle size={18} />
-            </button>
             {isAdmin && (
               <button
                 onClick={() => setView('admin')}
@@ -310,6 +321,7 @@ function AuthenticatedApp() {
           onOpenHistory={() => setView('history')}
           onOpenCoach={() => setView('coach')}
           onOpenCycle={() => setView('cycle')}
+          onOpenGoal={() => setView('goal')}
         />
       )}
       
@@ -320,39 +332,40 @@ function AuthenticatedApp() {
         />
       )}
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-6 py-4 pb-safe z-50 shadow-lg">
-        <div className="flex justify-around items-center max-w-md mx-auto">
+      {/* Floating pill navigation */}
+      <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
+        <div className="flex items-center gap-2 bg-white/95 backdrop-blur-lg rounded-full px-3 py-2 shadow-2xl border border-slate-200/50">
           <button 
             onClick={() => setView('dashboard')}
-            className={`flex flex-col items-center gap-1 transition-colors ${view === 'dashboard' ? 'text-purple-600' : 'text-slate-400 hover:text-slate-600'}`}
+            className={`p-3 rounded-full transition-all ${view === 'dashboard' ? 'bg-slate-100 text-slate-900' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
             data-testid="nav-dashboard"
+            title="Главная"
           >
-            <Home size={24} />
-            <span className="text-xs font-medium">Главная</span>
-          </button>
-          <button 
-            onClick={() => setView('log')}
-            className="flex flex-col items-center gap-1 transition-colors text-slate-400 hover:text-slate-600"
-            data-testid="nav-log"
-          >
-            <Dumbbell size={24} />
-            <span className="text-xs font-medium">Запись</span>
-          </button>
-          <button 
-            onClick={() => setView('progress')}
-            className={`flex flex-col items-center gap-1 transition-colors ${view === 'progress' ? 'text-purple-600' : 'text-slate-400 hover:text-slate-600'}`}
-            data-testid="nav-progress"
-          >
-            <BarChart2 size={24} />
-            <span className="text-xs font-medium">Прогресс</span>
+            <Home size={22} />
           </button>
           <button 
             onClick={() => setView('coach')}
-            className="flex flex-col items-center gap-1 transition-colors text-slate-400 hover:text-slate-600"
+            className={`p-3 rounded-full transition-all ${view === 'coach' ? 'bg-slate-100 text-slate-900' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
             data-testid="nav-coach"
+            title="AI Тренер"
           >
-            <MessageCircle size={24} />
-            <span className="text-xs font-medium">Тренер</span>
+            <Brain size={22} />
+          </button>
+          <button 
+            onClick={() => setView('log')}
+            className="p-4 -my-1 rounded-full bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all hover:scale-105 active:scale-95"
+            data-testid="nav-log"
+            title="Новая тренировка"
+          >
+            <Plus size={24} />
+          </button>
+          <button 
+            onClick={() => setView('progress')}
+            className={`p-3 rounded-full transition-all ${view === 'progress' ? 'bg-slate-100 text-slate-900' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+            data-testid="nav-progress"
+            title="Прогресс"
+          >
+            <BarChart2 size={22} />
           </button>
         </div>
       </nav>

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { 
   Search, 
   X, 
@@ -9,8 +9,10 @@ import {
   ChevronLeft,
   Info,
   Youtube,
-  Calendar
+  Calendar,
+  Sparkles
 } from 'lucide-react';
+import { queryClient, apiRequest } from '@/lib/queryClient';
 import { 
   MUSCLE_GROUPS, 
   type Exercise as ExerciseType, 
@@ -50,6 +52,22 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
   const [activeCategory, setActiveCategory] = useState<MuscleGroup>('legs');
   const [search, setSearch] = useState('');
   const [workoutDate, setWorkoutDate] = useState<number>(initialDate || Date.now());
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newExercise, setNewExercise] = useState({
+    name: '',
+    muscle: 'legs' as MuscleGroup,
+    type: 'compound' as 'compound' | 'isolation',
+    technique: ''
+  });
+
+  const createExerciseMutation = useMutation({
+    mutationFn: (data: typeof newExercise) => apiRequest('POST', '/api/user-exercises', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user-exercises'] });
+      setShowCreateModal(false);
+      setNewExercise({ name: '', muscle: 'legs', type: 'compound', technique: '' });
+    }
+  });
 
   const { data: dbExercises = [], isLoading: dbLoading } = useQuery<SelectCustomExercise[]>({
     queryKey: ['/api/exercises']
@@ -264,7 +282,7 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
   }
 
   return (
-    <div className="p-6 pb-32 max-w-5xl mx-auto animate-fadeIn bg-slate-50 min-h-screen">
+    <div className="p-6 pb-32 w-full animate-fadeIn bg-slate-50 min-h-screen">
       <div className="sticky top-0 z-30 bg-slate-50/90 backdrop-blur-lg pt-6 pb-4 -mx-6 px-6 mb-6 border-b border-slate-200">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">Запись</h1>
@@ -386,7 +404,130 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
             </div>
           </div>
         ))}
+
+        <div 
+          onClick={() => {
+            if (search.trim()) {
+              setNewExercise(prev => ({ ...prev, name: search.trim() }));
+            }
+            setShowCreateModal(true);
+          }}
+          className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-[2rem] p-6 border-2 border-dashed border-purple-300 hover:border-purple-500 transition-all cursor-pointer flex flex-col items-center justify-center min-h-[280px] group"
+          data-testid="button-add-custom-exercise"
+        >
+          <div className="w-16 h-16 bg-purple-200 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <Sparkles size={32} className="text-purple-600" />
+          </div>
+          <h3 className="font-bold text-lg text-purple-800 text-center mb-2">
+            {filteredDB.length === 0 && search.trim() ? 'Упражнение не найдено' : 'Добавить своё упражнение'}
+          </h3>
+          <p className="text-sm text-purple-600 text-center">
+            {search.trim() ? `Создать "${search}"` : 'Создайте персональное упражнение'}
+          </p>
+        </div>
       </div>
+
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center animate-fadeIn p-6">
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden">
+            <div className="p-6 border-b border-slate-200 flex justify-between items-center">
+              <h3 className="text-lg font-bold text-slate-900">Новое упражнение</h3>
+              <button 
+                onClick={() => setShowCreateModal(false)}
+                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                data-testid="button-close-create-modal"
+              >
+                <X size={20} className="text-slate-500" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  Название
+                </label>
+                <input
+                  type="text"
+                  value={newExercise.name}
+                  onChange={(e) => setNewExercise(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all"
+                  placeholder="Название упражнения"
+                  data-testid="input-new-exercise-name"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  Группа мышц
+                </label>
+                <select
+                  value={newExercise.muscle}
+                  onChange={(e) => setNewExercise(prev => ({ ...prev, muscle: e.target.value as MuscleGroup }))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all"
+                  data-testid="select-new-exercise-muscle"
+                >
+                  {(Object.keys(MUSCLE_GROUPS) as MuscleGroup[]).map(key => (
+                    <option key={key} value={key}>{MUSCLE_GROUPS[key].label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  Тип
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setNewExercise(prev => ({ ...prev, type: 'compound' }))}
+                    className={`px-4 py-3 rounded-xl font-medium transition-all ${
+                      newExercise.type === 'compound'
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                    data-testid="button-type-compound"
+                  >
+                    Базовое
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewExercise(prev => ({ ...prev, type: 'isolation' }))}
+                    className={`px-4 py-3 rounded-xl font-medium transition-all ${
+                      newExercise.type === 'isolation'
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                    data-testid="button-type-isolation"
+                  >
+                    Изоляция
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  Техника (опционально)
+                </label>
+                <textarea
+                  value={newExercise.technique}
+                  onChange={(e) => setNewExercise(prev => ({ ...prev, technique: e.target.value }))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all resize-none h-24"
+                  placeholder="Описание техники выполнения"
+                  data-testid="input-new-exercise-technique"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  if (newExercise.name.trim()) {
+                    createExerciseMutation.mutate(newExercise);
+                  }
+                }}
+                disabled={!newExercise.name.trim() || createExerciseMutation.isPending}
+                className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-xl font-bold hover:from-purple-700 hover:to-purple-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                data-testid="button-save-new-exercise"
+              >
+                {createExerciseMutation.isPending ? 'Сохранение...' : 'Создать упражнение'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {exercises.length > 0 && (
         <div className="fixed bottom-8 left-0 right-0 z-40 flex justify-center px-6">

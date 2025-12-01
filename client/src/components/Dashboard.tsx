@@ -76,6 +76,7 @@ interface DashboardProps {
   onOpenHistory: () => void;
   onOpenCoach: () => void;
   onOpenCycle: () => void;
+  onOpenGoal: () => void;
 }
 
 function getWeekRange(weekOffset: number): { start: number; end: number; label: string } {
@@ -117,7 +118,8 @@ export function Dashboard({
   onDeleteBodyLog,
   onOpenHistory,
   onOpenCoach,
-  onOpenCycle
+  onOpenCycle,
+  onOpenGoal
 }: DashboardProps) {
   const [weekOffset, setWeekOffset] = useState(0);
   const [showBodyModal, setShowBodyModal] = useState(false);
@@ -168,6 +170,13 @@ export function Dashboard({
 
   const hasFatData = user.fat && bodyChartData.some(d => d.fat && d.fat > 0);
 
+  const needsMeasurementReminder = useMemo(() => {
+    if (bodyLogs.length === 0) return true;
+    const lastLog = bodyLogs.reduce((latest, log) => log.date > latest.date ? log : latest, bodyLogs[0]);
+    const daysSinceLastLog = Math.floor((Date.now() - lastLog.date) / (1000 * 60 * 60 * 24));
+    return daysSinceLastLog >= 7;
+  }, [bodyLogs]);
+
   return (
     <div className="p-6 pb-24 max-w-4xl mx-auto space-y-6 animate-fadeIn bg-slate-50 min-h-screen">
       <header className="flex justify-between items-end mb-6">
@@ -197,9 +206,13 @@ export function Dashboard({
           <div className="absolute -top-20 -right-20 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
           <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-purple-400/20 rounded-full blur-3xl" />
         </div>
-        <div className="relative z-10 flex-1">
+        <div 
+          className="relative z-10 flex-1 cursor-pointer hover:opacity-90 transition-opacity"
+          onClick={onOpenGoal}
+          data-testid="card-goal"
+        >
           <div className="flex items-center gap-2 mb-2 text-purple-200 text-xs font-bold uppercase tracking-wider">
-            <Target size={14}/> Цель
+            <Target size={14}/> Цель <ChevronRight size={14} className="opacity-50" />
           </div>
           <h2 className="text-2xl font-bold mb-1 text-white" data-testid="text-goal">
             {GOALS[user.goal]?.label}
@@ -318,6 +331,19 @@ export function Dashboard({
       </div>
 
       <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col relative overflow-hidden">
+        {needsMeasurementReminder && (
+          <div 
+            onClick={() => setShowBodyModal(true)}
+            className="mb-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl cursor-pointer hover:from-amber-100 hover:to-orange-100 transition-colors"
+            data-testid="reminder-measurement"
+          >
+            <div className="flex items-center gap-2 text-amber-700">
+              <Scale size={16} />
+              <span className="text-sm font-medium">Пора обновить параметры тела</span>
+            </div>
+            <p className="text-xs text-amber-600 mt-1">Добавьте замер для отслеживания прогресса</p>
+          </div>
+        )}
         <div className="flex justify-between items-start mb-2 relative z-10">
           <h3 className="text-lg font-semibold flex items-center gap-2 text-slate-900">
             <Scale className="w-5 h-5 text-slate-400" /> Тело
