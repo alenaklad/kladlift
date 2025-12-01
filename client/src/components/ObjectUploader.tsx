@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload, X, Image, Video, Loader2 } from 'lucide-react';
 
@@ -21,6 +21,10 @@ export function ObjectUploader({
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setUploadedUrl(currentUrl || null);
+  }, [currentUrl]);
 
   const getAcceptTypes = () => {
     switch (accept) {
@@ -49,7 +53,8 @@ export function ObjectUploader({
     try {
       const response = await fetch('/api/objects/upload-url');
       if (!response.ok) {
-        throw new Error('Не удалось получить URL для загрузки');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Не удалось получить URL для загрузки');
       }
       const { uploadUrl } = await response.json();
 
@@ -72,19 +77,20 @@ export function ObjectUploader({
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ objectUrl: fileUrl, visibility: 'private' })
+        body: JSON.stringify({ objectUrl: fileUrl, visibility: 'public' })
       });
       
       if (!aclResponse.ok) {
         console.warn('Не удалось установить права доступа');
       }
       
-      const { path: normalizedPath } = await aclResponse.json();
-      const finalUrl = normalizedPath || fileUrl;
+      const aclData = await aclResponse.json().catch(() => ({}));
+      const finalUrl = aclData.path || fileUrl;
       
       setUploadedUrl(finalUrl);
       onUploadComplete(finalUrl);
     } catch (err) {
+      console.error('Upload error:', err);
       setError(err instanceof Error ? err.message : 'Ошибка загрузки');
     } finally {
       setIsUploading(false);
@@ -105,7 +111,7 @@ export function ObjectUploader({
 
   if (uploadedUrl) {
     return (
-      <div className={`relative rounded-lg overflow-hidden border border-white/10 bg-[#1A1F2E] ${className}`}>
+      <div className={`relative rounded-lg overflow-hidden border border-slate-200 bg-slate-100 ${className}`}>
         {isVideo(uploadedUrl) ? (
           <video 
             src={uploadedUrl} 
@@ -146,18 +152,18 @@ export function ObjectUploader({
       <Button
         type="button"
         variant="outline"
-        className="w-full h-24 border-dashed border-2 border-white/20 hover:border-white/40 bg-[#1A1F2E]"
+        className="w-full h-24 border-dashed border-2 border-slate-300 hover:border-slate-400 bg-slate-100 hover:bg-slate-200"
         onClick={() => fileInputRef.current?.click()}
         disabled={isUploading}
         data-testid="button-open-uploader"
       >
         {isUploading ? (
-          <div className="flex flex-col items-center gap-2 text-gray-400">
+          <div className="flex flex-col items-center gap-2 text-slate-500">
             <Loader2 size={24} className="animate-spin" />
             <span className="text-sm">Загрузка...</span>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-2 text-gray-400">
+          <div className="flex flex-col items-center gap-2 text-slate-500">
             {accept === 'video' ? <Video size={24} /> : accept === 'image' ? <Image size={24} /> : <Upload size={24} />}
             <span className="text-sm">{label}</span>
           </div>

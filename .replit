@@ -52,3 +52,12 @@ waitForPort = 5000
 
 [agent]
 integrations = ["javascript_mem_db:1.0.0", "javascript_openai_ai_integrations:1.0.0", "javascript_log_in_with_replit:1.0.0", "javascript_database:1.0.0"]
+
+[objectStorage]
+defaultBucketID = "replit-objstore-0540723d-28cb-44c7-973e-2a7a688754a0"
+
+[userenv]
+
+[userenv.shared]
+PRIVATE_OBJECT_DIR = "/kladlift-media/uploads"
+PUBLIC_OBJECT_SEARCH_PATHS = "/kladlift-media/public"
