@@ -238,6 +238,42 @@ export const userProfileSchema = z.object({
 export type UserProfile = z.infer<typeof userProfileSchema>;
 export type CycleData = z.infer<typeof cycleDataSchema>;
 
+// --- Cardio Exercise Types ---
+export const CARDIO_TYPES = {
+  hiit: { 
+    label: 'HIIT', 
+    fields: ['duration'],
+    exercises: ['hiit_gen']
+  },
+  distance: { 
+    label: 'Дистанция', 
+    fields: ['duration', 'distance'],
+    exercises: ['run_tread', 'run_outdoor', 'bike_outdoor', 'bike_stat', 'row_erg', 'swimming', 'elliptical']
+  },
+  stepper: { 
+    label: 'Степпер', 
+    fields: ['duration', 'steps'],
+    exercises: ['stair_climber']
+  },
+  jumprope: { 
+    label: 'Скакалка', 
+    fields: ['duration', 'jumps'],
+    exercises: ['jump_rope']
+  }
+} as const;
+
+export type CardioType = keyof typeof CARDIO_TYPES;
+
+// Helper to get cardio type by exercise id
+export function getCardioType(exerciseId: string): CardioType | null {
+  for (const [type, config] of Object.entries(CARDIO_TYPES)) {
+    if (config.exercises.includes(exerciseId)) {
+      return type as CardioType;
+    }
+  }
+  return null;
+}
+
 // --- Exercise ---
 export interface Exercise {
   id: string;
@@ -245,12 +281,20 @@ export interface Exercise {
   muscle: MuscleGroup;
   type: 'compound' | 'isolation';
   technique: string;
+  cardioType?: CardioType;
 }
 
-// --- Set ---
+// --- Set (supports both strength and cardio) ---
 export const setSchema = z.object({
-  weight: z.number().min(0),
-  reps: z.number().min(0)
+  // Strength training fields
+  weight: z.number().min(0).optional(),
+  reps: z.number().min(0).optional(),
+  // Cardio fields
+  duration: z.number().min(0).optional(), // minutes
+  distance: z.number().min(0).optional(), // km or miles
+  distanceUnit: z.enum(['km', 'mi']).optional(),
+  steps: z.number().min(0).optional(), // for stepper
+  jumps: z.number().min(0).optional() // for jump rope
 });
 
 export type SetData = z.infer<typeof setSchema>;
@@ -260,7 +304,8 @@ export const workoutExerciseSchema = z.object({
   id: z.string(),
   name: z.string(),
   muscle: z.string(),
-  sets: z.array(setSchema)
+  sets: z.array(setSchema),
+  cardioType: z.string().optional()
 });
 
 export type WorkoutExercise = z.infer<typeof workoutExerciseSchema>;
