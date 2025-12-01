@@ -145,6 +145,9 @@ export function getExercisesByMuscle(muscle: MuscleGroup): Exercise[] {
   return FULL_EXERCISE_DB.filter(e => e.muscle === muscle);
 }
 
-export function getVisualForExercise(exercise: Exercise): string {
+export function getVisualForExercise(exercise: Exercise & { imageUrl?: string | null }): string {
+  if (exercise.imageUrl) {
+    return exercise.imageUrl;
+  }
   return MUSCLE_GROUPS[exercise.muscle]?.image || MUSCLE_GROUPS.legs.image;
 }

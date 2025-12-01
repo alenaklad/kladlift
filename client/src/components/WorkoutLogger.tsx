@@ -28,9 +28,11 @@ interface WorkoutLoggerProps {
   initialExercises?: WorkoutExercise[];
 }
 
+type ExerciseWithImage = ExerciseType & { imageUrl?: string | null };
+
 export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: WorkoutLoggerProps) {
   const [exercises, setExercises] = useState<WorkoutExercise[]>(initialExercises);
-  const [selectedExercise, setSelectedExercise] = useState<ExerciseType | null>(null);
+  const [selectedExercise, setSelectedExercise] = useState<ExerciseWithImage | null>(null);
   const [currentSets, setCurrentSets] = useState<SetData[]>([{ weight: 0, reps: 0 }]);
   const [activeCategory, setActiveCategory] = useState<MuscleGroup>('legs');
   const [search, setSearch] = useState('');
@@ -43,22 +45,24 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [] }: Worko
     queryKey: ['/api/user-exercises']
   });
 
-  const allExercises = useMemo(() => {
+  const allExercises = useMemo((): ExerciseWithImage[] => {
     if (dbExercises.length > 0) {
-      const combined: ExerciseType[] = [
+      const combined: ExerciseWithImage[] = [
         ...dbExercises.map(ex => ({
           id: ex.id,
           name: ex.name,
           muscle: ex.muscle as MuscleGroup,
           type: ex.type as 'compound' | 'isolation',
-          technique: ex.technique
+          technique: ex.technique,
+          imageUrl: ex.imageUrl
         })),
         ...userExercises.map(ex => ({
           id: ex.id,
           name: ex.name,
           muscle: ex.muscle as MuscleGroup,
           type: ex.type as 'compound' | 'isolation',
-          technique: ex.technique
+          technique: ex.technique,
+          imageUrl: ex.imageUrl
         }))
       ];
       return combined;
