@@ -14,11 +14,14 @@ import {
 } from 'lucide-react';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { 
-  MUSCLE_GROUPS, 
+  MUSCLE_GROUPS,
+  CARDIO_TYPES,
+  getCardioType,
   type Exercise as ExerciseType, 
   type WorkoutExercise, 
   type SetData,
   type MuscleGroup,
+  type CardioType,
   type SelectCustomExercise,
   type SelectUserExercise
 } from '@shared/schema';
@@ -59,6 +62,10 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
     type: 'compound' as 'compound' | 'isolation',
     technique: ''
   });
+  const [distanceUnit, setDistanceUnit] = useState<'km' | 'mi'>('km');
+  const [cardioData, setCardioData] = useState<SetData>({ duration: 0, distance: 0, steps: 0, jumps: 0, distanceUnit: 'km' });
+
+  const selectedCardioType = selectedExercise ? getCardioType(selectedExercise.id) : null;
 
   const createExerciseMutation = useMutation({
     mutationFn: (data: typeof newExercise) => apiRequest('POST', '/api/user-exercises', data),
@@ -136,19 +143,53 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
 
   const addExerciseToWorkout = () => {
     if (!selectedExercise) return;
-    const validSets = currentSets.filter(s => s.weight > 0 || s.reps > 0);
-    if (validSets.length === 0) return;
+    
+    const cardioType = getCardioType(selectedExercise.id);
+    
+    if (cardioType) {
+      if (!cardioData.duration || cardioData.duration <= 0) return;
+      
+      const cardioSet: SetData = {
+        duration: cardioData.duration,
+        distanceUnit: distanceUnit
+      };
+      
+      if (cardioType === 'distance' && cardioData.distance) {
+        cardioSet.distance = cardioData.distance;
+      }
+      if (cardioType === 'stepper' && cardioData.steps) {
+        cardioSet.steps = cardioData.steps;
+      }
+      if (cardioType === 'jumprope' && cardioData.jumps) {
+        cardioSet.jumps = cardioData.jumps;
+      }
+      
+      const newExercise: WorkoutExercise = {
+        id: selectedExercise.id,
+        name: selectedExercise.name,
+        muscle: selectedExercise.muscle,
+        sets: [cardioSet],
+        cardioType
+      };
+      
+      setExercises([...exercises, newExercise]);
+      setSelectedExercise(null);
+      setCardioData({ duration: 0, distance: 0, steps: 0, jumps: 0, distanceUnit: 'km' });
+    } else {
+      const validSets = currentSets.filter(s => (s.weight && s.weight > 0) || (s.reps && s.reps > 0));
+      if (validSets.length === 0) return;
 
-    const newExercise: WorkoutExercise = {
-      id: selectedExercise.id,
-      name: selectedExercise.name,
-      muscle: selectedExercise.muscle,
-      sets: validSets
-    };
+      const newExercise: WorkoutExercise = {
+        id: selectedExercise.id,
+        name: selectedExercise.name,
+        muscle: selectedExercise.muscle,
+        sets: validSets
+      };
 
-    setExercises([...exercises, newExercise]);
-    setSelectedExercise(null);
-    setCurrentSets([{ weight: 0, reps: 0 }]);
+      setExercises([...exercises, newExercise]);
+      setSelectedExercise(null);
+      setCurrentSets([{ weight: 0, reps: 0 }]);
+    }
   };
 
   if (selectedExercise) {
@@ -209,63 +250,178 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
             </button>
           </div>
 
-          <div className="space-y-4 mb-8">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] mb-2">
-              Подходы
-            </h3>
-            {currentSets.map((set, idx) => (
-              <div key={idx} className="flex items-center gap-4 animate-fadeIn">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-purple-700 text-white flex items-center justify-center font-bold text-lg shadow-md">
-                  {idx + 1}
+          {selectedCardioType ? (
+            <div className="space-y-4 mb-8">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] mb-2">
+                Данные тренировки
+              </h3>
+              
+              <div className="flex items-center gap-4 animate-fadeIn">
+                <div className="flex-1 relative">
+                  <input 
+                    type="number" 
+                    value={cardioData.duration || ''} 
+                    onChange={(e) => setCardioData(prev => ({ ...prev, duration: parseFloat(e.target.value) || 0 }))} 
+                    className="w-full bg-white border border-slate-200 p-4 rounded-2xl text-2xl font-bold text-center text-slate-900 outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all shadow-sm" 
+                    placeholder="0" 
+                    autoFocus
+                    data-testid="input-duration"
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">
+                    МИН
+                  </span>
                 </div>
-                <div className="flex-1 flex gap-4">
-                  <div className="flex-1 relative">
-                    <input 
-                      type="number" 
-                      value={set.weight || ''} 
-                      onChange={(e) => updateCurrentSet(idx, 'weight', e.target.value)} 
-                      className="w-full bg-white border border-slate-200 p-4 rounded-2xl text-2xl font-bold text-center text-slate-900 outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all shadow-sm" 
-                      placeholder="0" 
-                      autoFocus={idx === currentSets.length - 1}
-                      data-testid={`input-weight-${idx}`}
-                    />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">
-                      KG
-                    </span>
-                  </div>
-                  <div className="flex-1 relative">
-                    <input 
-                      type="number" 
-                      value={set.reps || ''} 
-                      onChange={(e) => updateCurrentSet(idx, 'reps', e.target.value)} 
-                      className="w-full bg-white border border-slate-200 p-4 rounded-2xl text-2xl font-bold text-center text-slate-900 outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all shadow-sm" 
-                      placeholder="0" 
-                      data-testid={`input-reps-${idx}`}
-                    />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">
-                      REPS
-                    </span>
-                  </div>
-                </div>
-                {currentSets.length > 1 && (
-                  <button 
-                    onClick={() => removeSetLine(idx)} 
-                    className="p-4 rounded-2xl bg-slate-100 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                    data-testid={`button-remove-set-${idx}`}
-                  >
-                    <Trash2 size={20} />
-                  </button>
-                )}
               </div>
-            ))}
-            <button 
-              onClick={addNewSetLine} 
-              className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-bold hover:border-purple-500 hover:text-purple-600 transition-all flex items-center justify-center gap-2"
-              data-testid="button-add-set"
-            >
-              <Plus size={20} /> Добавить сет
-            </button>
-          </div>
+
+              {selectedCardioType === 'distance' && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-4 animate-fadeIn">
+                    <div className="flex-1 relative">
+                      <input 
+                        type="number"
+                        step="0.01"
+                        value={cardioData.distance || ''} 
+                        onChange={(e) => setCardioData(prev => ({ ...prev, distance: parseFloat(e.target.value) || 0 }))} 
+                        className="w-full bg-white border border-slate-200 p-4 rounded-2xl text-2xl font-bold text-center text-slate-900 outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all shadow-sm" 
+                        placeholder="0" 
+                        data-testid="input-distance"
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none uppercase">
+                        {distanceUnit}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 justify-center">
+                    <button
+                      type="button"
+                      onClick={() => setDistanceUnit('km')}
+                      className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${
+                        distanceUnit === 'km'
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                      data-testid="button-unit-km"
+                    >
+                      Километры
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDistanceUnit('mi')}
+                      className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${
+                        distanceUnit === 'mi'
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                      data-testid="button-unit-mi"
+                    >
+                      Мили
+                    </button>
+                  </div>
+                  {cardioData.duration && cardioData.duration > 0 && cardioData.distance && cardioData.distance > 0 && (
+                    <div className="bg-purple-50 border border-purple-100 rounded-2xl p-4 text-center">
+                      <span className="text-purple-600 font-bold text-lg">
+                        Скорость: {(cardioData.distance / (cardioData.duration / 60)).toFixed(2)} {distanceUnit}/ч
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {selectedCardioType === 'stepper' && (
+                <div className="flex items-center gap-4 animate-fadeIn">
+                  <div className="flex-1 relative">
+                    <input 
+                      type="number" 
+                      value={cardioData.steps || ''} 
+                      onChange={(e) => setCardioData(prev => ({ ...prev, steps: parseInt(e.target.value) || 0 }))} 
+                      className="w-full bg-white border border-slate-200 p-4 rounded-2xl text-2xl font-bold text-center text-slate-900 outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all shadow-sm" 
+                      placeholder="0" 
+                      data-testid="input-steps"
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">
+                      СТУП.
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {selectedCardioType === 'jumprope' && (
+                <div className="flex items-center gap-4 animate-fadeIn">
+                  <div className="flex-1 relative">
+                    <input 
+                      type="number" 
+                      value={cardioData.jumps || ''} 
+                      onChange={(e) => setCardioData(prev => ({ ...prev, jumps: parseInt(e.target.value) || 0 }))} 
+                      className="w-full bg-white border border-slate-200 p-4 rounded-2xl text-2xl font-bold text-center text-slate-900 outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all shadow-sm" 
+                      placeholder="0" 
+                      data-testid="input-jumps"
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">
+                      ПРЫЖ.
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4 mb-8">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] mb-2">
+                Подходы
+              </h3>
+              {currentSets.map((set, idx) => (
+                <div key={idx} className="flex items-center gap-4 animate-fadeIn">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-purple-700 text-white flex items-center justify-center font-bold text-lg shadow-md">
+                    {idx + 1}
+                  </div>
+                  <div className="flex-1 flex gap-4">
+                    <div className="flex-1 relative">
+                      <input 
+                        type="number" 
+                        value={set.weight || ''} 
+                        onChange={(e) => updateCurrentSet(idx, 'weight', e.target.value)} 
+                        className="w-full bg-white border border-slate-200 p-4 rounded-2xl text-2xl font-bold text-center text-slate-900 outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all shadow-sm" 
+                        placeholder="0" 
+                        autoFocus={idx === currentSets.length - 1}
+                        data-testid={`input-weight-${idx}`}
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">
+                        KG
+                      </span>
+                    </div>
+                    <div className="flex-1 relative">
+                      <input 
+                        type="number" 
+                        value={set.reps || ''} 
+                        onChange={(e) => updateCurrentSet(idx, 'reps', e.target.value)} 
+                        className="w-full bg-white border border-slate-200 p-4 rounded-2xl text-2xl font-bold text-center text-slate-900 outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all shadow-sm" 
+                        placeholder="0" 
+                        data-testid={`input-reps-${idx}`}
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">
+                        REPS
+                      </span>
+                    </div>
+                  </div>
+                  {currentSets.length > 1 && (
+                    <button 
+                      onClick={() => removeSetLine(idx)} 
+                      className="p-4 rounded-2xl bg-slate-100 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      data-testid={`button-remove-set-${idx}`}
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button 
+                onClick={addNewSetLine} 
+                className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-bold hover:border-purple-500 hover:text-purple-600 transition-all flex items-center justify-center gap-2"
+                data-testid="button-add-set"
+              >
+                <Plus size={20} /> Добавить сет
+              </button>
+            </div>
+          )}
 
           <div className="mt-auto sticky bottom-0 bg-slate-50 pt-4 pb-8 border-t border-slate-200">
             <button 

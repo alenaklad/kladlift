@@ -267,7 +267,7 @@ export type CardioType = keyof typeof CARDIO_TYPES;
 // Helper to get cardio type by exercise id
 export function getCardioType(exerciseId: string): CardioType | null {
   for (const [type, config] of Object.entries(CARDIO_TYPES)) {
-    if (config.exercises.includes(exerciseId)) {
+    if ((config.exercises as readonly string[]).includes(exerciseId)) {
       return type as CardioType;
     }
   }
