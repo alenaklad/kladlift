@@ -42,7 +42,13 @@ Preferred communication style: Simple, everyday language.
 
 **Data Visualization**: Recharts library for area charts, progress graphs, and workout analytics
 
-**Routing**: Single-page application with view-based navigation (dashboard, log, progress, coach, history)
+**Routing**: Single-page application with view-based navigation (dashboard, log, progress, coach, history, profile, admin, cycle, goal)
+
+**Key UI Components**:
+- UserMenu: Apple-style glassmorphic dropdown menu with avatar, settings, admin panel access, and logout
+- ProfileView: Recovery factor editing page with sliders for sleep/training days and selects for stress/calories
+- OptimizedImage: Lazy loading image component with IntersectionObserver, placeholder animation, and error handling
+- MuscleDetailModal: Exercise volume detail view with Russian declension for set counts (подход/подхода/подходов)
 
 ## Backend Architecture
 
