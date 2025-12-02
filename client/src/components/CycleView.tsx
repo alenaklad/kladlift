@@ -16,7 +16,7 @@ const PHASES_INFO = [
     days: '1-5',
     color: '#EF4444',
     bgClass: 'from-red-500/20 to-red-600/10',
-    borderClass: 'border-red-300',
+    borderClass: 'border-red-300 dark:border-red-700',
     icon: Moon,
     description: 'Низкая энергия. Организм восстанавливается.',
     training: [
@@ -40,7 +40,7 @@ const PHASES_INFO = [
     days: '6-13',
     color: '#EC4899',
     bgClass: 'from-pink-500/20 to-pink-600/10',
-    borderClass: 'border-pink-300',
+    borderClass: 'border-pink-300 dark:border-pink-700',
     icon: Sun,
     description: 'Рост энергии. Эстроген повышается, сила возвращается.',
     training: [
@@ -62,7 +62,7 @@ const PHASES_INFO = [
     days: '14-16',
     color: '#8B5CF6',
     bgClass: 'from-purple-500/20 to-purple-600/10',
-    borderClass: 'border-purple-300',
+    borderClass: 'border-purple-300 dark:border-purple-700',
     icon: Zap,
     description: 'Пик силы и тестостерона. Максимальная производительность.',
     training: [
@@ -84,7 +84,7 @@ const PHASES_INFO = [
     days: '17-28',
     color: '#F59E0B',
     bgClass: 'from-amber-500/20 to-amber-600/10',
-    borderClass: 'border-amber-300',
+    borderClass: 'border-amber-300 dark:border-amber-700',
     icon: Heart,
     description: 'Спад энергии. Прогестерон повышается, выносливость снижается.',
     training: [
@@ -127,25 +127,25 @@ export function CycleView({ user, onBack, onUpdatePeriod }: CycleViewProps) {
 
   if (!user.cycle || user.gender !== 'female') {
     return (
-      <div className="min-h-screen bg-slate-50 p-6">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6">
         <button 
           onClick={onBack}
-          className="mb-6 p-3 bg-white border border-slate-200 rounded-full shadow-sm hover:bg-slate-100 transition-colors"
+          className="mb-6 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full shadow-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
           data-testid="button-back"
         >
-          <ArrowLeft size={20} className="text-slate-600" />
+          <ArrowLeft size={20} className="text-slate-600 dark:text-slate-400" />
         </button>
         <div className="text-center py-12">
-          <Activity size={48} className="mx-auto text-slate-300 mb-4" />
-          <h2 className="text-xl font-bold text-slate-900 mb-2">Цикл не настроен</h2>
-          <p className="text-slate-500">Укажите дату последней менструации в настройках профиля.</p>
+          <Activity size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Цикл не настроен</h2>
+          <p className="text-slate-500 dark:text-slate-400">Укажите дату последней менструации в настройках профиля.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24">
       <div 
         className="relative p-6 pb-8"
         style={{ 
@@ -154,10 +154,10 @@ export function CycleView({ user, onBack, onUpdatePeriod }: CycleViewProps) {
       >
         <button 
           onClick={onBack}
-          className="mb-6 p-3 bg-white/80 backdrop-blur-sm border border-white/50 rounded-full shadow-sm hover:bg-white transition-colors"
+          className="mb-6 p-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-white/50 dark:border-slate-700 rounded-full shadow-sm hover:bg-white dark:hover:bg-slate-800 transition-colors"
           data-testid="button-back"
         >
-          <ArrowLeft size={20} className="text-slate-600" />
+          <ArrowLeft size={20} className="text-slate-600 dark:text-slate-400" />
         </button>
 
         <div className="flex items-center gap-3 mb-2">
@@ -168,8 +168,8 @@ export function CycleView({ user, onBack, onUpdatePeriod }: CycleViewProps) {
             {currentPhaseInfo?.icon && <currentPhaseInfo.icon size={24} style={{ color: cyclePhase?.color }} />}
           </div>
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-500">День цикла</p>
-            <p className="text-3xl font-bold text-slate-900">{cyclePhase?.day}</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">День цикла</p>
+            <p className="text-3xl font-bold text-slate-900 dark:text-white">{cyclePhase?.day}</p>
           </div>
         </div>
 
@@ -180,20 +180,20 @@ export function CycleView({ user, onBack, onUpdatePeriod }: CycleViewProps) {
         >
           {cyclePhase?.name}
         </h1>
-        <p className="text-slate-600">{cyclePhase?.desc}</p>
+        <p className="text-slate-600 dark:text-slate-300">{cyclePhase?.desc}</p>
       </div>
 
       <div className="p-6 space-y-6">
         {currentPhaseInfo && (
           <>
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-              <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <h3 className="font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                 <Zap size={18} style={{ color: cyclePhase?.color }} />
                 Рекомендуемые тренировки
               </h3>
               <ul className="space-y-2">
                 {currentPhaseInfo.training.map((item, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
+                  <li key={i} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
                     <span className="text-green-500 mt-0.5">✓</span>
                     {item}
                   </li>
@@ -202,14 +202,14 @@ export function CycleView({ user, onBack, onUpdatePeriod }: CycleViewProps) {
             </div>
 
             {currentPhaseInfo.avoid.length > 0 && (
-              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
+              <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <h3 className="font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                   <Info size={18} className="text-red-500" />
                   Лучше избегать
                 </h3>
                 <ul className="space-y-2">
                   {currentPhaseInfo.avoid.map((item, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
+                    <li key={i} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
                       <span className="text-red-400 mt-0.5">✗</span>
                       {item}
                     </li>
@@ -219,25 +219,25 @@ export function CycleView({ user, onBack, onUpdatePeriod }: CycleViewProps) {
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                <h4 className="font-bold text-slate-900 mb-2 text-sm">Питание</h4>
-                <p className="text-sm text-slate-600">{currentPhaseInfo.nutrition}</p>
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <h4 className="font-bold text-slate-900 dark:text-white mb-2 text-sm">Питание</h4>
+                <p className="text-sm text-slate-600 dark:text-slate-300">{currentPhaseInfo.nutrition}</p>
               </div>
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                <h4 className="font-bold text-slate-900 mb-2 text-sm">Сон</h4>
-                <p className="text-sm text-slate-600">{currentPhaseInfo.sleep}</p>
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <h4 className="font-bold text-slate-900 dark:text-white mb-2 text-sm">Сон</h4>
+                <p className="text-sm text-slate-600 dark:text-slate-300">{currentPhaseInfo.sleep}</p>
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-              <h4 className="font-bold text-slate-900 mb-2 text-sm">Настроение</h4>
-              <p className="text-sm text-slate-600">{currentPhaseInfo.mood}</p>
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <h4 className="font-bold text-slate-900 dark:text-white mb-2 text-sm">Настроение</h4>
+              <p className="text-sm text-slate-600 dark:text-slate-300">{currentPhaseInfo.mood}</p>
             </div>
           </>
         )}
 
         <div className="mt-8">
-          <h3 className="font-bold text-slate-900 mb-4 text-lg">Все фазы цикла</h3>
+          <h3 className="font-bold text-slate-900 dark:text-white mb-4 text-lg">Все фазы цикла</h3>
           <div className="space-y-3">
             {PHASES_INFO.map((phase) => {
               const isActive = phase.id === cyclePhase?.id;
@@ -248,21 +248,23 @@ export function CycleView({ user, onBack, onUpdatePeriod }: CycleViewProps) {
                   className={`p-4 rounded-2xl border-2 transition-all ${
                     isActive 
                       ? `bg-gradient-to-r ${phase.bgClass} ${phase.borderClass}` 
-                      : 'bg-white border-slate-100 opacity-60'
+                      : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 opacity-60'
                   }`}
                   data-testid={`phase-card-${phase.id}`}
                 >
                   <div className="flex items-center gap-3">
                     <div 
-                      className="w-10 h-10 rounded-xl flex items-center justify-center"
-                      style={{ backgroundColor: isActive ? `${phase.color}20` : '#f1f5f9' }}
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                        isActive ? '' : 'bg-slate-100 dark:bg-slate-800'
+                      }`}
+                      style={isActive ? { backgroundColor: `${phase.color}20` } : undefined}
                     >
                       <PhaseIcon size={20} style={{ color: isActive ? phase.color : '#94a3b8' }} />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-900">{phase.name}</span>
-                        <span className="text-xs text-slate-500">Дни {phase.days}</span>
+                        <span className="font-bold text-slate-900 dark:text-white">{phase.name}</span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">Дни {phase.days}</span>
                         {isActive && (
                           <span 
                             className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full"
@@ -272,7 +274,7 @@ export function CycleView({ user, onBack, onUpdatePeriod }: CycleViewProps) {
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-500 mt-0.5">{phase.description}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{phase.description}</p>
                     </div>
                   </div>
                 </div>
@@ -281,12 +283,12 @@ export function CycleView({ user, onBack, onUpdatePeriod }: CycleViewProps) {
           </div>
         </div>
 
-        <div className="bg-slate-100 p-4 rounded-2xl mt-6">
-          <div className="flex items-center gap-2 text-sm text-slate-600">
+        <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-2xl mt-6">
+          <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
             <Calendar size={16} />
             <span>Длина цикла: <strong>{user.cycle.length} дней</strong></span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-slate-600 mt-1">
+          <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 mt-1">
             <Activity size={16} />
             <span>Последняя менструация: <strong>{new Date(user.cycle.lastPeriod).toLocaleDateString('ru-RU')}</strong></span>
           </div>
@@ -303,24 +305,24 @@ export function CycleView({ user, onBack, onUpdatePeriod }: CycleViewProps) {
       </div>
 
       {showDatePicker && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center animate-fadeIn p-6">
-          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden">
-            <div className="p-6 border-b border-slate-200 flex justify-between items-center">
-              <h3 className="text-lg font-bold text-slate-900">Начало цикла</h3>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden">
+            <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Начало цикла</h3>
               <button 
                 onClick={() => setShowDatePicker(false)}
-                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
                 data-testid="button-close-period-modal"
               >
-                <X size={20} className="text-slate-500" />
+                <X size={20} className="text-slate-500 dark:text-slate-400" />
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-slate-600 dark:text-slate-300">
                 Укажите дату, когда начались месячные. Это поможет точнее рассчитать фазы вашего цикла.
               </p>
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
                   Дата начала
                 </label>
                 <input
@@ -328,7 +330,7 @@ export function CycleView({ user, onBack, onUpdatePeriod }: CycleViewProps) {
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
                   max={new Date().toISOString().split('T')[0]}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-lg font-bold text-center text-slate-900 outline-none focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 transition-all"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-lg font-bold text-center text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 transition-all"
                   data-testid="input-period-date"
                 />
               </div>

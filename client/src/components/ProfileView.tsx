@@ -58,24 +58,24 @@ export function ProfileView({ user, onSave, onBack }: ProfileViewProps) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-6 py-4 flex items-center justify-between">
           <button
             onClick={onBack}
-            className="p-2 -ml-2 rounded-xl hover:bg-slate-100 transition-colors"
+            className="p-2 -ml-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             data-testid="button-back"
           >
-            <ChevronLeft size={24} className="text-slate-600" />
+            <ChevronLeft size={24} className="text-slate-600 dark:text-slate-400" />
           </button>
-          <h1 className="font-bold text-lg text-slate-900">Настройки профиля</h1>
+          <h1 className="font-bold text-lg text-slate-900 dark:text-white">Настройки профиля</h1>
           <div className="w-10" />
         </div>
       </div>
 
       <div className="max-w-lg mx-auto p-6 space-y-8">
-        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
-          <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-6">
             Факторы восстановления
           </h2>
 
@@ -87,11 +87,11 @@ export function ProfileView({ user, onSave, onBack }: ProfileViewProps) {
                 render={({ field }) => (
                   <FormItem>
                     <div className="flex justify-between items-center mb-4">
-                      <FormLabel className="text-base font-medium text-slate-700">
+                      <FormLabel className="text-base font-medium text-slate-700 dark:text-slate-300">
                         Сон
                       </FormLabel>
-                      <span className="text-2xl font-bold text-purple-600">
-                        {field.value} <span className="text-sm text-slate-500 font-normal">часов</span>
+                      <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                        {field.value} <span className="text-sm text-slate-500 dark:text-slate-400 font-normal">часов</span>
                       </span>
                     </div>
                     <FormControl>
@@ -104,7 +104,7 @@ export function ProfileView({ user, onSave, onBack }: ProfileViewProps) {
                         className="py-2"
                       />
                     </FormControl>
-                    <div className="flex justify-between text-xs text-slate-400 mt-2">
+                    <div className="flex justify-between text-xs text-slate-400 dark:text-slate-500 mt-2">
                       <span>4 часа</span>
                       <span>10 часов</span>
                     </div>
@@ -117,19 +117,19 @@ export function ProfileView({ user, onSave, onBack }: ProfileViewProps) {
                 name="stress"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-base font-medium text-slate-700 mb-3 block">
+                    <FormLabel className="text-base font-medium text-slate-700 dark:text-slate-300 mb-3 block">
                       Уровень стресса
                     </FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger 
-                          className="h-14 rounded-2xl border-slate-200 bg-slate-50"
+                          className="h-14 rounded-2xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                           data-testid="select-stress"
                         >
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                         <SelectItem value="low" className="py-3">
                           <div className="flex items-center gap-3">
                             <div className="w-3 h-3 rounded-full bg-green-500" />
@@ -159,19 +159,19 @@ export function ProfileView({ user, onSave, onBack }: ProfileViewProps) {
                 name="calories"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-base font-medium text-slate-700 mb-3 block">
+                    <FormLabel className="text-base font-medium text-slate-700 dark:text-slate-300 mb-3 block">
                       Калорийность питания
                     </FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger 
-                          className="h-14 rounded-2xl border-slate-200 bg-slate-50"
+                          className="h-14 rounded-2xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                           data-testid="select-calories"
                         >
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                         <SelectItem value="deficit" className="py-3">
                           <div className="flex items-center gap-3">
                             <div className="w-3 h-3 rounded-full bg-blue-500" />
@@ -202,10 +202,10 @@ export function ProfileView({ user, onSave, onBack }: ProfileViewProps) {
                 render={({ field }) => (
                   <FormItem>
                     <div className="flex justify-between items-center mb-4">
-                      <FormLabel className="text-base font-medium text-slate-700">
+                      <FormLabel className="text-base font-medium text-slate-700 dark:text-slate-300">
                         Тренировочных дней в неделю
                       </FormLabel>
-                      <span className="text-2xl font-bold text-purple-600">
+                      <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                         {field.value}
                       </span>
                     </div>
@@ -219,7 +219,7 @@ export function ProfileView({ user, onSave, onBack }: ProfileViewProps) {
                         className="py-2"
                       />
                     </FormControl>
-                    <div className="flex justify-between text-xs text-slate-400 mt-2">
+                    <div className="flex justify-between text-xs text-slate-400 dark:text-slate-500 mt-2">
                       <span>2 дня</span>
                       <span>6 дней</span>
                     </div>
@@ -249,32 +249,32 @@ export function ProfileView({ user, onSave, onBack }: ProfileViewProps) {
           </Form>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
-          <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">
             Информация профиля
           </h2>
           <div className="space-y-3 text-sm">
-            <div className="flex justify-between py-2 border-b border-slate-100">
-              <span className="text-slate-500">Пол</span>
-              <span className="font-medium text-slate-700">
+            <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-slate-500 dark:text-slate-400">Пол</span>
+              <span className="font-medium text-slate-700 dark:text-slate-200">
                 {user.gender === 'female' ? 'Женский' : 'Мужской'}
               </span>
             </div>
-            <div className="flex justify-between py-2 border-b border-slate-100">
-              <span className="text-slate-500">Возраст</span>
-              <span className="font-medium text-slate-700">{user.age} лет</span>
+            <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-slate-500 dark:text-slate-400">Возраст</span>
+              <span className="font-medium text-slate-700 dark:text-slate-200">{user.age} лет</span>
             </div>
-            <div className="flex justify-between py-2 border-b border-slate-100">
-              <span className="text-slate-500">Вес</span>
-              <span className="font-medium text-slate-700">{user.weight} кг</span>
+            <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-slate-500 dark:text-slate-400">Вес</span>
+              <span className="font-medium text-slate-700 dark:text-slate-200">{user.weight} кг</span>
             </div>
-            <div className="flex justify-between py-2 border-b border-slate-100">
-              <span className="text-slate-500">Рост</span>
-              <span className="font-medium text-slate-700">{user.height} см</span>
+            <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-slate-500 dark:text-slate-400">Рост</span>
+              <span className="font-medium text-slate-700 dark:text-slate-200">{user.height} см</span>
             </div>
             <div className="flex justify-between py-2">
-              <span className="text-slate-500">Опыт тренировок</span>
-              <span className="font-medium text-slate-700">
+              <span className="text-slate-500 dark:text-slate-400">Опыт тренировок</span>
+              <span className="font-medium text-slate-700 dark:text-slate-200">
                 {user.experienceYears?.toFixed(1)} лет
               </span>
             </div>

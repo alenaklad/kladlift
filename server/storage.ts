@@ -44,7 +44,14 @@ export interface IStorage {
   
   // Admin operations
   getAllUsers(): Promise<User[]>;
-  getUserStats(): Promise<{ totalUsers: number; totalWorkouts: number; activeToday: number }>;
+  getUserStats(): Promise<{ 
+    totalUsers: number; 
+    totalWorkouts: number; 
+    activeToday: number;
+    newUsersThisWeek: number;
+    newUsersThisMonth: number;
+    avgWorkoutsPerUser: number;
+  }>;
   setUserRole(userId: string, role: string): Promise<User | undefined>;
   
   // Custom exercises (public database)
@@ -316,7 +323,14 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(users).orderBy(desc(users.createdAt));
   }
 
-  async getUserStats(): Promise<{ totalUsers: number; totalWorkouts: number; activeToday: number }> {
+  async getUserStats(): Promise<{ 
+    totalUsers: number; 
+    totalWorkouts: number; 
+    activeToday: number;
+    newUsersThisWeek: number;
+    newUsersThisMonth: number;
+    avgWorkoutsPerUser: number;
+  }> {
     const [usersResult] = await db.select({ count: count() }).from(users);
     const [workoutsResult] = await db.select({ count: count() }).from(workouts);
     
@@ -327,10 +341,31 @@ export class DatabaseStorage implements IStorage {
       .from(workouts)
       .where(sql`${workouts.date} >= ${today}`);
     
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const [newUsersWeekResult] = await db
+      .select({ count: count() })
+      .from(users)
+      .where(sql`${users.createdAt} >= ${weekAgo}`);
+    
+    const monthAgo = new Date();
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+    const [newUsersMonthResult] = await db
+      .select({ count: count() })
+      .from(users)
+      .where(sql`${users.createdAt} >= ${monthAgo}`);
+    
+    const totalUsers = usersResult?.count || 0;
+    const totalWorkouts = workoutsResult?.count || 0;
+    const avgWorkoutsPerUser = totalUsers > 0 ? totalWorkouts / totalUsers : 0;
+    
     return {
-      totalUsers: usersResult?.count || 0,
-      totalWorkouts: workoutsResult?.count || 0,
-      activeToday: activeResult?.count || 0
+      totalUsers,
+      totalWorkouts,
+      activeToday: activeResult?.count || 0,
+      newUsersThisWeek: newUsersWeekResult?.count || 0,
+      newUsersThisMonth: newUsersMonthResult?.count || 0,
+      avgWorkoutsPerUser
     };
   }
 
