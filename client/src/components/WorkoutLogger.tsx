@@ -27,6 +27,7 @@ import {
 } from '@shared/schema';
 import { getVisualForExercise, FULL_EXERCISE_DB } from '@/lib/exercises';
 import { MuscleTarget } from './MuscleTarget';
+import { OptimizedImage } from './OptimizedImage';
 
 interface WorkoutLoggerProps {
   onSave: (exercises: WorkoutExercise[], date: number) => void;
@@ -206,14 +207,13 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
           <ChevronLeft size={24} />
         </button>
 
-        <div 
-          className="relative h-64 flex items-end p-6 md:hidden"
-          style={{ 
-            backgroundImage: `url(${getVisualForExercise(selectedExercise)})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
-        >
+        <div className="relative h-64 flex items-end p-6 md:hidden overflow-hidden">
+          <OptimizedImage 
+            src={getVisualForExercise(selectedExercise)}
+            alt={selectedExercise.name}
+            className="absolute inset-0 w-full h-full"
+            placeholderColor="bg-slate-300"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
           <div className="relative z-10">
             <span 
@@ -234,12 +234,13 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
         <div className="hidden md:flex md:w-1/2 lg:w-2/5 md:p-8 md:items-center md:justify-center md:bg-slate-100">
           <div className="relative w-full max-w-lg">
             <div className="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl">
-              <img 
+              <OptimizedImage 
                 src={getVisualForExercise(selectedExercise)} 
                 alt={selectedExercise.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full"
+                placeholderColor="bg-slate-300"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
               <div className="absolute top-4 left-4">
                 <span 
                   className="inline-block px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg"
@@ -565,12 +566,13 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
             data-testid={`exercise-card-${ex.id}`}
           >
             <div className="relative h-56 w-full rounded-[1.5rem] overflow-hidden bg-slate-100 mb-4">
-              <img 
+              <OptimizedImage 
                 src={getVisualForExercise(ex)} 
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                alt={ex.name} 
+                alt={ex.name}
+                className="w-full h-full"
+                placeholderColor="bg-slate-200"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80 pointer-events-none"></div>
               <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-md p-2 rounded-full text-purple-600 group-hover:scale-110 transition-transform shadow-lg">
                 <Plus size={24} />
               </div>

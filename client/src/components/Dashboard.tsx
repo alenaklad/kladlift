@@ -20,10 +20,12 @@ import {
 import { 
   GOALS, 
   MUSCLE_GROUPS, 
+  getCardioType,
   type UserProfile, 
   type Workout, 
   type BodyLog 
 } from '@shared/schema';
+import { formatDate } from '@/lib/training';
 import { 
   calculateFullProgram, 
   getRangeFilter, 
@@ -147,8 +149,17 @@ export function Dashboard({
         }
       })
     );
-    return { actualVolume };
-  }, [filteredWorkouts]);
+    const targetVolume: Record<string, { mrv: number; mev: number }> = {};
+    (Object.keys(MUSCLE_GROUPS) as Array<keyof typeof MUSCLE_GROUPS>).forEach(key => {
+      if (key !== 'cardio') {
+        targetVolume[key] = { 
+          mrv: program.weeklyVolume[key] || 10,
+          mev: Math.floor((program.weeklyVolume[key] || 10) * 0.6)
+        };
+      }
+    });
+    return { actualVolume, targetVolume };
+  }, [filteredWorkouts, program]);
 
   const cyclePhase = useMemo(() => 
     user.gender === 'female' && user.cycle 
@@ -156,6 +167,46 @@ export function Dashboard({
       : null, 
     [user]
   );
+
+  const weeklyCardio = useMemo(() => {
+    const cardioWorkouts: Array<{
+      date: number;
+      exerciseName: string;
+      duration: number;
+      distance?: number;
+      distanceUnit?: string;
+      cardioType: string;
+    }> = [];
+    
+    filteredWorkouts.forEach(w => {
+      w.exercises.forEach(ex => {
+        const cardioType = getCardioType(ex.id);
+        if (cardioType && ex.sets.length > 0) {
+          const set = ex.sets[0];
+          cardioWorkouts.push({
+            date: w.date,
+            exerciseName: ex.name,
+            duration: set.duration || 0,
+            distance: set.distance,
+            distanceUnit: set.distanceUnit || 'km',
+            cardioType
+          });
+        }
+      });
+    });
+    
+    const totalDuration = cardioWorkouts.reduce((sum, c) => sum + c.duration, 0);
+    const totalDistance = cardioWorkouts
+      .filter(c => c.cardioType === 'distance' && c.distance)
+      .reduce((sum, c) => sum + (c.distance || 0), 0);
+    
+    return {
+      workouts: cardioWorkouts.sort((a, b) => b.date - a.date),
+      totalDuration,
+      totalDistance,
+      count: cardioWorkouts.length
+    };
+  }, [filteredWorkouts]);
 
   const bodyChartData = useMemo(() => 
     bodyLogs
@@ -329,6 +380,65 @@ export function Dashboard({
           })}
         </div>
       </div>
+
+      {weeklyCardio.count > 0 && (
+        <div className="bg-gradient-to-br from-purple-50 to-indigo-50 p-6 rounded-3xl shadow-sm border border-purple-100">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+              <Activity className="w-5 h-5 text-purple-500" />
+              Кардио за неделю
+            </h3>
+            <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-1">
+                <Clock size={14} className="text-purple-500" />
+                <span className="font-bold text-slate-700">{weeklyCardio.totalDuration}</span>
+                <span className="text-slate-500">мин</span>
+              </div>
+              {weeklyCardio.totalDistance > 0 && (
+                <div className="flex items-center gap-1">
+                  <span className="font-bold text-slate-700">{weeklyCardio.totalDistance.toFixed(1)}</span>
+                  <span className="text-slate-500">км</span>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="space-y-2">
+            {weeklyCardio.workouts.slice(0, 5).map((cardio, idx) => (
+              <div 
+                key={idx}
+                className="flex items-center justify-between p-3 bg-white/70 rounded-xl border border-purple-100"
+                data-testid={`cardio-session-${idx}`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                    <Activity size={14} className="text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-700 text-sm">{cardio.exerciseName}</p>
+                    <p className="text-xs text-slate-500">{formatDate(cardio.date)}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="font-mono text-slate-600">{cardio.duration} мин</span>
+                  {cardio.distance && (
+                    <>
+                      <span className="text-slate-300">|</span>
+                      <span className="font-mono text-slate-600">
+                        {cardio.distance.toFixed(1)} {cardio.distanceUnit === 'mi' ? 'ми' : 'км'}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          {weeklyCardio.count > 5 && (
+            <p className="text-center text-xs text-slate-500 mt-3">
+              +{weeklyCardio.count - 5} ещё
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col relative overflow-hidden">
         {needsMeasurementReminder && (

@@ -240,6 +240,103 @@ export async function registerRoutes(
     }
   });
 
+  // AI Volume Review endpoint
+  app.post("/api/coach/volume-review", isAuthenticated, async (req: Request, res) => {
+    try {
+      const { 
+        muscle, 
+        muscleLabel, 
+        actualSets, 
+        targetSets, 
+        completionPercent,
+        exercises,
+        userGoal,
+        experienceYears
+      } = req.body;
+
+      let statusPrompt = '';
+      let status: 'completed' | 'partial' | 'minimal' = 'minimal';
+
+      if (completionPercent >= 80) {
+        status = 'completed';
+        statusPrompt = `Пользователь выполнил ${completionPercent}% от недельной нормы (${actualSets} из ${targetSets} подходов). 
+Это отличный результат! Похвали за выполнение плана, отметь прогресс.
+Проанализируй упражнения и дай 2-3 рекомендации по улучшению техники или прогрессии весов.`;
+      } else if (completionPercent >= 30) {
+        status = 'partial';
+        statusPrompt = `Пользователь выполнил ${completionPercent}% от недельной нормы (${actualSets} из ${targetSets} подходов).
+Подбодри и предложи конкретный план для добивания нормы.
+Составь список из 2-3 упражнений с конкретными весами и повторениями на основе истории тренировок.`;
+      } else {
+        status = 'minimal';
+        statusPrompt = `Пользователь выполнил только ${completionPercent}% от недельной нормы (${actualSets} из ${targetSets} подходов).
+Мотивируй начать тренироваться и составь полный план закрытия нормы на эту группу мышц.
+Предложи 3-4 упражнения с конкретными весами и повторениями.`;
+      }
+
+      const exerciseHistory = exercises.length > 0 
+        ? exercises.map((ex: any) => `${ex.name}: ${ex.sets} подходов, ~${ex.avgWeight.toFixed(1)}кг x ${Math.round(ex.avgReps)} повторений`).join('\n')
+        : 'Нет данных о выполненных упражнениях';
+
+      const systemPrompt = `Ты - ИИ-тренер для фитнес-приложения. Отвечай кратко и по делу на русском языке.
+Группа мышц: ${muscleLabel}
+Цель пользователя: ${userGoal || 'гипертрофия'}
+Опыт тренировок: ${experienceYears || 1} лет
+
+История упражнений за неделю:
+${exerciseHistory}
+
+${statusPrompt}
+
+Ответ должен быть в формате JSON:
+{
+  "message": "Основное сообщение (2-3 предложения)",
+  "recommendations": ["рекомендация 1", "рекомендация 2"],
+  "exercises": [{"name": "Название", "sets": 3, "reps": "8-12", "weight": "30кг"}]
+}
+
+Поле exercises обязательно только если completionPercent < 80. Для completed достаточно message и recommendations.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: "Проанализируй мою нагрузку и дай рекомендации" }
+        ],
+        max_tokens: 512,
+        temperature: 0.7,
+        response_format: { type: "json_object" }
+      });
+
+      const aiContent = response.choices[0]?.message?.content || '{}';
+      let parsed;
+      try {
+        parsed = JSON.parse(aiContent);
+      } catch {
+        parsed = {
+          message: "Продолжайте тренироваться! Каждый подход приближает вас к цели.",
+          recommendations: ["Следите за техникой выполнения", "Постепенно увеличивайте нагрузку"]
+        };
+      }
+
+      res.json({
+        status,
+        message: parsed.message || "Анализ завершен",
+        recommendations: parsed.recommendations || [],
+        exercises: parsed.exercises || []
+      });
+    } catch (error) {
+      console.error("Volume review error:", error);
+      res.status(500).json({ 
+        error: "Failed to analyze volume",
+        status: 'partial',
+        message: "Не удалось получить анализ. Продолжайте тренироваться!",
+        recommendations: [],
+        exercises: []
+      });
+    }
+  });
+
   // --- Object Storage Routes ---
   app.get("/api/objects/upload-url", isAuthenticated, async (req: Request, res) => {
     try {

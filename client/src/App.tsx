@@ -9,10 +9,7 @@ import {
   BarChart2, 
   Plus,
   Brain,
-  Home,
-  LogOut,
-  User as UserIcon,
-  Shield
+  Home
 } from "lucide-react";
 import type { UserProfile, Workout, BodyLog, WorkoutExercise, User } from "@shared/schema";
 
@@ -26,8 +23,10 @@ import { AdminPanel } from "@/components/AdminPanel";
 import { AuthForms } from "@/components/AuthForms";
 import { CycleView } from "@/components/CycleView";
 import { GoalDetailsView } from "@/components/GoalDetailsView";
+import { UserMenu } from "@/components/UserMenu";
+import { ProfileView } from "@/components/ProfileView";
 
-type AppView = 'dashboard' | 'log' | 'progress' | 'coach' | 'history' | 'admin' | 'cycle' | 'goal';
+type AppView = 'dashboard' | 'log' | 'progress' | 'coach' | 'history' | 'admin' | 'cycle' | 'goal' | 'profile';
 
 function CalibrationView() {
   return (
@@ -261,52 +260,37 @@ function AuthenticatedApp() {
     return <GoalDetailsView user={userProfile} onBack={() => setView('dashboard')} />;
   }
 
+  if (view === 'profile') {
+    return (
+      <ProfileView 
+        user={userProfile}
+        onBack={() => setView('dashboard')}
+        onSave={async (data) => {
+          await saveUserMutation.mutateAsync({
+            ...userProfile,
+            ...data
+          });
+          toast({
+            title: "Профиль обновлён",
+            description: "Настройки успешно сохранены"
+          });
+        }}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* User header with logout */}
-      <div className="fixed top-0 right-0 p-4 z-50 flex items-center gap-3">
-        {authUser && (
-          <>
-            {isAdmin && (
-              <button
-                onClick={() => setView('admin')}
-                className="p-2 bg-white border border-slate-200 rounded-full text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors shadow-sm"
-                data-testid="button-admin-panel"
-                title="Админ-панель"
-              >
-                <Shield size={18} />
-              </button>
-            )}
-            <div className="flex items-center gap-2 text-slate-600 text-sm">
-              {authUser.profileImageUrl ? (
-                <img 
-                  src={authUser.profileImageUrl} 
-                  alt="" 
-                  className="w-8 h-8 rounded-full object-cover border border-slate-200"
-                />
-              ) : (
-                <div className="w-8 h-8 bg-white border border-slate-200 rounded-full flex items-center justify-center shadow-sm">
-                  <UserIcon size={16} className="text-slate-500" />
-                </div>
-              )}
-              <span className="hidden sm:block font-medium">{authUser.firstName || authUser.email}</span>
-            </div>
-            <button
-              onClick={async () => {
-                try {
-                  await apiRequest('POST', '/api/auth/logout');
-                  queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-                } catch (error) {
-                  console.error('Logout failed:', error);
-                }
-              }}
-              className="p-2 bg-white border border-slate-200 rounded-full text-slate-500 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-colors shadow-sm"
-              data-testid="button-logout"
-              title="Выйти"
-            >
-              <LogOut size={18} />
-            </button>
-          </>
+      {/* User header with UserMenu */}
+      <div className="fixed top-0 right-0 p-4 z-50">
+        {authUser && currentUser && (
+          <UserMenu
+            user={currentUser}
+            profile={userProfile}
+            isAdmin={isAdmin}
+            onOpenAdmin={() => setView('admin')}
+            onOpenProfile={() => setView('profile')}
+          />
         )}
       </div>
 
@@ -345,7 +329,7 @@ function AuthenticatedApp() {
           </button>
           <button 
             onClick={() => setView('coach')}
-            className={`p-3 rounded-full transition-all ${view === 'coach' ? 'bg-slate-100 text-slate-900' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+            className={`p-3 rounded-full transition-all ${(view as AppView) === 'coach' ? 'bg-slate-100 text-slate-900' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
             data-testid="nav-coach"
             title="AI Тренер"
           >

@@ -1,23 +1,39 @@
-import { useMemo } from 'react';
-import { X } from 'lucide-react';
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  ResponsiveContainer 
-} from 'recharts';
+import { useMemo, useState } from 'react';
+import { X, Sparkles, Loader2, Dumbbell, TrendingUp, Target } from 'lucide-react';
 import { MUSCLE_GROUPS, type Workout, type UserProfile } from '@shared/schema';
-import { formatDate } from '@/lib/training';
 import { MuscleTarget } from './MuscleTarget';
+import { apiRequest } from '@/lib/queryClient';
+
+function pluralizeSets(count: number): string {
+  const absCount = Math.abs(count);
+  const lastTwo = absCount % 100;
+  const lastOne = absCount % 10;
+  
+  if (lastTwo >= 11 && lastTwo <= 19) {
+    return `${count} подходов`;
+  }
+  if (lastOne === 1) {
+    return `${count} подход`;
+  }
+  if (lastOne >= 2 && lastOne <= 4) {
+    return `${count} подхода`;
+  }
+  return `${count} подходов`;
+}
 
 interface MuscleDetailModalProps {
   muscle: string;
   workouts: Workout[];
-  stats: { actualVolume: Record<string, number> };
+  stats: { actualVolume: Record<string, number>; targetVolume?: Record<string, { mrv: number; mev: number }> };
   onClose: () => void;
   user: UserProfile;
+}
+
+interface AIAnalysis {
+  status: 'completed' | 'partial' | 'minimal';
+  message: string;
+  recommendations: string[];
+  exercises?: { name: string; sets: number; reps: string; weight: string }[];
 }
 
 export function MuscleDetailModal({
@@ -28,39 +44,68 @@ export function MuscleDetailModal({
   user
 }: MuscleDetailModalProps) {
   const muscleData = MUSCLE_GROUPS[muscle as keyof typeof MUSCLE_GROUPS];
-  
-  const chartData = useMemo(() => {
-    return workouts
-      .filter(w => w.exercises.some(ex => ex.muscle === muscle))
-      .sort((a, b) => a.date - b.date)
-      .map(w => {
-        const sets = w.exercises
-          .filter(ex => ex.muscle === muscle)
-          .reduce((acc, ex) => acc + ex.sets.length, 0);
-        return {
-          date: formatDate(w.date),
-          sets
-        };
-      });
-  }, [workouts, muscle]);
+  const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const exerciseBreakdown = useMemo(() => {
-    const breakdown: Record<string, { name: string; sets: number; totalWeight: number }> = {};
+    const breakdown: Record<string, { name: string; sets: number; totalWeight: number; avgWeight: number; avgReps: number }> = {};
     
     workouts.forEach(w => {
       w.exercises
         .filter(ex => ex.muscle === muscle)
         .forEach(ex => {
           if (!breakdown[ex.id]) {
-            breakdown[ex.id] = { name: ex.name, sets: 0, totalWeight: 0 };
+            breakdown[ex.id] = { name: ex.name, sets: 0, totalWeight: 0, avgWeight: 0, avgReps: 0 };
           }
           breakdown[ex.id].sets += ex.sets.length;
-          breakdown[ex.id].totalWeight += ex.sets.reduce((acc, s) => acc + s.weight * s.reps, 0);
+          const validSets = ex.sets.filter(s => s.weight && s.reps);
+          if (validSets.length > 0) {
+            const totalWeight = validSets.reduce((acc, s) => acc + (s.weight || 0), 0);
+            const totalReps = validSets.reduce((acc, s) => acc + (s.reps || 0), 0);
+            breakdown[ex.id].avgWeight = totalWeight / validSets.length;
+            breakdown[ex.id].avgReps = totalReps / validSets.length;
+          }
+          breakdown[ex.id].totalWeight += ex.sets.reduce((acc, s) => acc + (s.weight || 0) * (s.reps || 0), 0);
         });
     });
     
     return Object.values(breakdown).sort((a, b) => b.sets - a.sets);
   }, [workouts, muscle]);
+
+  const actualSets = stats.actualVolume[muscle] || 0;
+  const targetSets = stats.targetVolume?.[muscle]?.mrv || 0;
+  const completionPercent = targetSets > 0 ? Math.round((actualSets / targetSets) * 100) : 0;
+
+  const fetchAIAnalysis = async () => {
+    setIsLoadingAI(true);
+    setAiError(null);
+    
+    try {
+      const response = await apiRequest('POST', '/api/coach/volume-review', {
+        muscle,
+        muscleLabel: muscleData?.label,
+        actualSets,
+        targetSets,
+        completionPercent,
+        exercises: exerciseBreakdown.map(ex => ({
+          name: ex.name,
+          sets: ex.sets,
+          avgWeight: ex.avgWeight,
+          avgReps: ex.avgReps
+        })),
+        userGoal: user.goal,
+        experienceYears: user.experienceYears
+      });
+      
+      const data = await response.json();
+      setAiAnalysis(data);
+    } catch (error) {
+      setAiError('Не удалось получить анализ. Попробуйте позже.');
+    } finally {
+      setIsLoadingAI(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center animate-fadeIn">
@@ -92,49 +137,138 @@ export function MuscleDetailModal({
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
-          {chartData.length > 0 ? (
-            <div>
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">
-                Динамика подходов
-              </h3>
-              <div className="h-[180px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id={`color${muscle}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={muscleData?.color} stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor={muscleData?.color} stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#6B7280' }} />
-                    <YAxis hide />
-                    <Tooltip 
-                      contentStyle={{ 
-                        borderRadius: '12px', 
-                        border: '1px solid #E2E8F0', 
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                        backgroundColor: '#fff',
-                        color: '#1E293B'
-                      }} 
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="sets" 
-                      name="Подходы"
-                      stroke={muscleData?.color} 
-                      strokeWidth={3} 
-                      fill={`url(#color${muscle})`} 
-                      activeDot={{ r: 6, strokeWidth: 0, fill: muscleData?.color }} 
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+          {targetSets > 0 && (
+            <div className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-2xl p-4 border border-slate-200">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-slate-600">Прогресс недели</span>
+                <span className="text-sm font-bold" style={{ color: muscleData?.color }}>
+                  {completionPercent}%
+                </span>
+              </div>
+              <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ 
+                    width: `${Math.min(completionPercent, 100)}%`,
+                    backgroundColor: muscleData?.color 
+                  }}
+                />
+              </div>
+              <div className="flex justify-between mt-2 text-xs text-slate-500">
+                <span>{pluralizeSets(actualSets)} выполнено</span>
+                <span>Цель: {pluralizeSets(targetSets)}</span>
               </div>
             </div>
-          ) : (
-            <div className="text-center py-8 text-slate-500">
-              <p>Нет данных за выбранный период</p>
-            </div>
           )}
+
+          <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-4 border border-purple-100">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                  <Sparkles size={16} className="text-purple-600" />
+                </div>
+                <h3 className="font-bold text-slate-800">ИИ-тренер</h3>
+              </div>
+              {!aiAnalysis && !isLoadingAI && (
+                <button
+                  onClick={fetchAIAnalysis}
+                  className="px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-xl hover:bg-purple-700 transition-colors"
+                  data-testid="button-get-ai-analysis"
+                >
+                  Получить анализ
+                </button>
+              )}
+            </div>
+
+            {isLoadingAI && (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 size={24} className="text-purple-600 animate-spin" />
+                <span className="ml-2 text-purple-600 font-medium">Анализирую...</span>
+              </div>
+            )}
+
+            {aiError && (
+              <div className="text-center py-4 text-red-500 text-sm">
+                {aiError}
+              </div>
+            )}
+
+            {aiAnalysis && (
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  {aiAnalysis.status === 'completed' && (
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <TrendingUp size={16} className="text-green-600" />
+                    </div>
+                  )}
+                  {aiAnalysis.status === 'partial' && (
+                    <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Target size={16} className="text-amber-600" />
+                    </div>
+                  )}
+                  {aiAnalysis.status === 'minimal' && (
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Dumbbell size={16} className="text-blue-600" />
+                    </div>
+                  )}
+                  <p className="text-slate-700 text-sm leading-relaxed">
+                    {aiAnalysis.message}
+                  </p>
+                </div>
+
+                {aiAnalysis.recommendations.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                      Рекомендации
+                    </h4>
+                    <ul className="space-y-1">
+                      {aiAnalysis.recommendations.map((rec, idx) => (
+                        <li key={idx} className="text-sm text-slate-600 flex items-start gap-2">
+                          <span className="text-purple-500 mt-0.5">•</span>
+                          {rec}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {aiAnalysis.exercises && aiAnalysis.exercises.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                      План на неделю
+                    </h4>
+                    <div className="space-y-2">
+                      {aiAnalysis.exercises.map((ex, idx) => (
+                        <div 
+                          key={idx}
+                          className="flex items-center justify-between p-3 bg-white rounded-xl border border-purple-100"
+                        >
+                          <span className="font-medium text-slate-700 text-sm truncate mr-2">
+                            {ex.name}
+                          </span>
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="font-bold text-purple-600">
+                              {pluralizeSets(ex.sets)}
+                            </span>
+                            <span className="text-slate-400">×</span>
+                            <span className="text-slate-600">{ex.reps}</span>
+                            <span className="text-slate-400">@</span>
+                            <span className="font-mono text-slate-600">{ex.weight}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!aiAnalysis && !isLoadingAI && !aiError && (
+              <p className="text-sm text-slate-500 text-center py-2">
+                Получите персональный анализ нагрузки и рекомендации
+              </p>
+            )}
+          </div>
 
           {exerciseBreakdown.length > 0 && (
             <div>
@@ -153,7 +287,7 @@ export function MuscleDetailModal({
                     </span>
                     <div className="flex items-center gap-3 text-sm">
                       <span className="font-bold text-slate-700">
-                        {ex.sets} <span className="text-slate-500 font-normal">sets</span>
+                        {pluralizeSets(ex.sets)}
                       </span>
                       <span className="text-slate-300">|</span>
                       <span className="font-mono text-slate-500">
