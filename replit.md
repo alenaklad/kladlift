@@ -63,7 +63,9 @@ Preferred communication style: Simple, everyday language.
 - Added full dark theme support with ThemeProvider and ThemeToggle components
 - HistoryView: Added pencil icon edit functionality for inline editing of weights, reps, and sets
 - Progress: Enhanced tooltips to display both max weight and rep count ("X кг, Y повторений")
-- WorkoutLogger: Removed white flash animation from exercise cards
+- WorkoutLogger: Removed white flash animation from exercise cards (all animate-fadeIn classes removed)
+- WorkoutLogger: Optimized image loading - removed lazy loading, added eager preloading for instant display
+- OptimizedImage: Removed animate-pulse placeholder animation, simplified to static placeholder
 - Dashboard: Fixed responsive header with flex-wrap layout for mobile screens
 
 ## Backend Architecture

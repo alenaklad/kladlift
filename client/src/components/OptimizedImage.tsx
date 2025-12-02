@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 interface OptimizedImageProps {
   src: string;
@@ -14,42 +14,37 @@ export function OptimizedImage({
   placeholderColor = 'bg-slate-200'
 }: OptimizedImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isInView, setIsInView] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const imgRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsInView(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: '100px' }
-    );
-
-    if (imgRef.current) {
-      observer.observe(imgRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
+    setIsLoaded(false);
+    setHasError(false);
+    
+    const img = new Image();
+    img.src = src;
+    img.onload = () => setIsLoaded(true);
+    img.onerror = () => setHasError(true);
+    
+    return () => {
+      img.onload = null;
+      img.onerror = null;
+    };
+  }, [src]);
 
   return (
-    <div ref={imgRef} className={`relative ${className}`}>
-      <div 
-        className={`absolute inset-0 ${placeholderColor} animate-pulse transition-opacity duration-300 ${isLoaded ? 'opacity-0' : 'opacity-100'}`}
-      />
-      {isInView && !hasError && (
+    <div className={`relative ${className}`}>
+      {!isLoaded && !hasError && (
+        <div className={`absolute inset-0 ${placeholderColor}`} />
+      )}
+      {!hasError && (
         <img
           src={src}
           alt={alt}
-          loading="lazy"
-          decoding="async"
+          loading="eager"
+          decoding="sync"
+          className={`w-full h-full object-cover ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
           onLoad={() => setIsLoaded(true)}
           onError={() => setHasError(true)}
-          className={`w-full h-full object-cover transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
         />
       )}
       {hasError && (

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { 
   Search, 
@@ -112,6 +112,15 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
 
   const isLoadingExercises = dbLoading || userLoading;
 
+  useEffect(() => {
+    if (allExercises.length > 0) {
+      allExercises.forEach(ex => {
+        const img = new Image();
+        img.src = getVisualForExercise(ex);
+      });
+    }
+  }, [allExercises]);
+
   const filteredDB = useMemo(() => {
     if (search.trim()) {
       return allExercises.filter(ex => 
@@ -195,7 +204,7 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
 
   if (selectedExercise) {
     return (
-      <div className="fixed inset-0 bg-slate-50 z-50 flex flex-col md:flex-row animate-slideInRight">
+      <div className="fixed inset-0 bg-slate-50 z-50 flex flex-col md:flex-row">
         <button 
           onClick={() => {
             setSelectedExercise(null);
@@ -287,7 +296,7 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
                 Данные тренировки
               </h3>
               
-              <div className="flex items-center gap-4 animate-fadeIn">
+              <div className="flex items-center gap-4">
                 <div className="flex-1 relative">
                   <input 
                     type="number" 
@@ -306,7 +315,7 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
 
               {selectedCardioType === 'distance' && (
                 <div className="space-y-3">
-                  <div className="flex items-center gap-4 animate-fadeIn">
+                  <div className="flex items-center gap-4">
                     <div className="flex-1 relative">
                       <input 
                         type="number"
@@ -359,7 +368,7 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
               )}
 
               {selectedCardioType === 'stepper' && (
-                <div className="flex items-center gap-4 animate-fadeIn">
+                <div className="flex items-center gap-4">
                   <div className="flex-1 relative">
                     <input 
                       type="number" 
@@ -377,7 +386,7 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
               )}
 
               {selectedCardioType === 'jumprope' && (
-                <div className="flex items-center gap-4 animate-fadeIn">
+                <div className="flex items-center gap-4">
                   <div className="flex-1 relative">
                     <input 
                       type="number" 
@@ -400,7 +409,7 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
                 Подходы
               </h3>
               {currentSets.map((set, idx) => (
-                <div key={idx} className="flex items-center gap-4 animate-fadeIn">
+                <div key={idx} className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-purple-700 text-white flex items-center justify-center font-bold text-lg shadow-md">
                     {idx + 1}
                   </div>
@@ -469,7 +478,7 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
   }
 
   return (
-    <div className="p-6 pb-32 w-full animate-fadeIn bg-slate-50 min-h-screen">
+    <div className="p-6 pb-32 w-full bg-slate-50 dark:bg-slate-900 min-h-screen">
       <div className="sticky top-0 z-30 bg-slate-50/90 backdrop-blur-lg pt-6 pb-4 -mx-6 px-6 mb-6 border-b border-slate-200">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">Запись</h1>
@@ -616,7 +625,7 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
       </div>
 
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center animate-fadeIn p-6">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-6">
           <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden">
             <div className="p-6 border-b border-slate-200 flex justify-between items-center">
               <h3 className="text-lg font-bold text-slate-900">Новое упражнение</h3>
