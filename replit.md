@@ -49,6 +49,22 @@ Preferred communication style: Simple, everyday language.
 - ProfileView: Recovery factor editing page with sliders for sleep/training days and selects for stress/calories
 - OptimizedImage: Lazy loading image component with IntersectionObserver, placeholder animation, and error handling
 - MuscleDetailModal: Exercise volume detail view with Russian declension for set counts (подход/подхода/подходов)
+- ThemeProvider: Context-based theme management supporting light/dark/system modes with localStorage persistence
+- ThemeToggle: Header button component for switching between light and dark themes
+
+**Theme System**:
+- ThemeProvider wraps the entire app and manages 'light' | 'dark' | 'system' modes
+- localStorage key: 'kladlift-theme' for persistence across sessions
+- Toggle adds/removes 'dark' class on document.documentElement for Tailwind dark: variants
+- All authenticated views support dark mode with dark: utility classes
+- Auth/Landing pages use fixed dark gradient design
+
+**Recent Changes (December 2025)**:
+- Added full dark theme support with ThemeProvider and ThemeToggle components
+- HistoryView: Added pencil icon edit functionality for inline editing of weights, reps, and sets
+- Progress: Enhanced tooltips to display both max weight and rep count ("X кг, Y повторений")
+- WorkoutLogger: Removed white flash animation from exercise cards
+- Dashboard: Fixed responsive header with flex-wrap layout for mobile screens
 
 ## Backend Architecture
 
@@ -60,7 +76,7 @@ Preferred communication style: Simple, everyday language.
 - GET /api/workouts - Fetch all workouts
 - GET /api/workouts/:id - Fetch specific workout
 - POST /api/workouts - Create new workout
-- PUT /api/workouts/:id - Update workout
+- PATCH /api/workouts/:id - Update workout (supports partial updates for exercises/date)
 - DELETE /api/workouts/:id - Delete workout
 - GET /api/body-logs - Fetch body composition logs
 - POST /api/body-logs - Create body log

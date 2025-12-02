@@ -156,14 +156,18 @@ export function Progress({ workouts, userCycle }: ProgressProps) {
         };
       }
 
-      const maxWeight = exData.sets.length > 0 
-        ? Math.max(...exData.sets.map(s => s.weight || 0)) 
-        : 0;
+      const maxWeightSet = exData.sets.reduce((max, s) => 
+        (s.weight || 0) > (max.weight || 0) ? s : max, 
+        exData.sets[0] || { weight: 0, reps: 0 }
+      );
+      const maxWeight = maxWeightSet.weight || 0;
+      const maxWeightReps = maxWeightSet.reps || 0;
       return {
         date: w.date,
         displayDate: formatDate(w.date),
         value: maxWeight,
         weight: maxWeight,
+        reps: maxWeightReps,
         phaseColor: phase ? phase.color : '#e5e7eb',
         phaseName: phase ? phase.name : '',
         isCardio: false
@@ -457,7 +461,8 @@ export function Progress({ workouts, userCycle }: ProgressProps) {
                           };
                           return [`${value.toFixed(1)} ${units[cardioMetric]}`, labels[cardioMetric]];
                         }
-                        return [`${value} кг`, 'Макс. вес'];
+                        const reps = entry?.reps || 0;
+                        return [`${value} кг, ${reps} повторений`, 'Макс. вес'];
                       }}
                     />
                     <Area 

@@ -562,7 +562,7 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
           <div 
             key={ex.id} 
             onClick={() => setSelectedExercise(ex)} 
-            className="bg-white rounded-[2rem] p-3 shadow-sm border border-slate-200 hover:border-purple-300 hover:shadow-md transition-all duration-500 group cursor-pointer transform hover:-translate-y-1"
+            className="bg-white dark:bg-slate-800 rounded-[2rem] p-3 shadow-sm border border-slate-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-md transition-colors duration-200 group cursor-pointer"
             data-testid={`exercise-card-${ex.id}`}
           >
             <div className="relative h-56 w-full rounded-[1.5rem] overflow-hidden bg-slate-100 mb-4">

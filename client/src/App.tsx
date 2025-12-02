@@ -25,6 +25,8 @@ import { CycleView } from "@/components/CycleView";
 import { GoalDetailsView } from "@/components/GoalDetailsView";
 import { UserMenu } from "@/components/UserMenu";
 import { ProfileView } from "@/components/ProfileView";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 type AppView = 'dashboard' | 'log' | 'progress' | 'coach' | 'history' | 'admin' | 'cycle' | 'goal' | 'profile';
 
@@ -224,6 +226,17 @@ function AuthenticatedApp() {
         }}
         onDelete={(id) => deleteWorkoutMutation.mutate(id)}
         onBack={() => setView('dashboard')}
+        onUpdateWorkout={async (workout) => {
+          await apiRequest('PATCH', `/api/workouts/${workout.id}`, { 
+            exercises: workout.exercises, 
+            date: workout.date 
+          });
+          queryClient.invalidateQueries({ queryKey: ['/api/workouts'] });
+          toast({
+            title: "Тренировка обновлена",
+            description: "Изменения сохранены"
+          });
+        }}
       />
     );
   }
@@ -280,9 +293,9 @@ function AuthenticatedApp() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* User header with UserMenu */}
-      <div className="fixed top-0 right-0 p-4 z-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+      <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-end px-4 gap-2">
+        <ThemeToggle />
         {authUser && currentUser && (
           <UserMenu
             user={currentUser}
@@ -378,10 +391,12 @@ function AppRouter() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AppRouter />
-        <Toaster />
-      </TooltipProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <AppRouter />
+          <Toaster />
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

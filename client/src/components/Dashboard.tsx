@@ -168,6 +168,14 @@ export function Dashboard({
     [user]
   );
 
+  const [cardioWeekOffset, setCardioWeekOffset] = useState(0);
+  
+  const cardioWeekRange = useMemo(() => getWeekRange(cardioWeekOffset), [cardioWeekOffset]);
+  
+  const cardioFilteredWorkouts = useMemo(() => {
+    return workouts.filter(w => w.date >= cardioWeekRange.start && w.date <= cardioWeekRange.end);
+  }, [workouts, cardioWeekRange]);
+  
   const weeklyCardio = useMemo(() => {
     const cardioWorkouts: Array<{
       date: number;
@@ -178,7 +186,7 @@ export function Dashboard({
       cardioType: string;
     }> = [];
     
-    filteredWorkouts.forEach(w => {
+    cardioFilteredWorkouts.forEach(w => {
       w.exercises.forEach(ex => {
         const cardioType = getCardioType(ex.id);
         if (cardioType && ex.sets.length > 0) {
@@ -206,7 +214,23 @@ export function Dashboard({
       totalDistance,
       count: cardioWorkouts.length
     };
-  }, [filteredWorkouts]);
+  }, [cardioFilteredWorkouts]);
+
+  const cardioMotivationalTexts = [
+    "Кардио улучшает выносливость и ускоряет восстановление между силовыми тренировками!",
+    "30 минут кардио в неделю снижает риск сердечно-сосудистых заболеваний на 20%!",
+    "Кардио помогает сжигать калории и поддерживать здоровый вес!",
+    "Регулярные кардио-тренировки улучшают качество сна и настроение!",
+    "Добавьте кардио для улучшения кровообращения и доставки питательных веществ к мышцам!",
+    "Даже 15 минут кардио повышают уровень эндорфинов — гормонов счастья!",
+    "Кардио укрепляет сердце и делает его более эффективным!",
+    "Совмещайте силовые и кардио для максимального результата!"
+  ];
+
+  const randomMotivationalText = useMemo(() => {
+    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+    return cardioMotivationalTexts[dayOfYear % cardioMotivationalTexts.length];
+  }, []);
 
   const bodyChartData = useMemo(() => 
     bodyLogs
@@ -229,22 +253,22 @@ export function Dashboard({
   }, [bodyLogs]);
 
   return (
-    <div className="p-6 pb-24 max-w-4xl mx-auto space-y-6 animate-fadeIn bg-slate-50 min-h-screen">
+    <div className="p-6 pt-20 pb-24 max-w-4xl mx-auto space-y-6 bg-slate-50 dark:bg-slate-900 min-h-screen">
       <header className="flex justify-between items-end mb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900" data-testid="text-app-title">KladLift</h1>
-          <p className="text-slate-500 text-sm font-medium">Твоя система</p>
+        <div className="flex-shrink-0">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100" data-testid="text-app-title">KladLift</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Твоя система</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2 flex-shrink-0">
           <button 
             onClick={onOpenHistory} 
-            className="w-10 h-10 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors shadow-sm"
+            className="w-10 h-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors shadow-sm"
             data-testid="button-history"
           >
             <Clock size={20} />
           </button>
           <div 
-            className="w-10 h-10 bg-gradient-to-br from-purple-600 to-purple-700 text-white rounded-full flex items-center justify-center font-bold shadow-md"
+            className="w-10 h-10 bg-gradient-to-br from-purple-600 to-purple-700 text-white rounded-full flex items-center justify-center font-bold shadow-md flex-shrink-0"
             data-testid="text-user-avatar"
           >
             {user.gender === 'male' ? 'M' : 'Ж'}
@@ -306,25 +330,25 @@ export function Dashboard({
         )}
       </div>
 
-      <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-lg text-slate-900">Недельный объем</h3>
+          <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">Недельный объем</h3>
           <div className="flex items-center gap-2">
             <button 
               onClick={() => setWeekOffset(prev => prev - 1)} 
-              className="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-colors"
+              className="p-2 bg-slate-100 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:text-slate-900 dark:hover:text-white transition-colors"
               data-testid="button-prev-week"
             >
               <ChevronLeft size={16} />
             </button>
             <div className="flex flex-col items-center min-w-[120px]">
-              <span className="text-sm font-bold text-slate-900" data-testid="text-week-label">
+              <span className="text-sm font-bold text-slate-900 dark:text-slate-100" data-testid="text-week-label">
                 {weekRange.label}
               </span>
               {weekOffset !== 0 && (
                 <button 
                   onClick={() => setWeekOffset(0)}
-                  className="text-[10px] text-purple-600 hover:text-purple-700 font-medium"
+                  className="text-[10px] text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium"
                   data-testid="button-reset-week"
                 >
                   Вернуться к текущей
@@ -336,8 +360,8 @@ export function Dashboard({
               disabled={weekOffset >= 0}
               className={`p-2 rounded-full transition-colors ${
                 weekOffset >= 0 
-                  ? 'bg-slate-50 text-slate-300 cursor-not-allowed' 
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                  ? 'bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-600 cursor-not-allowed' 
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:text-slate-900 dark:hover:text-white'
               }`}
               data-testid="button-next-week"
             >
@@ -363,13 +387,13 @@ export function Dashboard({
                 data-testid={`muscle-progress-${key}`}
               >
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="font-medium flex items-center gap-1 text-slate-700">
+                  <span className="font-medium flex items-center gap-1 text-slate-700 dark:text-slate-300">
                     {MUSCLE_GROUPS[key].label} 
                     <ChevronRight size={12} className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400"/>
                   </span>
-                  <span className="text-slate-500 font-mono">{actual} / {target}</span>
+                  <span className="text-slate-500 dark:text-slate-400 font-mono">{actual} / {target}</span>
                 </div>
-                <div className="h-2 bg-slate-100 rounded-full overflow-hidden relative">
+                <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden relative">
                   <div 
                     className="h-full rounded-full transition-all duration-1000" 
                     style={{ width: `${(pct / 120) * 100}%`, backgroundColor: barColor }}
@@ -381,86 +405,140 @@ export function Dashboard({
         </div>
       </div>
 
-      {weeklyCardio.count > 0 && (
-        <div className="bg-gradient-to-br from-purple-50 to-indigo-50 p-6 rounded-3xl shadow-sm border border-purple-100">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              <Activity className="w-5 h-5 text-purple-500" />
-              Кардио за неделю
-            </h3>
-            <div className="flex items-center gap-4 text-sm">
+      <div className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 p-6 rounded-3xl shadow-sm border border-purple-100 dark:border-purple-900/50">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <Activity className="w-5 h-5 text-purple-500" />
+            Кардио за неделю
+          </h3>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setCardioWeekOffset(prev => prev - 1)} 
+              className="p-2 bg-white dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors"
+              data-testid="button-cardio-prev-week"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <div className="flex flex-col items-center min-w-[120px]">
+              <span className="text-sm font-bold text-slate-900 dark:text-slate-100" data-testid="text-cardio-week-label">
+                {cardioWeekRange.label}
+              </span>
+              {cardioWeekOffset !== 0 && (
+                <button 
+                  onClick={() => setCardioWeekOffset(0)}
+                  className="text-[10px] text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium"
+                  data-testid="button-cardio-reset-week"
+                >
+                  Вернуться к текущей
+                </button>
+              )}
+            </div>
+            <button 
+              onClick={() => setCardioWeekOffset(prev => Math.min(prev + 1, 0))} 
+              disabled={cardioWeekOffset >= 0}
+              className={`p-2 rounded-full transition-colors ${
+                cardioWeekOffset >= 0 
+                  ? 'bg-slate-50 dark:bg-slate-800/50 text-slate-300 dark:text-slate-600 cursor-not-allowed' 
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white'
+              }`}
+              data-testid="button-cardio-next-week"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+        
+        {weeklyCardio.count > 0 ? (
+          <>
+            <div className="flex items-center gap-4 text-sm mb-4 pb-3 border-b border-purple-200 dark:border-purple-800">
               <div className="flex items-center gap-1">
                 <Clock size={14} className="text-purple-500" />
-                <span className="font-bold text-slate-700">{weeklyCardio.totalDuration}</span>
-                <span className="text-slate-500">мин</span>
+                <span className="font-bold text-slate-700 dark:text-slate-200">{weeklyCardio.totalDuration}</span>
+                <span className="text-slate-500 dark:text-slate-400">мин</span>
               </div>
               {weeklyCardio.totalDistance > 0 && (
                 <div className="flex items-center gap-1">
-                  <span className="font-bold text-slate-700">{weeklyCardio.totalDistance.toFixed(1)}</span>
-                  <span className="text-slate-500">км</span>
+                  <span className="font-bold text-slate-700 dark:text-slate-200">{weeklyCardio.totalDistance.toFixed(1)}</span>
+                  <span className="text-slate-500 dark:text-slate-400">км</span>
                 </div>
               )}
             </div>
-          </div>
-          <div className="space-y-2">
-            {weeklyCardio.workouts.slice(0, 5).map((cardio, idx) => (
-              <div 
-                key={idx}
-                className="flex items-center justify-between p-3 bg-white/70 rounded-xl border border-purple-100"
-                data-testid={`cardio-session-${idx}`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                    <Activity size={14} className="text-purple-600" />
+            <div className="space-y-2">
+              {weeklyCardio.workouts.slice(0, 5).map((cardio, idx) => (
+                <div 
+                  key={idx}
+                  className="flex items-center justify-between p-3 bg-white/70 dark:bg-slate-800/50 rounded-xl border border-purple-100 dark:border-purple-900/50"
+                  data-testid={`cardio-session-${idx}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/50 rounded-full flex items-center justify-center">
+                      <Activity size={14} className="text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-700 dark:text-slate-200 text-sm">{cardio.exerciseName}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{formatDate(cardio.date)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-slate-700 text-sm">{cardio.exerciseName}</p>
-                    <p className="text-xs text-slate-500">{formatDate(cardio.date)}</p>
+                  <div className="flex items-center gap-3 text-sm">
+                    <span className="font-mono text-slate-600 dark:text-slate-300">{cardio.duration} мин</span>
+                    {cardio.distance && (
+                      <>
+                        <span className="text-slate-300 dark:text-slate-600">|</span>
+                        <span className="font-mono text-slate-600 dark:text-slate-300">
+                          {cardio.distance.toFixed(1)} {cardio.distanceUnit === 'mi' ? 'ми' : 'км'}
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <span className="font-mono text-slate-600">{cardio.duration} мин</span>
-                  {cardio.distance && (
-                    <>
-                      <span className="text-slate-300">|</span>
-                      <span className="font-mono text-slate-600">
-                        {cardio.distance.toFixed(1)} {cardio.distanceUnit === 'mi' ? 'ми' : 'км'}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-          {weeklyCardio.count > 5 && (
-            <p className="text-center text-xs text-slate-500 mt-3">
-              +{weeklyCardio.count - 5} ещё
+              ))}
+            </div>
+            {weeklyCardio.count > 5 && (
+              <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-3">
+                +{weeklyCardio.count - 5} ещё
+              </p>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-6" data-testid="cardio-motivation">
+            <div className="w-16 h-16 mx-auto mb-4 bg-purple-100 dark:bg-purple-900/50 rounded-full flex items-center justify-center">
+              <Activity size={28} className="text-purple-500" />
+            </div>
+            <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed max-w-xs mx-auto">
+              {randomMotivationalText}
             </p>
-          )}
-        </div>
-      )}
+            <button 
+              onClick={onLogClick}
+              className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-xl font-medium text-sm hover:bg-purple-700 transition-colors"
+              data-testid="button-add-cardio"
+            >
+              Добавить кардио
+            </button>
+          </div>
+        )}
+      </div>
 
-      <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col relative overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col relative overflow-hidden">
         {needsMeasurementReminder && (
           <div 
             onClick={() => setShowBodyModal(true)}
-            className="mb-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl cursor-pointer hover:from-amber-100 hover:to-orange-100 transition-colors"
+            className="mb-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border border-amber-200 dark:border-amber-700 rounded-2xl cursor-pointer hover:from-amber-100 hover:to-orange-100 dark:hover:from-amber-900/40 dark:hover:to-orange-900/40 transition-colors"
             data-testid="reminder-measurement"
           >
-            <div className="flex items-center gap-2 text-amber-700">
+            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
               <Scale size={16} />
               <span className="text-sm font-medium">Пора обновить параметры тела</span>
             </div>
-            <p className="text-xs text-amber-600 mt-1">Добавьте замер для отслеживания прогресса</p>
+            <p className="text-xs text-amber-600 dark:text-amber-500 mt-1">Добавьте замер для отслеживания прогресса</p>
           </div>
         )}
         <div className="flex justify-between items-start mb-2 relative z-10">
-          <h3 className="text-lg font-semibold flex items-center gap-2 text-slate-900">
-            <Scale className="w-5 h-5 text-slate-400" /> Тело
+          <h3 className="text-lg font-semibold flex items-center gap-2 text-slate-900 dark:text-slate-100">
+            <Scale className="w-5 h-5 text-slate-400 dark:text-slate-500" /> Тело
           </h3>
           <button 
             onClick={() => setShowBodyModal(true)} 
-            className="bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-colors text-slate-600"
+            className="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 p-2 rounded-full transition-colors text-slate-600 dark:text-slate-300"
             data-testid="button-add-body-log"
           >
             <Plus size={18} />
@@ -468,16 +546,16 @@ export function Dashboard({
         </div>
         <div className="flex gap-8 mb-4 relative z-10">
           <div>
-            <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Вес</div>
-            <div className="text-3xl font-bold text-slate-900 tracking-tight" data-testid="text-weight">
-              {user.weight} <span className="text-lg text-slate-400 font-normal">кг</span>
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-bold mb-1">Вес</div>
+            <div className="text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight" data-testid="text-weight">
+              {user.weight} <span className="text-lg text-slate-400 dark:text-slate-500 font-normal">кг</span>
             </div>
           </div>
           {user.fat && (
             <div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Жир</div>
-              <div className="text-3xl font-bold text-slate-900 tracking-tight" data-testid="text-fat">
-                {user.fat} <span className="text-lg text-slate-400 font-normal">%</span>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-bold mb-1">Жир</div>
+              <div className="text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight" data-testid="text-fat">
+                {user.fat} <span className="text-lg text-slate-400 dark:text-slate-500 font-normal">%</span>
               </div>
             </div>
           )}
