@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, Calendar, Trash2, Pencil, X, Plus, Minus } from 'lucide-react';
+import { ChevronLeft, Calendar, Trash2, Pencil, X, Plus, Minus, Flame, TrendingUp } from 'lucide-react';
 import type { Workout, WorkoutExercise, SetData, MuscleGroup } from '@shared/schema';
 import { formatFullDate } from '@/lib/training';
 import { MUSCLE_GROUPS, getCardioType } from '@shared/schema';
@@ -287,7 +287,7 @@ export function HistoryView({ workouts, onEdit, onDelete, onBack, onUpdateWorkou
   };
 
   return (
-    <div className="p-6 pb-24 max-w-4xl mx-auto animate-slideUp bg-slate-50 dark:bg-slate-900 min-h-screen">
+    <div className="p-6 pb-24 w-full animate-slideUp bg-slate-50 dark:bg-slate-900 min-h-screen">
       <div className="flex items-center mb-8">
         <button 
           onClick={onBack} 
@@ -346,14 +346,20 @@ export function HistoryView({ workouts, onEdit, onDelete, onBack, onUpdateWorkou
                         ) : (
                           <>
                             {workout.exercises.length} {getExercisesWord(workout.exercises.length)} • {totalSets} {getSetsWord(totalSets)}
-                            {totalWeight > 0 && (
-                              <span className="ml-2 text-purple-600 dark:text-purple-400 font-medium">
-                                • {formatWeight(totalWeight)}
-                              </span>
-                            )}
                           </>
                         )}
                       </div>
+                      {!isCardioOnly && totalWeight > 0 && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-500/10 to-pink-500/10 dark:from-purple-500/20 dark:to-pink-500/20 rounded-full border border-purple-200/50 dark:border-purple-500/30">
+                            <Flame size={14} className="text-orange-500" />
+                            <span className="text-base font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+                              {formatWeight(totalWeight)}
+                            </span>
+                            <TrendingUp size={12} className="text-green-500 ml-0.5" />
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <div className="flex gap-2">
                       <button 

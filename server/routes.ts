@@ -369,6 +369,29 @@ ${statusPrompt}
     }
   });
 
+  app.post("/api/user/avatar", isAuthenticated, async (req: Request, res) => {
+    try {
+      const userId = getUserId(req)!;
+      const { avatarUrl } = req.body;
+      
+      if (!avatarUrl) {
+        return res.status(400).json({ error: "URL аватарки обязателен" });
+      }
+      
+      const normalizedPath = await objectStorage.trySetObjectEntityAclPolicy(avatarUrl, {
+        owner: userId,
+        visibility: 'public'
+      });
+      
+      const user = await storage.updateUserAvatar(userId, normalizedPath);
+      
+      res.json({ user, avatarPath: normalizedPath });
+    } catch (error) {
+      console.error("Error updating avatar:", error);
+      res.status(500).json({ error: "Не удалось обновить аватарку" });
+    }
+  });
+
   app.post("/api/admin/objects/set-public", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const { objectUrl } = req.body;

@@ -16,6 +16,8 @@ import {
   type Workout 
 } from '@shared/schema';
 import { apiRequest } from '@/lib/queryClient';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface CoachViewProps {
   user: UserProfile;
@@ -247,7 +249,15 @@ export function CoachView({ user, workouts, onBack }: CoachViewProps) {
                   className="rounded-2xl mb-2 max-w-full"
                 />
               )}
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+              {msg.role === 'assistant' ? (
+                <div className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none prose-headings:text-current prose-strong:text-current prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-table:text-xs">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {msg.text}
+                  </ReactMarkdown>
+                </div>
+              ) : (
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+              )}
             </div>
           </div>
         ))}

@@ -425,6 +425,8 @@ export function Progress({ workouts, userCycle }: ProgressProps) {
                       axisLine={false} 
                       tickLine={false}
                       className="text-slate-500 dark:text-slate-400"
+                      interval={chartData.length <= 7 ? 0 : Math.ceil(chartData.length / 6)}
+                      minTickGap={20}
                     />
                     <YAxis 
                       tick={{ fontSize: 11, fill: 'currentColor' }} 

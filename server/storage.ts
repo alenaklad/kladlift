@@ -53,6 +53,7 @@ export interface IStorage {
     avgWorkoutsPerUser: number;
   }>;
   setUserRole(userId: string, role: string): Promise<User | undefined>;
+  updateUserAvatar(userId: string, avatarUrl: string): Promise<User | undefined>;
   
   // Custom exercises (public database)
   getCustomExercises(): Promise<SelectCustomExercise[]>;
@@ -373,6 +374,15 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db
       .update(users)
       .set({ role, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async updateUserAvatar(userId: string, avatarUrl: string): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ profileImageUrl: avatarUrl, updatedAt: new Date() })
       .where(eq(users.id, userId))
       .returning();
     return user;

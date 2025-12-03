@@ -60,15 +60,10 @@ export function UserMenu({ user, profile, isAdmin, onOpenAdmin, onOpenProfile }:
         headers: { 'Content-Type': file.type }
       });
 
-      const objectUrl = uploadUrl.split('?')[0];
+      const avatarUrl = uploadUrl.split('?')[0];
       
-      await apiRequest('POST', '/api/objects/set-acl', {
-        objectUrl,
-        visibility: 'public'
-      });
-
-      await apiRequest('PATCH', '/api/auth/user', {
-        profileImageUrl: objectUrl
+      await apiRequest('POST', '/api/user/avatar', {
+        avatarUrl
       });
 
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
