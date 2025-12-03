@@ -136,7 +136,8 @@ export function CoachView({ user, workouts, onBack }: CoachViewProps) {
         }
       });
 
-      const aiText = response.response || 'Извините, произошла ошибка. Попробуйте еще раз.';
+      const data = await response.json();
+      const aiText = data.response || 'Извините, произошла ошибка. Попробуйте еще раз.';
 
       setChatHistory(prev => ({
         ...prev,

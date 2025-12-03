@@ -50,6 +50,39 @@ function getExercisesWord(count: number): string {
   return 'упражнений';
 }
 
+function isCardioOnlyWorkout(workout: Workout): boolean {
+  return workout.exercises.length === 1 && 
+         workout.exercises[0].muscle === 'cardio';
+}
+
+function getCardioSummary(workout: Workout): string {
+  const exercise = workout.exercises[0];
+  const totalDuration = exercise.sets.reduce((acc, s) => acc + (s.duration || 0), 0);
+  const totalDistance = exercise.sets.reduce((acc, s) => acc + (s.distance || 0), 0);
+  
+  let summary = `${totalDuration} мин`;
+  if (totalDistance > 0) {
+    summary += ` • ${totalDistance.toFixed(1)} км`;
+  }
+  return summary;
+}
+
+function calculateTotalWeight(workout: Workout): number {
+  return workout.exercises.reduce((workoutTotal, ex) => {
+    if (ex.muscle === 'cardio') return workoutTotal;
+    return workoutTotal + ex.sets.reduce((setTotal, set) => {
+      return setTotal + (set.weight || 0) * (set.reps || 0);
+    }, 0);
+  }, 0);
+}
+
+function formatWeight(kg: number): string {
+  if (kg >= 1000) {
+    return `${(kg / 1000).toFixed(1)} т`;
+  }
+  return `${kg.toFixed(0)} кг`;
+}
+
 interface ExerciseEditorProps {
   exercise: WorkoutExercise;
   onSave: (updated: WorkoutExercise) => void;
@@ -159,40 +192,40 @@ function ExerciseEditor({ exercise, onSave, onCancel }: ExerciseEditorProps) {
             ))
           ) : (
             sets.map((set, idx) => (
-              <div key={idx} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/50 rounded-full flex items-center justify-center font-bold text-purple-600 dark:text-purple-400 text-sm">
+              <div key={idx} className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/50 rounded-full flex items-center justify-center font-bold text-purple-600 dark:text-purple-400 text-sm flex-shrink-0">
                   {idx + 1}
                 </div>
-                <div className="flex-1 grid grid-cols-2 gap-2">
-                  <div className="relative">
+                <div className="flex-1 flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 flex-1">
                     <input
                       type="number"
                       value={set.weight || ''}
                       onChange={(e) => updateSet(idx, 'weight', parseFloat(e.target.value) || 0)}
-                      className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-center font-bold text-slate-900 dark:text-slate-100"
+                      className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-center font-bold text-slate-900 dark:text-slate-100"
                       data-testid={`input-weight-${idx}`}
                     />
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 pointer-events-none">
-                      КГ
+                    <span className="text-xs text-slate-400 dark:text-slate-500 font-medium w-6 flex-shrink-0">
+                      кг
                     </span>
                   </div>
-                  <div className="relative">
+                  <div className="flex items-center gap-1.5 flex-1">
                     <input
                       type="number"
                       value={set.reps || ''}
                       onChange={(e) => updateSet(idx, 'reps', parseInt(e.target.value) || 0)}
-                      className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-center font-bold text-slate-900 dark:text-slate-100"
+                      className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-center font-bold text-slate-900 dark:text-slate-100"
                       data-testid={`input-reps-${idx}`}
                     />
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 pointer-events-none">
-                      ПОВТ
+                    <span className="text-xs text-slate-400 dark:text-slate-500 font-medium w-8 flex-shrink-0">
+                      повт
                     </span>
                   </div>
                 </div>
                 {sets.length > 1 && (
                   <button 
                     onClick={() => removeSet(idx)}
-                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex-shrink-0"
                     data-testid={`button-remove-set-${idx}`}
                   >
                     <Minus size={16} />
@@ -285,6 +318,8 @@ export function HistoryView({ workouts, onEdit, onDelete, onBack, onUpdateWorkou
             .map(workout => {
               const totalSets = workout.exercises.reduce((acc, ex) => acc + ex.sets.length, 0);
               const isExpanded = expandedWorkout === workout.id;
+              const isCardioOnly = isCardioOnlyWorkout(workout);
+              const totalWeight = !isCardioOnly ? calculateTotalWeight(workout) : 0;
               
               return (
                 <div 
@@ -304,7 +339,20 @@ export function HistoryView({ workouts, onEdit, onDelete, onBack, onUpdateWorkou
                         </span>
                       </div>
                       <div className="text-sm text-slate-500 dark:text-slate-400">
-                        {workout.exercises.length} {getExercisesWord(workout.exercises.length)} • {totalSets} {getSetsWord(totalSets)}
+                        {isCardioOnly ? (
+                          <>
+                            {workout.exercises[0].name} • {getCardioSummary(workout)}
+                          </>
+                        ) : (
+                          <>
+                            {workout.exercises.length} {getExercisesWord(workout.exercises.length)} • {totalSets} {getSetsWord(totalSets)}
+                            {totalWeight > 0 && (
+                              <span className="ml-2 text-purple-600 dark:text-purple-400 font-medium">
+                                • {formatWeight(totalWeight)}
+                              </span>
+                            )}
+                          </>
+                        )}
                       </div>
                     </div>
                     <div className="flex gap-2">

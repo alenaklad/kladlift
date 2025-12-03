@@ -108,8 +108,15 @@ export function MuscleDetailModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center animate-fadeIn">
-      <div className="bg-white w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-slate-200">
+    <div 
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center animate-fadeIn"
+      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div 
+        className="bg-white dark:bg-slate-900 w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-700"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div 
           className="p-6 border-b flex justify-between items-center"
           style={{ backgroundColor: muscleData?.bg, borderColor: `${muscleData?.color}20` }}
@@ -136,16 +143,16 @@ export function MuscleDetailModal({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-6 space-y-6 bg-white dark:bg-slate-900">
           {targetSets > 0 && (
-            <div className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-2xl p-4 border border-slate-200">
+            <div className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-800/50 rounded-2xl p-4 border border-slate-200 dark:border-slate-700">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-slate-600">Прогресс недели</span>
+                <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Прогресс недели</span>
                 <span className="text-sm font-bold" style={{ color: muscleData?.color }}>
                   {completionPercent}%
                 </span>
               </div>
-              <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+              <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                 <div 
                   className="h-full rounded-full transition-all duration-500"
                   style={{ 
@@ -154,20 +161,20 @@ export function MuscleDetailModal({
                   }}
                 />
               </div>
-              <div className="flex justify-between mt-2 text-xs text-slate-500">
+              <div className="flex justify-between mt-2 text-xs text-slate-500 dark:text-slate-400">
                 <span>{pluralizeSets(actualSets)} выполнено</span>
                 <span>Цель: {pluralizeSets(targetSets)}</span>
               </div>
             </div>
           )}
 
-          <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-4 border border-purple-100">
+          <div className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/30 dark:to-indigo-900/20 rounded-2xl p-4 border border-purple-100 dark:border-purple-800/50">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                  <Sparkles size={16} className="text-purple-600" />
+                <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/50 rounded-full flex items-center justify-center">
+                  <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
                 </div>
-                <h3 className="font-bold text-slate-800">ИИ-тренер</h3>
+                <h3 className="font-bold text-slate-800 dark:text-slate-100">ИИ-тренер</h3>
               </div>
               {!aiAnalysis && !isLoadingAI && (
                 <button
@@ -182,13 +189,13 @@ export function MuscleDetailModal({
 
             {isLoadingAI && (
               <div className="flex items-center justify-center py-8">
-                <Loader2 size={24} className="text-purple-600 animate-spin" />
-                <span className="ml-2 text-purple-600 font-medium">Анализирую...</span>
+                <Loader2 size={24} className="text-purple-600 dark:text-purple-400 animate-spin" />
+                <span className="ml-2 text-purple-600 dark:text-purple-400 font-medium">Анализирую...</span>
               </div>
             )}
 
             {aiError && (
-              <div className="text-center py-4 text-red-500 text-sm">
+              <div className="text-center py-4 text-red-500 dark:text-red-400 text-sm">
                 {aiError}
               </div>
             )}
@@ -197,34 +204,34 @@ export function MuscleDetailModal({
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   {aiAnalysis.status === 'completed' && (
-                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <TrendingUp size={16} className="text-green-600" />
+                    <div className="w-8 h-8 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center flex-shrink-0">
+                      <TrendingUp size={16} className="text-green-600 dark:text-green-400" />
                     </div>
                   )}
                   {aiAnalysis.status === 'partial' && (
-                    <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Target size={16} className="text-amber-600" />
+                    <div className="w-8 h-8 bg-amber-100 dark:bg-amber-900/50 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Target size={16} className="text-amber-600 dark:text-amber-400" />
                     </div>
                   )}
                   {aiAnalysis.status === 'minimal' && (
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Dumbbell size={16} className="text-blue-600" />
+                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Dumbbell size={16} className="text-blue-600 dark:text-blue-400" />
                     </div>
                   )}
-                  <p className="text-slate-700 text-sm leading-relaxed">
+                  <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
                     {aiAnalysis.message}
                   </p>
                 </div>
 
                 {aiAnalysis.recommendations.length > 0 && (
                   <div className="space-y-2">
-                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       Рекомендации
                     </h4>
                     <ul className="space-y-1">
                       {aiAnalysis.recommendations.map((rec, idx) => (
-                        <li key={idx} className="text-sm text-slate-600 flex items-start gap-2">
-                          <span className="text-purple-500 mt-0.5">•</span>
+                        <li key={idx} className="text-sm text-slate-600 dark:text-slate-300 flex items-start gap-2">
+                          <span className="text-purple-500 dark:text-purple-400 mt-0.5">•</span>
                           {rec}
                         </li>
                       ))}
@@ -234,26 +241,26 @@ export function MuscleDetailModal({
 
                 {aiAnalysis.exercises && aiAnalysis.exercises.length > 0 && (
                   <div className="space-y-2">
-                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       План на неделю
                     </h4>
                     <div className="space-y-2">
                       {aiAnalysis.exercises.map((ex, idx) => (
                         <div 
                           key={idx}
-                          className="flex items-center justify-between p-3 bg-white rounded-xl border border-purple-100"
+                          className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-xl border border-purple-100 dark:border-purple-800/50"
                         >
-                          <span className="font-medium text-slate-700 text-sm truncate mr-2">
+                          <span className="font-medium text-slate-700 dark:text-slate-200 text-sm truncate mr-2">
                             {ex.name}
                           </span>
                           <div className="flex items-center gap-2 text-xs">
-                            <span className="font-bold text-purple-600">
+                            <span className="font-bold text-purple-600 dark:text-purple-400">
                               {pluralizeSets(ex.sets)}
                             </span>
                             <span className="text-slate-400">×</span>
-                            <span className="text-slate-600">{ex.reps}</span>
+                            <span className="text-slate-600 dark:text-slate-300">{ex.reps}</span>
                             <span className="text-slate-400">@</span>
-                            <span className="font-mono text-slate-600">{ex.weight}</span>
+                            <span className="font-mono text-slate-600 dark:text-slate-300">{ex.weight}</span>
                           </div>
                         </div>
                       ))}
@@ -264,7 +271,7 @@ export function MuscleDetailModal({
             )}
 
             {!aiAnalysis && !isLoadingAI && !aiError && (
-              <p className="text-sm text-slate-500 text-center py-2">
+              <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-2">
                 Получите персональный анализ нагрузки и рекомендации
               </p>
             )}
@@ -272,25 +279,25 @@ export function MuscleDetailModal({
 
           {exerciseBreakdown.length > 0 && (
             <div>
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">
+              <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
                 Упражнения
               </h3>
               <div className="space-y-2">
                 {exerciseBreakdown.map((ex, idx) => (
                   <div 
                     key={idx}
-                    className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100"
+                    className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700"
                     data-testid={`exercise-breakdown-${idx}`}
                   >
-                    <span className="font-medium text-slate-700 truncate mr-4">
+                    <span className="font-medium text-slate-700 dark:text-slate-200 truncate mr-4">
                       {ex.name}
                     </span>
                     <div className="flex items-center gap-3 text-sm">
-                      <span className="font-bold text-slate-700">
+                      <span className="font-bold text-slate-700 dark:text-slate-200">
                         {pluralizeSets(ex.sets)}
                       </span>
-                      <span className="text-slate-300">|</span>
-                      <span className="font-mono text-slate-500">
+                      <span className="text-slate-300 dark:text-slate-600">|</span>
+                      <span className="font-mono text-slate-500 dark:text-slate-400">
                         {(ex.totalWeight / 1000).toFixed(1)}т
                       </span>
                     </div>

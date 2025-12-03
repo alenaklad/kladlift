@@ -370,15 +370,49 @@ function AuthenticatedApp() {
   );
 }
 
+function LoadingScreen() {
+  return (
+    <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <div className="relative mb-8">
+        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shadow-2xl shadow-purple-500/30">
+          <svg 
+            viewBox="0 0 24 24" 
+            className="w-10 h-10 text-white"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M6.5 6.5a2 2 0 0 0-2.83 0L2.46 7.71a2 2 0 0 0 0 2.83l1.21 1.21" />
+            <path d="M21.54 7.71a2 2 0 0 0 0-2.83l-1.21-1.21a2 2 0 0 0-2.83 0l-1.21 1.21" />
+            <path d="M12 3v18" />
+            <path d="M5 12h14" />
+            <circle cx="5" cy="12" r="2" />
+            <circle cx="19" cy="12" r="2" />
+            <path d="m2 2 20 20" className="opacity-0" />
+          </svg>
+        </div>
+        <div className="absolute -inset-2 bg-gradient-to-r from-purple-500/20 to-purple-600/20 rounded-3xl blur-xl animate-pulse"></div>
+      </div>
+      
+      <h1 className="text-2xl font-bold text-white mb-2 tracking-tight">KladLift</h1>
+      <p className="text-slate-400 text-sm mb-8">Персональный тренировочный трекер</p>
+      
+      <div className="flex items-center gap-2">
+        <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+        <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+        <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+      </div>
+    </div>
+  );
+}
+
 function AppRouter() {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-        <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (!isAuthenticated) {
