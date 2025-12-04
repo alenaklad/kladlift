@@ -1,8 +1,18 @@
 import { useState } from 'react';
-import { ChevronLeft, Calendar, Trash2, Pencil, X, Plus, Minus, Flame, TrendingUp } from 'lucide-react';
+import { ChevronLeft, Calendar, Trash2, Pencil, X, Plus, Minus, Flame, TrendingUp, RotateCcw } from 'lucide-react';
 import type { Workout, WorkoutExercise, SetData, MuscleGroup } from '@shared/schema';
 import { formatFullDate } from '@/lib/training';
 import { MUSCLE_GROUPS, getCardioType } from '@shared/schema';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface HistoryViewProps {
   workouts: Workout[];
@@ -10,6 +20,7 @@ interface HistoryViewProps {
   onDelete: (id: string) => void;
   onBack: () => void;
   onUpdateWorkout?: (workout: Workout) => void;
+  onRepeatWorkout?: (workout: Workout) => void;
 }
 
 function getSetsWord(count: number): string {
@@ -265,9 +276,17 @@ function ExerciseEditor({ exercise, onSave, onCancel }: ExerciseEditorProps) {
   );
 }
 
-export function HistoryView({ workouts, onEdit, onDelete, onBack, onUpdateWorkout }: HistoryViewProps) {
+export function HistoryView({ workouts, onEdit, onDelete, onBack, onUpdateWorkout, onRepeatWorkout }: HistoryViewProps) {
   const [expandedWorkout, setExpandedWorkout] = useState<string | null>(null);
   const [editingExercise, setEditingExercise] = useState<{ workoutId: string; exercise: WorkoutExercise } | null>(null);
+  const [deleteConfirmWorkout, setDeleteConfirmWorkout] = useState<Workout | null>(null);
+
+  const handleDeleteConfirm = () => {
+    if (deleteConfirmWorkout) {
+      onDelete(deleteConfirmWorkout.id);
+      setDeleteConfirmWorkout(null);
+    }
+  };
 
   const handleSaveExercise = (updated: WorkoutExercise) => {
     if (!editingExercise || !onUpdateWorkout) return;
@@ -362,6 +381,19 @@ export function HistoryView({ workouts, onEdit, onDelete, onBack, onUpdateWorkou
                       )}
                     </div>
                     <div className="flex gap-2">
+                      {onRepeatWorkout && (
+                        <button 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            onRepeatWorkout(workout);
+                          }} 
+                          className="p-2 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-xl hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors"
+                          data-testid={`button-repeat-workout-${workout.id}`}
+                          title="Повторить тренировку"
+                        >
+                          <RotateCcw size={18} />
+                        </button>
+                      )}
                       <button 
                         onClick={(e) => { 
                           e.stopPropagation(); 
@@ -376,7 +408,7 @@ export function HistoryView({ workouts, onEdit, onDelete, onBack, onUpdateWorkou
                       <button 
                         onClick={(e) => { 
                           e.stopPropagation(); 
-                          onDelete(workout.id); 
+                          setDeleteConfirmWorkout(workout);
                         }} 
                         className="p-2 bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
                         data-testid={`button-delete-workout-${workout.id}`}
@@ -460,6 +492,39 @@ export function HistoryView({ workouts, onEdit, onDelete, onBack, onUpdateWorkou
           onCancel={() => setEditingExercise(null)}
         />
       )}
+
+      <AlertDialog open={!!deleteConfirmWorkout} onOpenChange={(open) => !open && setDeleteConfirmWorkout(null)}>
+        <AlertDialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-slate-900 dark:text-slate-100">
+              Удалить тренировку?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-500 dark:text-slate-400">
+              {deleteConfirmWorkout && (
+                <>
+                  Тренировка от {formatFullDate(deleteConfirmWorkout.date)} будет удалена. 
+                  После удаления у вас будет 10 секунд, чтобы отменить это действие.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border-0"
+              data-testid="button-cancel-delete"
+            >
+              Отмена
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              className="bg-red-500 text-white hover:bg-red-600 border-0"
+              data-testid="button-confirm-delete"
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

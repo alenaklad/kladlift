@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { queryClient, apiRequest } from "./lib/queryClient";
 import { QueryClientProvider, useQuery, useMutation } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -9,7 +9,8 @@ import {
   BarChart2, 
   Plus,
   Brain,
-  Home
+  Home,
+  Undo2
 } from "lucide-react";
 import type { UserProfile, Workout, BodyLog, WorkoutExercise, User } from "@shared/schema";
 
@@ -43,13 +44,98 @@ function CalibrationView() {
   );
 }
 
+interface PendingDelete {
+  workout: Workout;
+  timeoutId: ReturnType<typeof setTimeout>;
+  startTime: number;
+}
+
+function UndoDeleteToast({ 
+  pendingDeletes, 
+  onUndo 
+}: { 
+  pendingDeletes: Map<string, PendingDelete>; 
+  onUndo: (id: string) => void 
+}) {
+  const [, forceUpdate] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => forceUpdate(n => n + 1), 100);
+    return () => clearInterval(interval);
+  }, []);
+  
+  const entries = Array.from(pendingDeletes.entries());
+  if (entries.length === 0) return null;
+  
+  return (
+    <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2">
+      {entries.map(([workoutId, pending]) => {
+        const elapsed = Date.now() - pending.startTime;
+        const remaining = Math.max(0, 10000 - elapsed);
+        const progress = (remaining / 10000) * 100;
+        
+        return (
+          <div 
+            key={workoutId}
+            className="bg-slate-900 dark:bg-slate-800 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 min-w-[280px] animate-slideUp"
+          >
+            <div className="relative w-10 h-10 flex-shrink-0">
+              <svg className="w-10 h-10 -rotate-90">
+                <circle 
+                  cx="20" 
+                  cy="20" 
+                  r="18" 
+                  fill="none" 
+                  stroke="rgba(255,255,255,0.2)" 
+                  strokeWidth="3"
+                />
+                <circle 
+                  cx="20" 
+                  cy="20" 
+                  r="18" 
+                  fill="none" 
+                  stroke="#a855f7" 
+                  strokeWidth="3"
+                  strokeDasharray={`${2 * Math.PI * 18}`}
+                  strokeDashoffset={`${2 * Math.PI * 18 * (1 - progress / 100)}`}
+                  strokeLinecap="round"
+                  className="transition-all duration-100"
+                />
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center text-sm font-bold">
+                {Math.ceil(remaining / 1000)}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">Тренировка удалена</p>
+              <p className="text-xs text-slate-400 truncate">
+                {pending.workout.exercises.length} упр.
+              </p>
+            </div>
+            <button
+              onClick={() => onUndo(workoutId)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-xl transition-colors"
+              data-testid={`button-undo-delete-${workoutId}`}
+            >
+              <Undo2 size={14} />
+              Отменить
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function AuthenticatedApp() {
-  const { toast } = useToast();
+  const { toast, dismiss } = useToast();
   const { user: authUser } = useAuth();
   const [view, setView] = useState<AppView>('dashboard');
   const [isOnboarded, setIsOnboarded] = useState<boolean | null>(null);
   const [isCalibrating, setIsCalibrating] = useState(false);
   const [editingWorkout, setEditingWorkout] = useState<Workout | null>(null);
+  const [pendingDeletes, setPendingDeletes] = useState<Map<string, PendingDelete>>(new Map());
+  const pendingDeletesRef = useRef<Map<string, PendingDelete>>(new Map());
 
   const { data: currentUser } = useQuery<User>({
     queryKey: ['/api/auth/user'],
@@ -95,11 +181,50 @@ function AuthenticatedApp() {
     mutationFn: (id: string) => apiRequest('DELETE', `/api/workouts/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/workouts'] });
+    }
+  });
+
+  const cancelPendingDelete = useCallback((workoutId: string) => {
+    const pending = pendingDeletesRef.current.get(workoutId);
+    if (pending) {
+      clearTimeout(pending.timeoutId);
+      pendingDeletesRef.current.delete(workoutId);
+      setPendingDeletes(new Map(pendingDeletesRef.current));
+      toast({
+        title: "Удаление отменено",
+        description: "Тренировка восстановлена",
+      });
+    }
+  }, [toast]);
+
+  const initiateDelete = useCallback((workout: Workout) => {
+    const workoutId = workout.id;
+    
+    if (pendingDeletesRef.current.has(workoutId)) {
+      return;
+    }
+    
+    const startTime = Date.now();
+    const UNDO_TIMEOUT = 10000;
+    
+    const timeoutId = setTimeout(() => {
+      pendingDeletesRef.current.delete(workoutId);
+      setPendingDeletes(new Map(pendingDeletesRef.current));
+      deleteWorkoutMutation.mutate(workoutId);
       toast({
         title: "Тренировка удалена",
       });
-    }
-  });
+    }, UNDO_TIMEOUT);
+    
+    const pendingDelete: PendingDelete = {
+      workout,
+      timeoutId,
+      startTime,
+    };
+    
+    pendingDeletesRef.current.set(workoutId, pendingDelete);
+    setPendingDeletes(new Map(pendingDeletesRef.current));
+  }, [deleteWorkoutMutation, toast]);
 
   const addBodyLogMutation = useMutation({
     mutationFn: (log: Omit<BodyLog, 'id'>) => apiRequest('POST', '/api/body-logs', log),
@@ -217,27 +342,50 @@ function AuthenticatedApp() {
   }
 
   if (view === 'history') {
+    const visibleWorkouts = workouts.filter(w => !pendingDeletes.has(w.id));
+    
     return (
-      <HistoryView 
-        workouts={workouts}
-        onEdit={(workout) => {
-          setEditingWorkout(workout);
-          setView('log');
-        }}
-        onDelete={(id) => deleteWorkoutMutation.mutate(id)}
-        onBack={() => setView('dashboard')}
-        onUpdateWorkout={async (workout) => {
-          await apiRequest('PATCH', `/api/workouts/${workout.id}`, { 
-            exercises: workout.exercises, 
-            date: workout.date 
-          });
-          queryClient.invalidateQueries({ queryKey: ['/api/workouts'] });
-          toast({
-            title: "Тренировка обновлена",
-            description: "Изменения сохранены"
-          });
-        }}
-      />
+      <>
+        <HistoryView 
+          workouts={visibleWorkouts}
+          onEdit={(workout) => {
+            setEditingWorkout(workout);
+            setView('log');
+          }}
+          onDelete={(id) => {
+            const workout = workouts.find(w => w.id === id);
+            if (workout) {
+              initiateDelete(workout);
+            }
+          }}
+          onBack={() => setView('dashboard')}
+          onUpdateWorkout={async (workout) => {
+            await apiRequest('PATCH', `/api/workouts/${workout.id}`, { 
+              exercises: workout.exercises, 
+              date: workout.date 
+            });
+            queryClient.invalidateQueries({ queryKey: ['/api/workouts'] });
+            toast({
+              title: "Тренировка обновлена",
+              description: "Изменения сохранены"
+            });
+          }}
+          onRepeatWorkout={(workout) => {
+            setEditingWorkout({
+              ...workout,
+              id: '',
+              date: Date.now(),
+            });
+            setView('log');
+          }}
+        />
+        {pendingDeletes.size > 0 && (
+          <UndoDeleteToast 
+            pendingDeletes={pendingDeletes} 
+            onUndo={cancelPendingDelete}
+          />
+        )}
+      </>
     );
   }
 

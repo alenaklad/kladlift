@@ -75,6 +75,7 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
     muscle: '',
     type: '',
     technique: '',
+    workingMuscles: '',
     imageUrl: '',
     videoUrl: ''
   });
@@ -177,6 +178,7 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
       muscle: '',
       type: '',
       technique: '',
+      workingMuscles: '',
       imageUrl: '',
       videoUrl: ''
     });
@@ -189,6 +191,7 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
       muscle: exercise.muscle,
       type: exercise.type,
       technique: exercise.technique,
+      workingMuscles: exercise.workingMuscles || '',
       imageUrl: exercise.imageUrl || '',
       videoUrl: exercise.videoUrl || ''
     });
@@ -552,13 +555,118 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
                       </div>
                       <div>
                         <Label className="text-slate-700 dark:text-slate-300">Техника выполнения *</Label>
-                        <Textarea
-                          value={exerciseForm.technique}
-                          onChange={(e) => setExerciseForm({ ...exerciseForm, technique: e.target.value })}
-                          placeholder="Описание техники выполнения"
-                          className="mt-1.5 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 min-h-[100px]"
-                          data-testid="input-exercise-technique"
+                        <div className="mt-1.5 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                          <div className="flex gap-1 p-2 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const textarea = document.getElementById('technique-textarea') as HTMLTextAreaElement;
+                                if (!textarea) return;
+                                const start = textarea.selectionStart;
+                                const end = textarea.selectionEnd;
+                                const text = exerciseForm.technique;
+                                const selectedText = text.substring(start, end);
+                                const newText = text.substring(0, start) + '**' + selectedText + '**' + text.substring(end);
+                                setExerciseForm({ ...exerciseForm, technique: newText });
+                                setTimeout(() => {
+                                  textarea.focus();
+                                  textarea.setSelectionRange(start + 2, end + 2);
+                                }, 0);
+                              }}
+                              className="px-3 py-1.5 text-sm font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors"
+                              title="Жирный текст"
+                              data-testid="button-format-bold"
+                            >
+                              B
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const textarea = document.getElementById('technique-textarea') as HTMLTextAreaElement;
+                                if (!textarea) return;
+                                const start = textarea.selectionStart;
+                                const text = exerciseForm.technique;
+                                const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+                                const newText = text.substring(0, lineStart) + '## ' + text.substring(lineStart);
+                                setExerciseForm({ ...exerciseForm, technique: newText });
+                                setTimeout(() => {
+                                  textarea.focus();
+                                  textarea.setSelectionRange(start + 3, start + 3);
+                                }, 0);
+                              }}
+                              className="px-3 py-1.5 text-sm font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors"
+                              title="Заголовок"
+                              data-testid="button-format-heading"
+                            >
+                              H
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const textarea = document.getElementById('technique-textarea') as HTMLTextAreaElement;
+                                if (!textarea) return;
+                                const start = textarea.selectionStart;
+                                const text = exerciseForm.technique;
+                                const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+                                const newText = text.substring(0, lineStart) + '• ' + text.substring(lineStart);
+                                setExerciseForm({ ...exerciseForm, technique: newText });
+                                setTimeout(() => {
+                                  textarea.focus();
+                                  textarea.setSelectionRange(start + 2, start + 2);
+                                }, 0);
+                              }}
+                              className="px-3 py-1.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors"
+                              title="Пункт списка"
+                              data-testid="button-format-list"
+                            >
+                              •
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const textarea = document.getElementById('technique-textarea') as HTMLTextAreaElement;
+                                if (!textarea) return;
+                                const start = textarea.selectionStart;
+                                const text = exerciseForm.technique;
+                                const newText = text.substring(0, start) + '\n\n' + text.substring(start);
+                                setExerciseForm({ ...exerciseForm, technique: newText });
+                                setTimeout(() => {
+                                  textarea.focus();
+                                  textarea.setSelectionRange(start + 2, start + 2);
+                                }, 0);
+                              }}
+                              className="px-3 py-1.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors"
+                              title="Пустая строка"
+                              data-testid="button-format-newline"
+                            >
+                              ¶
+                            </button>
+                          </div>
+                          <Textarea
+                            id="technique-textarea"
+                            value={exerciseForm.technique}
+                            onChange={(e) => setExerciseForm({ ...exerciseForm, technique: e.target.value })}
+                            placeholder="Описание техники выполнения&#10;&#10;Используйте кнопки выше для форматирования:&#10;B - жирный текст&#10;H - заголовок&#10;• - пункт списка&#10;¶ - пустая строка"
+                            className="bg-white dark:bg-slate-800 border-0 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 min-h-[150px] rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                            data-testid="input-exercise-technique"
+                          />
+                        </div>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                          Поддерживается markdown: **жирный**, ## Заголовок, • списки
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-slate-700 dark:text-slate-300">Какие мышцы работают</Label>
+                        <Input
+                          value={exerciseForm.workingMuscles}
+                          onChange={(e) => setExerciseForm({ ...exerciseForm, workingMuscles: e.target.value })}
+                          placeholder="Например: Квадрицепсы, ягодицы, бицепс бедра"
+                          className="mt-1.5 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                          data-testid="input-exercise-working-muscles"
                         />
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                          Перечислите мышцы через запятую
+                        </p>
                       </div>
                       <div>
                         <Label className="text-slate-700 dark:text-slate-300">Фото</Label>

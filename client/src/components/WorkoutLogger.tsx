@@ -36,7 +36,7 @@ interface WorkoutLoggerProps {
   initialDate?: number;
 }
 
-type ExerciseWithImage = ExerciseType & { imageUrl?: string | null };
+type ExerciseWithImage = ExerciseType & { imageUrl?: string | null; workingMuscles?: string | null };
 
 function formatDateForInput(timestamp: number): string {
   const date = new Date(timestamp);
@@ -94,7 +94,8 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
           muscle: ex.muscle as MuscleGroup,
           type: ex.type as 'compound' | 'isolation',
           technique: ex.technique,
-          imageUrl: ex.imageUrl
+          imageUrl: ex.imageUrl,
+          workingMuscles: ex.workingMuscles
         })),
         ...userExercises.map(ex => ({
           id: ex.id,
@@ -102,7 +103,8 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
           muscle: ex.muscle as MuscleGroup,
           type: ex.type as 'compound' | 'isolation',
           technique: ex.technique,
-          imageUrl: ex.imageUrl
+          imageUrl: ex.imageUrl,
+          workingMuscles: ex.workingMuscles
         }))
       ];
       return combined;
@@ -271,9 +273,20 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 pb-32 bg-slate-50 md:w-1/2 lg:w-3/5 md:pt-20">
-          <p className="text-slate-600 text-sm mb-6 leading-relaxed">
+          <p className="text-slate-600 text-sm mb-4 leading-relaxed">
             {selectedExercise.technique}
           </p>
+
+          {selectedExercise.workingMuscles && (
+            <div className="mb-6 p-3 bg-purple-50 rounded-xl border border-purple-100">
+              <div className="text-xs font-bold text-purple-600 uppercase tracking-wider mb-1">
+                Какие мышцы работают
+              </div>
+              <p className="text-sm text-purple-700 font-medium">
+                {selectedExercise.workingMuscles}
+              </p>
+            </div>
+          )}
 
           <div className="flex gap-3 mb-8">
             <a 
