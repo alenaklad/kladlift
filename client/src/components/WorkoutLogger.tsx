@@ -492,35 +492,35 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
   }
 
   return (
-    <div className="p-6 pb-32 w-full bg-slate-50 dark:bg-slate-900 min-h-screen">
-      <div className="sticky top-0 z-30 bg-slate-50/90 backdrop-blur-lg pt-6 pb-4 -mx-6 px-6 mb-6 border-b border-slate-200">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">Запись</h1>
+    <div className="px-4 sm:px-6 pb-32 w-full bg-slate-50 dark:bg-slate-900 min-h-screen pt-safe">
+      <div className="sticky top-0 z-30 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-lg pt-4 sm:pt-6 pb-3 sm:pb-4 -mx-4 sm:-mx-6 px-4 sm:px-6 mb-4 sm:mb-6 border-b border-slate-200 dark:border-slate-700">
+        <div className="flex justify-between items-center mb-3 sm:mb-4">
+          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Запись</h1>
           <button 
             onClick={onCancel} 
-            className="p-3 bg-white border border-slate-200 rounded-full shadow-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+            className="p-2.5 sm:p-3 touch-target bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full shadow-sm text-slate-500 dark:text-slate-400 active:text-slate-900 dark:active:text-white active:bg-slate-100 dark:active:bg-slate-700 transition-colors"
             data-testid="button-cancel-workout"
           >
-            <X size={24} />
+            <X size={22} />
           </button>
         </div>
 
-        <div className="flex items-center gap-3 mb-6 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
-          <Calendar size={20} className="text-purple-600" />
-          <label className="text-sm font-medium text-slate-600">Дата тренировки:</label>
+        <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6 bg-white dark:bg-slate-800 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+          <Calendar size={18} className="text-purple-600 flex-shrink-0" />
+          <label className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 hidden sm:block">Дата:</label>
           <input
             type="date"
             value={formatDateForInput(workoutDate)}
             onChange={(e) => setWorkoutDate(parseInputDate(e.target.value))}
-            className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-base font-bold text-slate-900 outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all"
+            className="flex-1 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2 text-sm sm:text-base font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all touch-target"
             data-testid="input-workout-date"
           />
         </div>
 
-        <div className="relative mb-6 group">
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+        <div className="relative mb-4 sm:mb-6 group">
+          <Search className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input 
-            className="w-full bg-white pl-14 pr-6 py-4 rounded-3xl text-lg font-medium shadow-sm border border-slate-200 outline-none placeholder-slate-400 text-slate-900 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all" 
+            className="w-full bg-white dark:bg-slate-800 pl-11 sm:pl-14 pr-4 sm:pr-6 py-3 sm:py-4 rounded-2xl sm:rounded-3xl text-base sm:text-lg font-medium shadow-sm border border-slate-200 dark:border-slate-700 outline-none placeholder-slate-400 text-slate-900 dark:text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all touch-target" 
             placeholder="Поиск упражнения..." 
             value={search} 
             onChange={(e) => setSearch(e.target.value)} 
@@ -529,15 +529,15 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
         </div>
 
         {!search && (
-          <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide -mx-6 px-6">
+          <div className="flex overflow-x-auto gap-2 sm:gap-3 pb-2 scrollbar-hide -mx-4 sm:-mx-6 px-4 sm:px-6">
             {(Object.keys(MUSCLE_GROUPS) as MuscleGroup[]).map(key => (
               <button 
                 key={key} 
                 onClick={() => setActiveCategory(key)}
-                className={`px-6 py-3 rounded-full text-sm font-bold whitespace-nowrap transition-all ${
+                className={`px-4 sm:px-6 py-2.5 sm:py-3 touch-target rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${
                   activeCategory === key 
-                    ? 'bg-slate-900 text-white shadow-lg scale-105' 
-                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg scale-105' 
+                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 active:bg-slate-100 dark:active:bg-slate-700 border border-slate-200 dark:border-slate-700'
                 }`}
                 data-testid={`button-category-${key}`}
               >
@@ -549,10 +549,10 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
       </div>
 
       {exercises.length > 0 && (
-        <div className="mb-8 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200">
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Сводка</span>
-            <span className="bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+        <div className="mb-6 sm:mb-8 bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] shadow-sm border border-slate-200 dark:border-slate-700">
+          <div className="flex justify-between items-center mb-3 sm:mb-4">
+            <span className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Сводка</span>
+            <span className="bg-purple-600 text-white text-[10px] sm:text-xs font-bold px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full">
               {exercises.length}
             </span>
           </div>
@@ -560,15 +560,15 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
             {exercises.map((ex, i) => (
               <div 
                 key={i} 
-                className="flex justify-between items-center p-3 bg-slate-50 rounded-2xl"
+                className="flex justify-between items-center p-2.5 sm:p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl sm:rounded-2xl"
                 data-testid={`workout-summary-exercise-${i}`}
               >
-                <span className="font-bold text-slate-900 truncate mr-4">{ex.name}</span>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold text-slate-500">{ex.sets.length} sets</span>
+                <span className="font-bold text-sm sm:text-base text-slate-900 dark:text-white truncate mr-3">{ex.name}</span>
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <span className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400">{ex.sets.length} sets</span>
                   <button 
                     onClick={() => setExercises(exercises.filter((_, idx) => idx !== i))} 
-                    className="text-slate-400 hover:text-red-500 transition-colors"
+                    className="p-1.5 touch-target text-slate-400 active:text-red-500 transition-colors"
                     data-testid={`button-remove-exercise-${i}`}
                   >
                     <Trash2 size={16} />
@@ -580,36 +580,36 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-5">
         {filteredDB.map(ex => (
           <div 
             key={ex.id} 
             onClick={() => setSelectedExercise(ex)} 
-            className="bg-white dark:bg-slate-800 rounded-[2rem] p-3 shadow-sm border border-slate-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-md transition-colors duration-200 group cursor-pointer"
+            className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-[2rem] p-2 sm:p-3 shadow-sm border border-slate-200 dark:border-slate-700 active:border-purple-300 dark:active:border-purple-600 active:shadow-md transition-colors duration-200 group cursor-pointer touch-target"
             data-testid={`exercise-card-${ex.id}`}
           >
-            <div className="relative h-56 w-full rounded-[1.5rem] overflow-hidden bg-slate-100 mb-4">
+            <div className="relative aspect-[4/5] sm:h-56 w-full rounded-xl sm:rounded-[1.5rem] overflow-hidden bg-slate-100 dark:bg-slate-700 mb-2 sm:mb-4">
               <OptimizedImage 
                 src={getVisualForExercise(ex)} 
                 alt={ex.name}
                 className="w-full h-full"
-                placeholderColor="bg-slate-200"
+                placeholderColor="bg-slate-200 dark:bg-slate-600"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80 pointer-events-none"></div>
-              <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-md p-2 rounded-full text-purple-600 group-hover:scale-110 transition-transform shadow-lg">
-                <Plus size={24} />
+              <div className="absolute bottom-2 sm:bottom-4 right-2 sm:right-4 bg-white/90 backdrop-blur-md p-1.5 sm:p-2 rounded-full text-purple-600 group-active:scale-110 transition-transform shadow-lg">
+                <Plus size={18} className="sm:w-6 sm:h-6" />
               </div>
-              <div className="absolute top-4 left-4">
-                <span className="px-3 py-1 bg-black/40 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-lg border border-white/10">
+              <div className="absolute top-2 sm:top-4 left-2 sm:left-4">
+                <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-black/40 backdrop-blur-md text-white text-[8px] sm:text-[10px] font-bold uppercase tracking-widest rounded-md sm:rounded-lg border border-white/10">
                   {MUSCLE_GROUPS[ex.muscle].label}
                 </span>
               </div>
-              <div className="absolute bottom-4 left-4 w-8 h-12 opacity-80">
+              <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 w-6 h-9 sm:w-8 sm:h-12 opacity-80">
                 <MuscleTarget muscle={ex.muscle} />
               </div>
             </div>
-            <div className="px-2 pb-2">
-              <h3 className="font-bold text-xl text-slate-900 leading-tight group-hover:text-purple-600 transition-colors">
+            <div className="px-1 sm:px-2 pb-1 sm:pb-2">
+              <h3 className="font-bold text-sm sm:text-xl text-slate-900 dark:text-white leading-tight group-active:text-purple-600 transition-colors line-clamp-2">
                 {ex.name}
               </h3>
             </div>
@@ -623,17 +623,17 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
             }
             setShowCreateModal(true);
           }}
-          className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-[2rem] p-6 border-2 border-dashed border-purple-300 hover:border-purple-500 transition-all cursor-pointer flex flex-col items-center justify-center min-h-[280px] group"
+          className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 border-2 border-dashed border-purple-300 dark:border-purple-600 active:border-purple-500 dark:active:border-purple-400 transition-all cursor-pointer flex flex-col items-center justify-center min-h-[200px] sm:min-h-[280px] group touch-target"
           data-testid="button-add-custom-exercise"
         >
-          <div className="w-16 h-16 bg-purple-200 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-            <Sparkles size={32} className="text-purple-600" />
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-200 dark:bg-purple-800 rounded-full flex items-center justify-center mb-3 sm:mb-4 group-active:scale-110 transition-transform">
+            <Sparkles size={24} className="text-purple-600 dark:text-purple-300 sm:w-8 sm:h-8" />
           </div>
-          <h3 className="font-bold text-lg text-purple-800 text-center mb-2">
-            {filteredDB.length === 0 && search.trim() ? 'Упражнение не найдено' : 'Добавить своё упражнение'}
+          <h3 className="font-bold text-sm sm:text-lg text-purple-800 dark:text-purple-200 text-center mb-1 sm:mb-2">
+            {filteredDB.length === 0 && search.trim() ? 'Не найдено' : 'Своё упражнение'}
           </h3>
-          <p className="text-sm text-purple-600 text-center">
-            {search.trim() ? `Создать "${search}"` : 'Создайте персональное упражнение'}
+          <p className="text-xs sm:text-sm text-purple-600 dark:text-purple-400 text-center">
+            {search.trim() ? `Создать "${search}"` : 'Создайте своё'}
           </p>
         </div>
       </div>

@@ -118,22 +118,22 @@ function WeeklyProgressBar({ workouts, trainingDays }: WeeklyProgressBarProps) {
   const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
   
   return (
-    <div className={`p-5 rounded-3xl border border-slate-200 dark:border-slate-700 ${progress.bgColor} shadow-sm`}>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-2xl bg-gradient-to-br ${progress.color} flex items-center justify-center shadow-lg`}>
-            <IconComponent size={20} className="text-white" />
+    <div className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-700 ${progress.bgColor} shadow-sm`}>
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-br ${progress.color} flex items-center justify-center shadow-lg`}>
+            <IconComponent size={18} className="text-white sm:w-5 sm:h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-slate-900 dark:text-slate-100">Недельный план</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{progress.message}</p>
+            <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100">Недельный план</h3>
+            <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">{progress.message}</p>
           </div>
         </div>
         <div className="text-right">
-          <div className={`text-2xl font-bold bg-gradient-to-r ${progress.color} bg-clip-text text-transparent`}>
+          <div className={`text-xl sm:text-2xl font-bold bg-gradient-to-r ${progress.color} bg-clip-text text-transparent`}>
             {progress.completed}/{progress.target}
           </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">тренировок</div>
+          <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">тренировок</div>
         </div>
       </div>
       
@@ -149,7 +149,7 @@ function WeeklyProgressBar({ workouts, trainingDays }: WeeklyProgressBarProps) {
         )}
       </div>
       
-      <div className="flex justify-between">
+      <div className="flex justify-between gap-1">
         {dayNames.map((day, idx) => {
           const isPast = idx < progress.currentDayIndex;
           const isCurrent = idx === progress.currentDayIndex;
@@ -158,7 +158,7 @@ function WeeklyProgressBar({ workouts, trainingDays }: WeeklyProgressBarProps) {
             <div 
               key={day}
               className={`
-                w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all
+                w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-medium transition-all
                 ${isCurrent 
                   ? `bg-gradient-to-br ${progress.color} text-white shadow-md ring-2 ring-white dark:ring-slate-800` 
                   : isPast 
@@ -395,19 +395,19 @@ export function Dashboard({
   }, [bodyLogs]);
 
   return (
-    <div className="p-6 pt-20 pb-24 max-w-4xl mx-auto space-y-6 bg-slate-50 dark:bg-slate-900 min-h-screen">
-      <header className="flex justify-between items-end mb-6">
+    <div className="px-4 sm:px-6 pt-16 sm:pt-20 pb-28 sm:pb-24 max-w-4xl mx-auto space-y-4 sm:space-y-6 bg-slate-50 dark:bg-slate-900 min-h-screen">
+      <header className="flex justify-between items-center gap-3 mb-4 sm:mb-6">
         <div className="flex-shrink-0">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100" data-testid="text-app-title">KladLift</h1>
-          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Твоя система</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100" data-testid="text-app-title">KladLift</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium">Твоя система</p>
         </div>
         <button 
           onClick={onOpenHistory} 
-          className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors shadow-sm"
+          className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 touch-target bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors shadow-sm"
           data-testid="button-history"
         >
           <Clock size={18} />
-          <span className="font-medium text-sm">История</span>
+          <span className="font-medium text-xs sm:text-sm">История</span>
         </button>
       </header>
 
@@ -416,37 +416,37 @@ export function Dashboard({
         trainingDays={user.trainingDays}
       />
 
-      <div className="bg-gradient-to-br from-purple-600 via-purple-700 to-slate-900 text-white p-6 rounded-3xl shadow-xl relative overflow-hidden flex flex-col md:flex-row gap-6">
+      <div className="bg-gradient-to-br from-purple-600 via-purple-700 to-slate-900 text-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-xl relative overflow-hidden flex flex-col md:flex-row gap-4 sm:gap-6">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-20 -right-20 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
           <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-purple-400/20 rounded-full blur-3xl" />
         </div>
         <div 
-          className="relative z-10 flex-1 cursor-pointer hover:opacity-90 transition-opacity"
+          className="relative z-10 flex-1 cursor-pointer active:opacity-80 transition-opacity touch-target"
           onClick={onOpenGoal}
           data-testid="card-goal"
         >
-          <div className="flex items-center gap-2 mb-2 text-purple-200 text-xs font-bold uppercase tracking-wider">
+          <div className="flex items-center gap-2 mb-1.5 sm:mb-2 text-purple-200 text-[10px] sm:text-xs font-bold uppercase tracking-wider">
             <Target size={14}/> Цель <ChevronRight size={14} className="opacity-50" />
           </div>
-          <h2 className="text-2xl font-bold mb-1 text-white" data-testid="text-goal">
+          <h2 className="text-xl sm:text-2xl font-bold mb-1 text-white" data-testid="text-goal">
             {GOALS[user.goal]?.label}
           </h2>
-          <p className="text-purple-200 text-sm mb-4">
+          <p className="text-purple-200 text-xs sm:text-sm mb-3 sm:mb-4 leading-relaxed">
             {program.trainingParams.goalDescription}
           </p>
-          <div className="flex gap-6">
+          <div className="flex gap-4 sm:gap-6">
             <div>
-              <div className="text-2xl font-bold text-white" data-testid="text-base-sets">
+              <div className="text-xl sm:text-2xl font-bold text-white" data-testid="text-base-sets">
                 {program.meta.standardSets}
               </div>
-              <div className="text-[10px] text-purple-200 uppercase">База (сеты)</div>
+              <div className="text-[9px] sm:text-[10px] text-purple-200 uppercase">База (сеты)</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-green-400" data-testid="text-recovery-factor">
+              <div className="text-xl sm:text-2xl font-bold text-green-400" data-testid="text-recovery-factor">
                 x{program.meta.recoveryMultiplier.toFixed(2)}
               </div>
-              <div className="text-[10px] text-purple-200 uppercase">Фактор восст.</div>
+              <div className="text-[9px] sm:text-[10px] text-purple-200 uppercase">Фактор восст.</div>
             </div>
           </div>
         </div>
@@ -470,38 +470,38 @@ export function Dashboard({
         )}
       </div>
 
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">Недельный объем</h3>
-          <div className="flex items-center gap-2">
+      <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700">
+        <div className="flex justify-between items-center mb-3 sm:mb-4 gap-2">
+          <h3 className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100">Недельный объем</h3>
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button 
               onClick={() => setWeekOffset(prev => prev - 1)} 
-              className="p-2 bg-slate-100 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:text-slate-900 dark:hover:text-white transition-colors"
+              className="p-2 touch-target bg-slate-100 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300 active:bg-slate-200 dark:active:bg-slate-600 transition-colors"
               data-testid="button-prev-week"
             >
               <ChevronLeft size={16} />
             </button>
-            <div className="flex flex-col items-center min-w-[120px]">
-              <span className="text-sm font-bold text-slate-900 dark:text-slate-100" data-testid="text-week-label">
+            <div className="flex flex-col items-center min-w-[90px] sm:min-w-[120px]">
+              <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100" data-testid="text-week-label">
                 {weekRange.label}
               </span>
               {weekOffset !== 0 && (
                 <button 
                   onClick={() => setWeekOffset(0)}
-                  className="text-[10px] text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium"
+                  className="text-[9px] sm:text-[10px] text-purple-600 dark:text-purple-400 active:text-purple-700 dark:active:text-purple-300 font-medium"
                   data-testid="button-reset-week"
                 >
-                  Вернуться к текущей
+                  К текущей
                 </button>
               )}
             </div>
             <button 
               onClick={() => setWeekOffset(prev => Math.min(prev + 1, 0))} 
               disabled={weekOffset >= 0}
-              className={`p-2 rounded-full transition-colors ${
+              className={`p-2 touch-target rounded-full transition-colors ${
                 weekOffset >= 0 
                   ? 'bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-600 cursor-not-allowed' 
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:text-slate-900 dark:hover:text-white'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 active:bg-slate-200 dark:active:bg-slate-600'
               }`}
               data-testid="button-next-week"
             >
@@ -545,41 +545,41 @@ export function Dashboard({
         </div>
       </div>
 
-      <div className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 p-6 rounded-3xl shadow-sm border border-purple-100 dark:border-purple-900/50">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <Activity className="w-5 h-5 text-purple-500" />
+      <div className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-purple-100 dark:border-purple-900/50">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-3 sm:mb-4">
+          <h3 className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500" />
             Кардио за неделю
           </h3>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 self-end sm:self-auto">
             <button 
               onClick={() => setCardioWeekOffset(prev => prev - 1)} 
-              className="p-2 bg-white dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors"
+              className="p-2 touch-target bg-white dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 active:bg-slate-200 dark:active:bg-slate-700 transition-colors"
               data-testid="button-cardio-prev-week"
             >
               <ChevronLeft size={16} />
             </button>
-            <div className="flex flex-col items-center min-w-[120px]">
-              <span className="text-sm font-bold text-slate-900 dark:text-slate-100" data-testid="text-cardio-week-label">
+            <div className="flex flex-col items-center min-w-[90px] sm:min-w-[120px]">
+              <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100" data-testid="text-cardio-week-label">
                 {cardioWeekRange.label}
               </span>
               {cardioWeekOffset !== 0 && (
                 <button 
                   onClick={() => setCardioWeekOffset(0)}
-                  className="text-[10px] text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium"
+                  className="text-[9px] sm:text-[10px] text-purple-600 dark:text-purple-400 active:text-purple-700 dark:active:text-purple-300 font-medium"
                   data-testid="button-cardio-reset-week"
                 >
-                  Вернуться к текущей
+                  К текущей
                 </button>
               )}
             </div>
             <button 
               onClick={() => setCardioWeekOffset(prev => Math.min(prev + 1, 0))} 
               disabled={cardioWeekOffset >= 0}
-              className={`p-2 rounded-full transition-colors ${
+              className={`p-2 touch-target rounded-full transition-colors ${
                 cardioWeekOffset >= 0 
                   ? 'bg-slate-50 dark:bg-slate-800/50 text-slate-300 dark:text-slate-600 cursor-not-allowed' 
-                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 active:bg-slate-200 dark:active:bg-slate-700'
               }`}
               data-testid="button-cardio-next-week"
             >
@@ -658,49 +658,49 @@ export function Dashboard({
         )}
       </div>
 
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col relative overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col relative overflow-hidden">
         {needsMeasurementReminder && (
           <div 
             onClick={() => setShowBodyModal(true)}
-            className="mb-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border border-amber-200 dark:border-amber-700 rounded-2xl cursor-pointer hover:from-amber-100 hover:to-orange-100 dark:hover:from-amber-900/40 dark:hover:to-orange-900/40 transition-colors"
+            className="mb-3 sm:mb-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border border-amber-200 dark:border-amber-700 rounded-xl sm:rounded-2xl cursor-pointer active:from-amber-100 active:to-orange-100 dark:active:from-amber-900/40 dark:active:to-orange-900/40 transition-colors touch-target"
             data-testid="reminder-measurement"
           >
             <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
               <Scale size={16} />
-              <span className="text-sm font-medium">Пора обновить параметры тела</span>
+              <span className="text-xs sm:text-sm font-medium">Пора обновить параметры тела</span>
             </div>
-            <p className="text-xs text-amber-600 dark:text-amber-500 mt-1">Добавьте замер для отслеживания прогресса</p>
+            <p className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-500 mt-1">Добавьте замер для отслеживания прогресса</p>
           </div>
         )}
         <div className="flex justify-between items-start mb-2 relative z-10">
-          <h3 className="text-lg font-semibold flex items-center gap-2 text-slate-900 dark:text-slate-100">
-            <Scale className="w-5 h-5 text-slate-400 dark:text-slate-500" /> Тело
+          <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2 text-slate-900 dark:text-slate-100">
+            <Scale className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 dark:text-slate-500" /> Тело
           </h3>
           <button 
             onClick={() => setShowBodyModal(true)} 
-            className="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 p-2 rounded-full transition-colors text-slate-600 dark:text-slate-300"
+            className="bg-slate-100 dark:bg-slate-700 active:bg-slate-200 dark:active:bg-slate-600 p-2 touch-target rounded-full transition-colors text-slate-600 dark:text-slate-300"
             data-testid="button-add-body-log"
           >
             <Plus size={18} />
           </button>
         </div>
-        <div className="flex gap-8 mb-4 relative z-10">
+        <div className="flex gap-6 sm:gap-8 mb-3 sm:mb-4 relative z-10">
           <div>
-            <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-bold mb-1">Вес</div>
-            <div className="text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight" data-testid="text-weight">
-              {user.weight} <span className="text-lg text-slate-400 dark:text-slate-500 font-normal">кг</span>
+            <div className="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-bold mb-1">Вес</div>
+            <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight" data-testid="text-weight">
+              {user.weight} <span className="text-base sm:text-lg text-slate-400 dark:text-slate-500 font-normal">кг</span>
             </div>
           </div>
           {user.fat && (
             <div>
-              <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-bold mb-1">Жир</div>
-              <div className="text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight" data-testid="text-fat">
-                {user.fat} <span className="text-lg text-slate-400 dark:text-slate-500 font-normal">%</span>
+              <div className="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-bold mb-1">Жир</div>
+              <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight" data-testid="text-fat">
+                {user.fat} <span className="text-base sm:text-lg text-slate-400 dark:text-slate-500 font-normal">%</span>
               </div>
             </div>
           )}
         </div>
-        <div className="h-[150px] w-full relative z-0 -ml-4">
+        <div className="h-[120px] sm:h-[150px] w-full relative z-0 -ml-4">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={bodyChartData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
               <defs>
@@ -749,7 +749,7 @@ export function Dashboard({
 
       <button 
         onClick={onLogClick} 
-        className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-2xl font-bold shadow-lg shadow-purple-500/25 active:scale-95 transition-transform flex items-center justify-center gap-2 hover:from-purple-700 hover:to-purple-800"
+        className="w-full py-3.5 sm:py-4 touch-target bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base shadow-lg shadow-purple-500/25 active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
         data-testid="button-log-workout"
       >
         <Plus size={20}/> Записать тренировку
