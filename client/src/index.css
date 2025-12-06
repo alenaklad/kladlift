@@ -352,8 +352,56 @@
     display: none;
   }
 
-  /* Safe area padding for iOS */
+  /* Safe area padding for iOS notch devices */
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .safe-bottom {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
+  }
+
+  .safe-top {
+    top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Mobile touch targets - minimum 44px */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Smooth page transitions */
+  .page-transition-enter {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  
+  .page-transition-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 200ms ease-out, transform 200ms ease-out;
+  }
+
+  /* Mobile optimized cards */
+  @media (max-width: 640px) {
+    .mobile-card {
+      border-radius: 1rem;
+      padding: 1rem;
+    }
+    
+    .mobile-text-lg {
+      font-size: 1.125rem;
+      line-height: 1.5rem;
+    }
+    
+    .mobile-text-xl {
+      font-size: 1.25rem;
+      line-height: 1.75rem;
+    }
   }
 }

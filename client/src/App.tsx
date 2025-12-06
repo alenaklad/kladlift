@@ -477,40 +477,39 @@ function AuthenticatedApp() {
         />
       )}
 
-      {/* Floating pill navigation */}
-      <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
-        <div className="flex items-center gap-2 bg-white/95 backdrop-blur-lg rounded-full px-3 py-2 shadow-2xl border border-slate-200/50">
+      {/* Mobile-optimized bottom navigation with safe-area */}
+      <nav className="fixed safe-bottom left-1/2 -translate-x-1/2 z-50 pb-safe">
+        <div className="flex items-center gap-1 sm:gap-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl sm:rounded-full px-2 sm:px-3 py-2 shadow-2xl border border-slate-200/50 dark:border-slate-700/50">
           <button 
             onClick={() => setView('dashboard')}
-            className={`p-3 rounded-full transition-all ${view === 'dashboard' ? 'bg-slate-100 text-slate-900' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+            className={`flex flex-col items-center justify-center touch-target px-3 py-2 rounded-xl sm:rounded-full transition-all ${view === 'dashboard' ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
             data-testid="nav-dashboard"
-            title="Главная"
           >
             <Home size={22} />
+            <span className="text-[10px] font-medium mt-0.5 sm:hidden">Главная</span>
           </button>
           <button 
             onClick={() => setView('coach')}
-            className={`p-3 rounded-full transition-all ${(view as AppView) === 'coach' ? 'bg-slate-100 text-slate-900' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+            className={`flex flex-col items-center justify-center touch-target px-3 py-2 rounded-xl sm:rounded-full transition-all ${(view as AppView) === 'coach' ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
             data-testid="nav-coach"
-            title="AI Тренер"
           >
             <Brain size={22} />
+            <span className="text-[10px] font-medium mt-0.5 sm:hidden">Тренер</span>
           </button>
           <button 
             onClick={() => setView('log')}
-            className="p-4 -my-1 rounded-full bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all hover:scale-105 active:scale-95"
+            className="flex items-center justify-center w-14 h-14 sm:w-12 sm:h-12 -my-1 rounded-2xl sm:rounded-full bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all hover:scale-105 active:scale-95"
             data-testid="nav-log"
-            title="Новая тренировка"
           >
-            <Plus size={24} />
+            <Plus size={26} />
           </button>
           <button 
             onClick={() => setView('progress')}
-            className={`p-3 rounded-full transition-all ${view === 'progress' ? 'bg-slate-100 text-slate-900' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+            className={`flex flex-col items-center justify-center touch-target px-3 py-2 rounded-xl sm:rounded-full transition-all ${view === 'progress' ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
             data-testid="nav-progress"
-            title="Прогресс"
           >
             <BarChart2 size={22} />
+            <span className="text-[10px] font-medium mt-0.5 sm:hidden">Прогресс</span>
           </button>
         </div>
       </nav>
