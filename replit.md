@@ -67,6 +67,13 @@ Preferred communication style: Simple, everyday language.
 - WorkoutLogger: Optimized image loading - removed lazy loading, added eager preloading for instant display
 - OptimizedImage: Removed animate-pulse placeholder animation, simplified to static placeholder
 - Dashboard: Fixed responsive header with flex-wrap layout for mobile screens
+- **Mobile Optimization (December 2025)**:
+  - Added safe-area CSS classes (pt-safe, pb-safe, px-safe) for iPhone notch/home bar support
+  - Added touch-target class (min 44px) for all interactive elements
+  - Dashboard: Responsive padding (p-4 md:p-6), adaptive typography (text-sm sm:text-lg)
+  - WorkoutLogger: 2-column grid for exercises on mobile, compact cards, swipe categories
+  - Bottom navigation: Added labels on mobile (Главная, Тренер, Прогресс), larger touch targets
+  - Fade-in animations for Dashboard and Progress transitions
 
 ## Backend Architecture
 
