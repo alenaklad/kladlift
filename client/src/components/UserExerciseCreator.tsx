@@ -24,6 +24,7 @@ import {
   X as XIcon
 } from 'lucide-react';
 import type { SelectUserExercise } from '@shared/schema';
+import { getProxiedImageUrl } from '@/lib/exercises';
 
 interface UserExerciseCreatorProps {
   onBack: () => void;
@@ -313,7 +314,7 @@ export function UserExerciseCreator({ onBack }: UserExerciseCreatorProps) {
                       <div className="flex items-start gap-4">
                         {exercise.imageUrl ? (
                           <img
-                            src={exercise.imageUrl}
+                            src={getProxiedImageUrl(exercise.imageUrl)}
                             alt={exercise.name}
                             className="w-16 h-16 rounded object-cover flex-shrink-0"
                           />

@@ -63,7 +63,12 @@ function WeeklyProgressBar({ workouts, trainingDays }: WeeklyProgressBarProps) {
       return workoutDate >= thisMonday && workoutDate <= thisSunday;
     });
     
-    const completed = weekWorkouts.length;
+    // Считаем только силовые тренировки (содержащие хотя бы одно НЕ-кардио упражнение)
+    const strengthWorkouts = weekWorkouts.filter(w => 
+      w.exercises.some(ex => ex.muscle !== 'cardio')
+    );
+    
+    const completed = strengthWorkouts.length;
     const target = trainingDays;
     const percentage = target > 0 ? Math.round((completed / target) * 100) : 0;
     

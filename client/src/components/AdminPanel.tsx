@@ -33,6 +33,7 @@ import {
   Calendar
 } from 'lucide-react';
 import type { User, SelectCustomExercise, SelectUserExercise } from '@shared/schema';
+import { getProxiedImageUrl } from '@/lib/exercises';
 
 interface AdminPanelProps {
   onBack: () => void;
@@ -766,7 +767,7 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
                           <div className="flex items-center gap-4">
                             {exercise.imageUrl ? (
                               <img
-                                src={exercise.imageUrl}
+                                src={getProxiedImageUrl(exercise.imageUrl)}
                                 alt={exercise.name}
                                 className="w-12 h-12 rounded-lg object-cover"
                               />
@@ -841,7 +842,7 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
                           <div className="flex items-start gap-4">
                             {submission.imageUrl ? (
                               <img
-                                src={submission.imageUrl}
+                                src={getProxiedImageUrl(submission.imageUrl)}
                                 alt={submission.name}
                                 className="w-20 h-20 rounded-lg object-cover"
                               />

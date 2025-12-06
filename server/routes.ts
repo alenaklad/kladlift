@@ -626,5 +626,46 @@ ${statusPrompt}
     }
   });
 
+  // --- Image Proxy (для обхода блокировки Google Cloud Storage в России) ---
+  app.get("/api/image-proxy", async (req: Request, res) => {
+    try {
+      const url = req.query.url as string;
+      if (!url) {
+        return res.status(400).json({ error: "URL не указан" });
+      }
+
+      // Разрешаем только безопасные домены
+      const allowedDomains = [
+        'storage.googleapis.com',
+        'images.unsplash.com',
+        'storage.cloud.google.com'
+      ];
+      
+      const urlObj = new URL(url);
+      if (!allowedDomains.some(domain => urlObj.hostname.includes(domain))) {
+        return res.status(403).json({ error: "Домен не разрешён" });
+      }
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        return res.status(response.status).json({ error: "Не удалось загрузить изображение" });
+      }
+
+      const contentType = response.headers.get('content-type') || 'image/jpeg';
+      const buffer = await response.arrayBuffer();
+
+      res.set({
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Access-Control-Allow-Origin': '*'
+      });
+      
+      res.send(Buffer.from(buffer));
+    } catch (error) {
+      console.error("Image proxy error:", error);
+      res.status(500).json({ error: "Ошибка загрузки изображения" });
+    }
+  });
+
   return httpServer;
 }

@@ -145,9 +145,21 @@ export function getExercisesByMuscle(muscle: MuscleGroup): Exercise[] {
   return FULL_EXERCISE_DB.filter(e => e.muscle === muscle);
 }
 
+// Проксируем изображения с Google Cloud Storage через наш сервер (для России)
+export function getProxiedImageUrl(url: string): string {
+  if (!url) return '';
+  
+  // Проксируем только Google Cloud Storage (заблокирован в России)
+  if (url.includes('storage.googleapis.com') || url.includes('storage.cloud.google.com')) {
+    return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+  }
+  
+  return url;
+}
+
 export function getVisualForExercise(exercise: Exercise & { imageUrl?: string | null }): string {
   if (exercise.imageUrl) {
-    return exercise.imageUrl;
+    return getProxiedImageUrl(exercise.imageUrl);
   }
   return MUSCLE_GROUPS[exercise.muscle]?.image || MUSCLE_GROUPS.legs.image;
 }
