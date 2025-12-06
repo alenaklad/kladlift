@@ -116,9 +116,10 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
 
   useEffect(() => {
     if (allExercises.length > 0) {
-      allExercises.forEach(ex => {
+      const urls = allExercises.map(ex => getVisualForExercise(ex));
+      urls.forEach(url => {
         const img = new Image();
-        img.src = getVisualForExercise(ex);
+        img.src = url;
       });
     }
   }, [allExercises]);
