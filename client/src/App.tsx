@@ -456,25 +456,29 @@ function AuthenticatedApp() {
       </div>
 
       {view === 'dashboard' && (
-        <Dashboard 
-          user={userProfile}
-          workouts={workouts}
-          bodyLogs={bodyLogs}
-          onLogClick={() => setView('log')}
-          onUpdateBody={handleUpdateBody}
-          onDeleteBodyLog={(id) => deleteBodyLogMutation.mutate(id)}
-          onOpenHistory={() => setView('history')}
-          onOpenCoach={() => setView('coach')}
-          onOpenCycle={() => setView('cycle')}
-          onOpenGoal={() => setView('goal')}
-        />
+        <div className="animate-fadeIn">
+          <Dashboard 
+            user={userProfile}
+            workouts={workouts}
+            bodyLogs={bodyLogs}
+            onLogClick={() => setView('log')}
+            onUpdateBody={handleUpdateBody}
+            onDeleteBodyLog={(id) => deleteBodyLogMutation.mutate(id)}
+            onOpenHistory={() => setView('history')}
+            onOpenCoach={() => setView('coach')}
+            onOpenCycle={() => setView('cycle')}
+            onOpenGoal={() => setView('goal')}
+          />
+        </div>
       )}
       
       {view === 'progress' && (
-        <Progress 
-          workouts={workouts} 
-          userCycle={userProfile.cycle} 
-        />
+        <div className="animate-fadeIn">
+          <Progress 
+            workouts={workouts} 
+            userCycle={userProfile.cycle} 
+          />
+        </div>
       )}
 
       {/* Mobile-optimized bottom navigation with safe-area */}
