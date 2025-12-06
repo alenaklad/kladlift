@@ -2,16 +2,20 @@ import {
   type UserProfile, 
   type Workout, 
   type BodyLog,
+  type WorkoutTemplate,
   type User,
   type UpsertUser,
   type InsertCustomExercise,
   type SelectCustomExercise,
   type InsertUserExercise,
   type SelectUserExercise,
+  type InsertWorkoutTemplate,
+  type SelectWorkoutTemplate,
   users,
   userProfiles,
   workouts,
   bodyLogs,
+  workoutTemplates,
   customExercises,
   userExercises
 } from "@shared/schema";
@@ -73,6 +77,12 @@ export interface IStorage {
   getPendingSubmissions(): Promise<SelectUserExercise[]>;
   approveSubmission(id: string, adminId: string, notes?: string): Promise<SelectCustomExercise | undefined>;
   rejectSubmission(id: string, adminId: string, notes?: string): Promise<boolean>;
+  
+  // Workout Templates
+  getWorkoutTemplates(userId: string): Promise<WorkoutTemplate[]>;
+  createWorkoutTemplate(userId: string, template: Omit<WorkoutTemplate, 'id'>): Promise<WorkoutTemplate>;
+  updateWorkoutTemplate(userId: string, id: string, template: Partial<WorkoutTemplate>): Promise<WorkoutTemplate | undefined>;
+  deleteWorkoutTemplate(userId: string, id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -524,6 +534,67 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(userExercises.id, id));
     
+    return true;
+  }
+
+  // Workout Templates
+  async getWorkoutTemplates(userId: string): Promise<WorkoutTemplate[]> {
+    const results = await db
+      .select()
+      .from(workoutTemplates)
+      .where(eq(workoutTemplates.userId, userId))
+      .orderBy(desc(workoutTemplates.createdAt));
+    
+    return results.map(t => ({
+      id: t.id,
+      name: t.name,
+      exercises: t.exercises as WorkoutTemplate['exercises']
+    }));
+  }
+
+  async createWorkoutTemplate(userId: string, template: Omit<WorkoutTemplate, 'id'>): Promise<WorkoutTemplate> {
+    const id = randomUUID();
+    const [result] = await db
+      .insert(workoutTemplates)
+      .values({
+        id,
+        userId,
+        name: template.name,
+        exercises: template.exercises,
+      })
+      .returning();
+    
+    return {
+      id: result.id,
+      name: result.name,
+      exercises: result.exercises as WorkoutTemplate['exercises']
+    };
+  }
+
+  async updateWorkoutTemplate(userId: string, id: string, template: Partial<WorkoutTemplate>): Promise<WorkoutTemplate | undefined> {
+    const updateData: Partial<InsertWorkoutTemplate> = {};
+    if (template.name !== undefined) updateData.name = template.name;
+    if (template.exercises !== undefined) updateData.exercises = template.exercises;
+    
+    const [result] = await db
+      .update(workoutTemplates)
+      .set({ ...updateData, updatedAt: new Date() })
+      .where(and(eq(workoutTemplates.userId, userId), eq(workoutTemplates.id, id)))
+      .returning();
+    
+    if (!result) return undefined;
+    
+    return {
+      id: result.id,
+      name: result.name,
+      exercises: result.exercises as WorkoutTemplate['exercises']
+    };
+  }
+
+  async deleteWorkoutTemplate(userId: string, id: string): Promise<boolean> {
+    await db
+      .delete(workoutTemplates)
+      .where(and(eq(workoutTemplates.userId, userId), eq(workoutTemplates.id, id)));
     return true;
   }
 }

@@ -74,6 +74,17 @@ Preferred communication style: Simple, everyday language.
   - WorkoutLogger: 2-column grid for exercises on mobile, compact cards, swipe categories
   - Bottom navigation: Added labels on mobile (Главная, Тренер, Прогресс), larger touch targets
   - Fade-in animations for Dashboard and Progress transitions
+- **Workout Templates (December 2025)**:
+  - WorkoutLogger: Added template save/load functionality (BookmarkPlus and FolderOpen icons in header)
+  - New workoutTemplates table in database schema
+  - API endpoints: GET/POST /api/workout-templates, DELETE /api/workout-templates/:id
+  - Modal dialogs for saving templates (name input + exercise preview) and loading templates (list with delete option)
+- **Weekly Stories (December 2025)**:
+  - Instagram-style full-screen carousel with weekly progress stats
+  - Available Sunday 12:00 - Monday 12:00 (isStoryTimeActive function)
+  - 4 slides: Summary (workout count, exercises, sets, tonnage), Top Muscles, Records, Motivation
+  - Auto-advance with progress bars, tap navigation, dot indicators
+  - Dashboard: "Итоги" button appears in header during story time window
 
 ## Backend Architecture
 

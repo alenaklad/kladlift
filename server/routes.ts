@@ -156,6 +156,54 @@ export async function registerRoutes(
     }
   });
 
+  // Workout Templates endpoints
+  app.get("/api/workout-templates", isAuthenticated, async (req: Request, res) => {
+    try {
+      const userId = getUserId(req)!;
+      const templates = await storage.getWorkoutTemplates(userId);
+      res.json(templates);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get workout templates" });
+    }
+  });
+
+  app.post("/api/workout-templates", isAuthenticated, async (req: Request, res) => {
+    try {
+      const userId = getUserId(req)!;
+      const template = await storage.createWorkoutTemplate(userId, req.body);
+      res.json(template);
+    } catch (error) {
+      console.error("Error creating workout template:", error);
+      res.status(500).json({ error: "Failed to create workout template" });
+    }
+  });
+
+  app.put("/api/workout-templates/:id", isAuthenticated, async (req: Request, res) => {
+    try {
+      const userId = getUserId(req)!;
+      const template = await storage.updateWorkoutTemplate(userId, req.params.id, req.body);
+      if (!template) {
+        return res.status(404).json({ error: "Template not found" });
+      }
+      res.json(template);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update workout template" });
+    }
+  });
+
+  app.delete("/api/workout-templates/:id", isAuthenticated, async (req: Request, res) => {
+    try {
+      const userId = getUserId(req)!;
+      const deleted = await storage.deleteWorkoutTemplate(userId, req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Template not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete workout template" });
+    }
+  });
+
   // AI Chat endpoint (protected)
   app.post("/api/chat", isAuthenticated, async (req: Request, res) => {
     try {

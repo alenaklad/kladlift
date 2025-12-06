@@ -10,7 +10,10 @@ import {
   Info,
   Youtube,
   Calendar,
-  Sparkles
+  Sparkles,
+  BookmarkPlus,
+  FolderOpen,
+  Bookmark
 } from 'lucide-react';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { 
@@ -23,7 +26,9 @@ import {
   type MuscleGroup,
   type CardioType,
   type SelectCustomExercise,
-  type SelectUserExercise
+  type SelectUserExercise,
+  type Workout,
+  type WorkoutTemplate
 } from '@shared/schema';
 import { getVisualForExercise, FULL_EXERCISE_DB } from '@/lib/exercises';
 import { MuscleTarget } from './MuscleTarget';
@@ -34,6 +39,23 @@ interface WorkoutLoggerProps {
   onCancel: () => void;
   initialExercises?: WorkoutExercise[];
   initialDate?: number;
+  allWorkouts?: Workout[];
+}
+
+function getLastPerformance(exerciseId: string, exerciseName: string, workouts: Workout[]): { weight: number; reps: number; date: number } | null {
+  for (const workout of workouts.sort((a, b) => b.date - a.date)) {
+    const found = workout.exercises.find(ex => ex.id === exerciseId || ex.name === exerciseName);
+    if (found && found.sets.length > 0) {
+      const bestSet = found.sets.reduce((best, set) => {
+        const weight = set.weight || 0;
+        return weight > (best.weight || 0) ? set : best;
+      }, found.sets[0]);
+      if (bestSet.weight && bestSet.reps) {
+        return { weight: bestSet.weight, reps: bestSet.reps, date: workout.date };
+      }
+    }
+  }
+  return null;
 }
 
 type ExerciseWithImage = ExerciseType & { imageUrl?: string | null; workingMuscles?: string | null };
@@ -49,7 +71,7 @@ function parseInputDate(dateStr: string): number {
   return date.getTime();
 }
 
-export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initialDate }: WorkoutLoggerProps) {
+export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initialDate, allWorkouts = [] }: WorkoutLoggerProps) {
   const [exercises, setExercises] = useState<WorkoutExercise[]>(initialExercises);
   const [selectedExercise, setSelectedExercise] = useState<ExerciseWithImage | null>(null);
   const [currentSets, setCurrentSets] = useState<SetData[]>([{ weight: 0, reps: 0 }]);
@@ -84,6 +106,42 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
   const { data: userExercises = [], isLoading: userLoading } = useQuery<SelectUserExercise[]>({
     queryKey: ['/api/user-exercises']
   });
+
+  const { data: templates = [] } = useQuery<WorkoutTemplate[]>({
+    queryKey: ['/api/workout-templates']
+  });
+
+  const [showTemplatesModal, setShowTemplatesModal] = useState(false);
+  const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+
+  const saveTemplateMutation = useMutation({
+    mutationFn: (data: { name: string; exercises: WorkoutExercise[] }) => 
+      apiRequest('POST', '/api/workout-templates', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/workout-templates'] });
+      setShowSaveTemplateModal(false);
+      setTemplateName('');
+    }
+  });
+
+  const deleteTemplateMutation = useMutation({
+    mutationFn: (id: string) => apiRequest('DELETE', `/api/workout-templates/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/workout-templates'] });
+    }
+  });
+
+  const handleSaveAsTemplate = () => {
+    if (templateName.trim() && exercises.length > 0) {
+      saveTemplateMutation.mutate({ name: templateName.trim(), exercises });
+    }
+  };
+
+  const handleLoadTemplate = (template: WorkoutTemplate) => {
+    setExercises(template.exercises);
+    setShowTemplatesModal(false);
+  };
 
   const allExercises = useMemo((): ExerciseWithImage[] => {
     if (dbExercises.length > 0) {
@@ -419,7 +477,30 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
             </div>
           ) : (
             <div className="space-y-4 mb-8">
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] mb-2">
+              {(() => {
+                const lastPerf = selectedExercise ? getLastPerformance(selectedExercise.id, selectedExercise.name, allWorkouts) : null;
+                if (lastPerf) {
+                  const daysAgo = Math.floor((Date.now() - lastPerf.date) / (1000 * 60 * 60 * 24));
+                  return (
+                    <div className="mb-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border border-green-200 dark:border-green-700/50">
+                      <div className="flex items-center gap-2">
+                        <Sparkles size={16} className="text-green-600 dark:text-green-400" />
+                        <span className="text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wider">
+                          В прошлый раз
+                        </span>
+                        <span className="text-xs text-green-600 dark:text-green-400 ml-auto">
+                          {daysAgo === 0 ? 'сегодня' : daysAgo === 1 ? 'вчера' : `${daysAgo} дн. назад`}
+                        </span>
+                      </div>
+                      <p className="text-lg font-bold text-green-800 dark:text-green-200 mt-1">
+                        {lastPerf.weight} кг × {lastPerf.reps} повт
+                      </p>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+              <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-2">
                 Подходы
               </h3>
               {currentSets.map((set, idx) => (
@@ -496,13 +577,33 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
       <div className="sticky top-0 z-30 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-lg pt-4 sm:pt-6 pb-3 sm:pb-4 -mx-4 sm:-mx-6 px-4 sm:px-6 mb-4 sm:mb-6 border-b border-slate-200 dark:border-slate-700">
         <div className="flex justify-between items-center mb-3 sm:mb-4">
           <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Запись</h1>
-          <button 
-            onClick={onCancel} 
-            className="p-2.5 sm:p-3 touch-target bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full shadow-sm text-slate-500 dark:text-slate-400 active:text-slate-900 dark:active:text-white active:bg-slate-100 dark:active:bg-slate-700 transition-colors"
-            data-testid="button-cancel-workout"
-          >
-            <X size={22} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setShowTemplatesModal(true)}
+              className="p-2.5 sm:p-3 touch-target bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full shadow-sm text-purple-600 dark:text-purple-400 active:bg-purple-50 dark:active:bg-purple-900/30 transition-colors"
+              data-testid="button-load-template"
+              title="Загрузить шаблон"
+            >
+              <FolderOpen size={20} />
+            </button>
+            {exercises.length > 0 && (
+              <button 
+                onClick={() => setShowSaveTemplateModal(true)}
+                className="p-2.5 sm:p-3 touch-target bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full shadow-sm text-green-600 dark:text-green-400 active:bg-green-50 dark:active:bg-green-900/30 transition-colors"
+                data-testid="button-save-template"
+                title="Сохранить как шаблон"
+              >
+                <BookmarkPlus size={20} />
+              </button>
+            )}
+            <button 
+              onClick={onCancel} 
+              className="p-2.5 sm:p-3 touch-target bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full shadow-sm text-slate-500 dark:text-slate-400 active:text-slate-900 dark:active:text-white active:bg-slate-100 dark:active:bg-slate-700 transition-colors"
+              data-testid="button-cancel-workout"
+            >
+              <X size={22} />
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6 bg-white dark:bg-slate-800 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
@@ -755,6 +856,131 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
               <ArrowRight size={24} />
             </div>
           </button>
+        </div>
+      )}
+
+      {showTemplatesModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full max-h-[70vh] overflow-hidden shadow-2xl">
+            <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/50 rounded-xl flex items-center justify-center">
+                  <Bookmark size={20} className="text-purple-600 dark:text-purple-400" />
+                </div>
+                <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">Мои шаблоны</h3>
+              </div>
+              <button 
+                onClick={() => setShowTemplatesModal(false)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                data-testid="button-close-templates"
+              >
+                <X size={20} className="text-slate-500" />
+              </button>
+            </div>
+            
+            <div className="p-4 overflow-y-auto max-h-[50vh]">
+              {templates.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
+                    <FolderOpen size={32} className="text-slate-400" />
+                  </div>
+                  <p className="text-slate-500 dark:text-slate-400 font-medium">Нет сохранённых шаблонов</p>
+                  <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+                    Добавьте упражнения и сохраните как шаблон
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {templates.map((template) => (
+                    <div
+                      key={template.id}
+                      className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700"
+                    >
+                      <button
+                        onClick={() => handleLoadTemplate(template)}
+                        className="flex-1 text-left"
+                        data-testid={`template-${template.id}`}
+                      >
+                        <p className="font-bold text-slate-900 dark:text-slate-100">{template.name}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                          {template.exercises.length} упражнений
+                        </p>
+                      </button>
+                      <button
+                        onClick={() => deleteTemplateMutation.mutate(template.id)}
+                        className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                        data-testid={`delete-template-${template.id}`}
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSaveTemplateModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl">
+            <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-100 dark:bg-green-900/50 rounded-xl flex items-center justify-center">
+                  <BookmarkPlus size={20} className="text-green-600 dark:text-green-400" />
+                </div>
+                <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">Сохранить шаблон</h3>
+              </div>
+              <button 
+                onClick={() => setShowSaveTemplateModal(false)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                data-testid="button-close-save-template"
+              >
+                <X size={20} className="text-slate-500" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                  Название шаблона
+                </label>
+                <input
+                  type="text"
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500 transition-all"
+                  placeholder="Например: День ног"
+                  autoFocus
+                  data-testid="input-template-name"
+                />
+              </div>
+              <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
+                  Будет сохранено {exercises.length} упражнений:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {exercises.slice(0, 5).map((ex, idx) => (
+                    <span key={idx} className="text-xs bg-white dark:bg-slate-700 px-2 py-1 rounded-lg text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
+                      {ex.name}
+                    </span>
+                  ))}
+                  {exercises.length > 5 && (
+                    <span className="text-xs text-slate-400">+{exercises.length - 5} ещё</span>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={handleSaveAsTemplate}
+                disabled={!templateName.trim() || saveTemplateMutation.isPending}
+                className="w-full py-4 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl font-bold hover:from-green-700 hover:to-green-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                data-testid="button-confirm-save-template"
+              >
+                {saveTemplateMutation.isPending ? 'Сохранение...' : 'Сохранить шаблон'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

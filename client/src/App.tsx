@@ -327,6 +327,7 @@ function AuthenticatedApp() {
         }}
         initialExercises={editingWorkout?.exercises}
         initialDate={editingWorkout?.date}
+        allWorkouts={workouts}
       />
     );
   }

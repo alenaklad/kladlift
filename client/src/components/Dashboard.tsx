@@ -37,6 +37,8 @@ import {
 } from '@/lib/training';
 import { BodyStatsManager } from './BodyStatsManager';
 import { MuscleDetailModal } from './MuscleDetailModal';
+import { WeeklyStories, isStoryTimeActive } from './WeeklyStories';
+import { Sparkles } from 'lucide-react';
 
 interface WeeklyProgressBarProps {
   workouts: Workout[];
@@ -268,6 +270,9 @@ export function Dashboard({
   const [weekOffset, setWeekOffset] = useState(0);
   const [showBodyModal, setShowBodyModal] = useState(false);
   const [selectedMuscle, setSelectedMuscle] = useState<string | null>(null);
+  const [showStories, setShowStories] = useState(false);
+
+  const storyTimeActive = isStoryTimeActive();
 
   const program = useMemo(() => 
     calculateFullProgram({ ...user, gender: user.gender }), 
@@ -401,14 +406,26 @@ export function Dashboard({
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100" data-testid="text-app-title">KladLift</h1>
           <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium">Твоя система</p>
         </div>
-        <button 
-          onClick={onOpenHistory} 
-          className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 touch-target bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors shadow-sm"
-          data-testid="button-history"
-        >
-          <Clock size={18} />
-          <span className="font-medium text-xs sm:text-sm">История</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {storyTimeActive && (
+            <button 
+              onClick={() => setShowStories(true)}
+              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 touch-target bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-white shadow-lg shadow-purple-500/30 active:scale-95 transition-transform"
+              data-testid="button-weekly-stories"
+            >
+              <Sparkles size={18} />
+              <span className="font-medium text-xs sm:text-sm">Итоги</span>
+            </button>
+          )}
+          <button 
+            onClick={onOpenHistory} 
+            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 touch-target bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors shadow-sm"
+            data-testid="button-history"
+          >
+            <Clock size={18} />
+            <span className="font-medium text-xs sm:text-sm">История</span>
+          </button>
+        </div>
       </header>
 
       <WeeklyProgressBar 
@@ -773,6 +790,13 @@ export function Dashboard({
           stats={stats} 
           onClose={() => setSelectedMuscle(null)} 
           user={user} 
+        />
+      )}
+      
+      {showStories && (
+        <WeeklyStories 
+          workouts={workouts} 
+          onClose={() => setShowStories(false)} 
         />
       )}
     </div>

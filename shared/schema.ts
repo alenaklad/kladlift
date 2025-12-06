@@ -212,6 +212,19 @@ export const bodyLogs = pgTable("body_logs", {
 export type InsertBodyLog = typeof bodyLogs.$inferInsert;
 export type SelectBodyLog = typeof bodyLogs.$inferSelect;
 
+// Workout Templates table linked to user
+export const workoutTemplates = pgTable("workout_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  name: varchar("name").notNull(),
+  exercises: jsonb("exercises").notNull().$type<WorkoutExercise[]>(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type InsertWorkoutTemplate = typeof workoutTemplates.$inferInsert;
+export type SelectWorkoutTemplate = typeof workoutTemplates.$inferSelect;
+
 // ========== ZOD SCHEMAS (for validation) ==========
 
 // --- User Profile ---
@@ -320,6 +333,15 @@ export const workoutSchema = z.object({
 });
 
 export type Workout = z.infer<typeof workoutSchema>;
+
+// --- Workout Template ---
+export const workoutTemplateSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  exercises: z.array(workoutExerciseSchema)
+});
+
+export type WorkoutTemplate = z.infer<typeof workoutTemplateSchema>;
 
 // --- Body Log ---
 export const bodyLogSchema = z.object({
