@@ -7,9 +7,15 @@ if [ -z "$GITHUB_PERSONAL_ACCESS_TOKEN" ]; then
   exit 1
 fi
 
-git add .
-git commit -m "deploy: $(date '+%Y-%m-%d %H:%M')" 2>/dev/null || echo "Нет изменений для коммита"
+REMOTE_URL="https://${GITHUB_PERSONAL_ACCESS_TOKEN}@github.com/alenaklad/kladlift.git"
 
-git push https://${GITHUB_PERSONAL_ACCESS_TOKEN}@github.com/alenaklad/kladlift.git main
+git add .
+git commit -m "deploy: $(date '+%Y-%m-%d %H:%M')" 2>/dev/null || echo "Нет новых изменений для коммита"
+
+echo "📥 Синхронизация с GitHub..."
+git pull "$REMOTE_URL" main --rebase --autostash
+
+echo "📤 Отправка изменений..."
+git push "$REMOTE_URL" main
 
 echo "✅ Готово! Railway автоматически обновит приложение через 1-2 минуты"
