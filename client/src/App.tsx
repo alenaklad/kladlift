@@ -523,6 +523,8 @@ function AuthenticatedApp() {
           </button>
         </div>
       </nav>
+      
+      <InstallPWABanner isAuthenticated={true} />
     </div>
   );
 }
@@ -572,7 +574,6 @@ function App() {
         <TooltipProvider>
           <AppRouter />
           <Toaster />
-          <InstallPWABanner />
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>

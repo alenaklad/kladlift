@@ -531,10 +531,10 @@ export function Dashboard({
             if (key === 'cardio') return null;
             const actual = stats.actualVolume[key] || 0;
             const target = program.weeklyVolume[key] || 10;
-            const pct = Math.min((actual / target) * 100, 120);
+            const pct = (actual / target) * 100;
             let barColor = '#22C55E';
             if (actual < target * 0.5) barColor = '#F59E0B';
-            if (actual > target * 1.1) barColor = '#EF4444';
+            if (actual > target) barColor = '#166534';
             
             return (
               <div 
@@ -553,7 +553,7 @@ export function Dashboard({
                 <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden relative">
                   <div 
                     className="h-full rounded-full transition-all duration-1000" 
-                    style={{ width: `${(pct / 120) * 100}%`, backgroundColor: barColor }}
+                    style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: barColor }}
                   ></div>
                 </div>
               </div>
