@@ -119,9 +119,7 @@ export function AuthForms({ onSuccess }: AuthFormsProps) {
           {/* Header */}
           <header className="p-6 md:p-8">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/10">
-                <Activity className="w-5 h-5 text-white" />
-              </div>
+              <img src="/logo.png" alt="KladLift" className="w-10 h-10 object-contain" />
               <span className="text-white/90 font-semibold text-lg tracking-tight">KladLift</span>
             </div>
           </header>
@@ -377,9 +375,7 @@ export function AuthForms({ onSuccess }: AuthFormsProps) {
           </div>
           <div className="relative z-10 flex flex-col justify-center p-16">
             <div className="max-w-md">
-              <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-8 border border-white/10">
-                <Activity className="w-8 h-8 text-white" />
-              </div>
+              <img src="/logo.png" alt="KladLift" className="w-20 h-20 object-contain mb-8" />
               <h2 className="text-4xl font-bold text-white mb-4 tracking-tight">
                 Трансформируй своё тело
               </h2>
@@ -404,9 +400,7 @@ export function AuthForms({ onSuccess }: AuthFormsProps) {
         </div>
         <div className="relative z-10 flex flex-col justify-center p-16">
           <div className="max-w-md">
-            <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-8 border border-white/10">
-              <Activity className="w-8 h-8 text-white" />
-            </div>
+            <img src="/logo.png" alt="KladLift" className="w-20 h-20 object-contain mb-8" />
             <h2 className="text-4xl font-bold text-white mb-4 tracking-tight">
               С возвращением
             </h2>

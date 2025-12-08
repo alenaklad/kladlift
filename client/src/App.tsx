@@ -34,13 +34,17 @@ type AppView = 'dashboard' | 'log' | 'progress' | 'coach' | 'history' | 'admin' 
 
 function CalibrationView() {
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-purple-600 via-purple-700 to-slate-900 text-white">
-      <div className="relative w-24 h-24 mb-8">
-        <div className="absolute inset-0 border-t-4 border-white rounded-full animate-spin"></div>
-        <div className="absolute inset-3 border-b-4 border-white/30 rounded-full animate-spin-reverse"></div>
+    <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
+      <div className="relative w-28 h-28 mb-8">
+        <img 
+          src="/logo.png" 
+          alt="KladLift" 
+          className="w-28 h-28 object-contain animate-pulse"
+        />
+        <div className="absolute inset-0 border-t-4 border-orange-500 rounded-full animate-spin"></div>
       </div>
-      <h3 className="text-2xl font-bold mb-2 animate-pulse">Калибровка...</h3>
-      <p className="text-white/60 text-sm">Рассчитываем MRV и MEV нагрузки</p>
+      <h3 className="text-2xl font-bold mb-2">Калибровка...</h3>
+      <p className="text-slate-400 text-sm">Рассчитываем MRV и MEV нагрузки</p>
     </div>
   );
 }
@@ -526,36 +530,22 @@ function AuthenticatedApp() {
 function LoadingScreen() {
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      <div className="relative mb-8">
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shadow-2xl shadow-purple-500/30">
-          <svg 
-            viewBox="0 0 24 24" 
-            className="w-10 h-10 text-white"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M6.5 6.5a2 2 0 0 0-2.83 0L2.46 7.71a2 2 0 0 0 0 2.83l1.21 1.21" />
-            <path d="M21.54 7.71a2 2 0 0 0 0-2.83l-1.21-1.21a2 2 0 0 0-2.83 0l-1.21 1.21" />
-            <path d="M12 3v18" />
-            <path d="M5 12h14" />
-            <circle cx="5" cy="12" r="2" />
-            <circle cx="19" cy="12" r="2" />
-            <path d="m2 2 20 20" className="opacity-0" />
-          </svg>
-        </div>
-        <div className="absolute -inset-2 bg-gradient-to-r from-purple-500/20 to-purple-600/20 rounded-3xl blur-xl animate-pulse"></div>
+      <div className="relative mb-8 animate-fadeInScale">
+        <img 
+          src="/logo.png" 
+          alt="KladLift" 
+          className="w-32 h-32 object-contain drop-shadow-2xl animate-float"
+        />
+        <div className="absolute -inset-4 bg-gradient-to-r from-orange-500/20 to-amber-600/20 rounded-full blur-2xl animate-pulse"></div>
       </div>
       
-      <h1 className="text-2xl font-bold text-white mb-2 tracking-tight">KladLift</h1>
-      <p className="text-slate-400 text-sm mb-8">Персональный тренировочный трекер</p>
+      <h1 className="text-3xl font-bold text-white mb-2 tracking-tight animate-fadeIn-delay-1">KladLift</h1>
+      <p className="text-slate-400 text-sm mb-8 animate-fadeIn-delay-2">Персональный тренировочный трекер</p>
       
-      <div className="flex items-center gap-2">
-        <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-        <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-        <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+      <div className="flex items-center gap-2 animate-fadeIn-delay-3">
+        <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+        <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+        <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
       </div>
     </div>
   );

@@ -168,9 +168,14 @@ export function WeeklyStories({ workouts, onClose }: WeeklyStoriesProps) {
         ))}
       </div>
       
+      <div className="absolute top-10 left-4 z-10 flex items-center gap-2">
+        <img src="/logo.png" alt="KladLift" className="w-8 h-8 object-contain opacity-80" />
+        <span className="text-white/60 text-sm font-medium">KladLift</span>
+      </div>
+      
       <button 
         onClick={onClose}
-        className="absolute top-12 right-4 z-10 p-2 text-white/80 hover:text-white"
+        className="absolute top-10 right-4 z-10 p-2 text-white/80 hover:text-white"
         data-testid="button-close-stories"
       >
         <X size={24} />

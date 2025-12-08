@@ -402,9 +402,12 @@ export function Dashboard({
   return (
     <div className="px-4 sm:px-6 pt-16 sm:pt-20 pb-28 sm:pb-24 max-w-4xl mx-auto space-y-4 sm:space-y-6 bg-slate-50 dark:bg-slate-900 min-h-screen">
       <header className="flex justify-between items-center gap-3 mb-4 sm:mb-6">
-        <div className="flex-shrink-0">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100" data-testid="text-app-title">KladLift</h1>
-          <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium">Твоя система</p>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <img src="/logo.png" alt="KladLift" className="w-10 h-10 sm:w-12 sm:h-12 object-contain" />
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100" data-testid="text-app-title">KladLift</h1>
+            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium">Твоя система</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {storyTimeActive && (
