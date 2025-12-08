@@ -403,7 +403,7 @@ export function Dashboard({
     <div className="px-4 sm:px-6 pt-16 sm:pt-20 pb-28 sm:pb-24 max-w-4xl mx-auto space-y-4 sm:space-y-6 bg-slate-50 dark:bg-slate-900 min-h-screen">
       <header className="flex justify-between items-center gap-3 mb-4 sm:mb-6">
         <div className="flex items-center gap-2 sm:gap-3">
-          <img src="/logo.png" alt="KladLift" className="w-10 h-10 sm:w-12 sm:h-12 object-contain" />
+          <img src="/logo.png" alt="KladLift" className="w-10 h-10 sm:w-12 sm:h-12 object-contain pl-[4px] pr-[4px]" />
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100" data-testid="text-app-title">KladLift</h1>
             <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium">Твоя система</p>
@@ -430,12 +430,10 @@ export function Dashboard({
           </button>
         </div>
       </header>
-
       <WeeklyProgressBar 
         workouts={workouts} 
         trainingDays={user.trainingDays}
       />
-
       <div className="bg-gradient-to-br from-purple-600 via-purple-700 to-slate-900 text-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-xl relative overflow-hidden flex flex-col md:flex-row gap-4 sm:gap-6">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-20 -right-20 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
@@ -489,7 +487,6 @@ export function Dashboard({
           </div>
         )}
       </div>
-
       <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700">
         <div className="flex justify-between items-center mb-3 sm:mb-4 gap-2">
           <h3 className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100">Недельный объем</h3>
@@ -564,7 +561,6 @@ export function Dashboard({
           })}
         </div>
       </div>
-
       <div className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-purple-100 dark:border-purple-900/50">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-3 sm:mb-4">
           <h3 className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
@@ -677,7 +673,6 @@ export function Dashboard({
           </div>
         )}
       </div>
-
       <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col relative overflow-hidden">
         {needsMeasurementReminder && (
           <div 
@@ -766,7 +761,6 @@ export function Dashboard({
           </ResponsiveContainer>
         </div>
       </div>
-
       <button 
         onClick={onLogClick} 
         className="w-full py-3.5 sm:py-4 touch-target bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base shadow-lg shadow-purple-500/25 active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
@@ -774,7 +768,6 @@ export function Dashboard({
       >
         <Plus size={20}/> Записать тренировку
       </button>
-
       {showBodyModal && (
         <BodyStatsManager 
           currentWeight={user.weight} 
@@ -785,7 +778,6 @@ export function Dashboard({
           onDelete={onDeleteBodyLog} 
         />
       )}
-      
       {selectedMuscle && (
         <MuscleDetailModal 
           muscle={selectedMuscle} 
@@ -795,7 +787,6 @@ export function Dashboard({
           user={user} 
         />
       )}
-      
       {showStories && (
         <WeeklyStories 
           workouts={workouts} 
