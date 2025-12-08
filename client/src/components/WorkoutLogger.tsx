@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useHaptic } from '@/hooks/use-haptic';
 import { 
   Search, 
   X, 
@@ -13,8 +14,10 @@ import {
   Sparkles,
   BookmarkPlus,
   FolderOpen,
-  Bookmark
+  Bookmark,
+  Timer
 } from 'lucide-react';
+import { RestTimer } from './RestTimer';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { 
   MUSCLE_GROUPS,
@@ -72,6 +75,7 @@ function parseInputDate(dateStr: string): number {
 }
 
 export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initialDate, allWorkouts = [] }: WorkoutLoggerProps) {
+  const haptic = useHaptic();
   const [exercises, setExercises] = useState<WorkoutExercise[]>(initialExercises);
   const [selectedExercise, setSelectedExercise] = useState<ExerciseWithImage | null>(null);
   const [currentSets, setCurrentSets] = useState<SetData[]>([{ weight: 0, reps: 0 }]);
@@ -114,6 +118,7 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
   const [showTemplatesModal, setShowTemplatesModal] = useState(false);
   const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
   const [templateName, setTemplateName] = useState('');
+  const [showRestTimer, setShowRestTimer] = useState(false);
 
   const saveTemplateMutation = useMutation({
     mutationFn: (data: { name: string; exercises: WorkoutExercise[] }) => 
@@ -244,6 +249,7 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
       };
       
       setExercises([...exercises, newExercise]);
+      haptic.medium();
       setSelectedExercise(null);
       setCardioData({ duration: 0, distance: 0, steps: 0, jumps: 0, distanceUnit: 'km' });
     } else {
@@ -258,9 +264,15 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
       };
 
       setExercises([...exercises, newExercise]);
+      haptic.medium();
       setSelectedExercise(null);
       setCurrentSets([{ weight: 0, reps: 0 }]);
     }
+  };
+
+  const removeExercise = (idx: number) => {
+    haptic.light();
+    setExercises(exercises.filter((_, i) => i !== idx));
   };
 
   if (selectedExercise) {
@@ -500,9 +512,19 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
                 }
                 return null;
               })()}
-              <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-2">
-                Подходы
-              </h3>
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">
+                  Подходы
+                </h3>
+                <button
+                  onClick={() => setShowRestTimer(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-full text-xs font-bold hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
+                  data-testid="button-rest-timer"
+                >
+                  <Timer size={14} />
+                  Таймер
+                </button>
+              </div>
               {currentSets.map((set, idx) => (
                 <div key={idx} className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-purple-700 text-white flex items-center justify-center font-bold text-lg shadow-md">
@@ -568,6 +590,11 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
             </button>
           </div>
         </div>
+        
+        <RestTimer 
+          isOpen={showRestTimer} 
+          onClose={() => setShowRestTimer(false)} 
+        />
       </div>
     );
   }
@@ -668,7 +695,7 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
                 <div className="flex items-center gap-2 sm:gap-3">
                   <span className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400">{ex.sets.length} sets</span>
                   <button 
-                    onClick={() => setExercises(exercises.filter((_, idx) => idx !== i))} 
+                    onClick={() => removeExercise(i)} 
                     className="p-1.5 touch-target text-slate-400 active:text-red-500 transition-colors"
                     data-testid={`button-remove-exercise-${i}`}
                   >

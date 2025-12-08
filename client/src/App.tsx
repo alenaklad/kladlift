@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { queryClient, apiRequest } from "./lib/queryClient";
 import { QueryClientProvider, useQuery, useMutation } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useHaptic } from "@/hooks/use-haptic";
 import { 
   BarChart2, 
   Plus,
@@ -29,6 +30,9 @@ import { ProfileView } from "@/components/ProfileView";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { InstallPWABanner } from "@/components/InstallPWABanner";
+import { DashboardSkeleton } from "@/components/Skeleton";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { useOnlineStatus, useOfflineWorkouts, useOfflineBodyLogs } from "@/hooks/use-offline";
 
 type AppView = 'dashboard' | 'log' | 'progress' | 'coach' | 'history' | 'admin' | 'cycle' | 'goal' | 'profile';
 
@@ -135,6 +139,10 @@ function UndoDeleteToast({
 function AuthenticatedApp() {
   const { toast, dismiss } = useToast();
   const { user: authUser } = useAuth();
+  const haptic = useHaptic();
+  const isOnline = useOnlineStatus();
+  const { getCachedWorkouts, cacheWorkouts } = useOfflineWorkouts();
+  const { getCachedBodyLogs, cacheBodyLogs } = useOfflineBodyLogs();
   const [view, setView] = useState<AppView>('dashboard');
   const [isOnboarded, setIsOnboarded] = useState<boolean | null>(null);
   const [isCalibrating, setIsCalibrating] = useState(false);
@@ -154,15 +162,47 @@ function AuthenticatedApp() {
     queryKey: ['/api/user'],
   });
 
-  const { data: workouts = [], refetch: refetchWorkouts } = useQuery<Workout[]>({
+  const { data: workoutsData = [], refetch: refetchWorkouts, isError: workoutsError } = useQuery<Workout[]>({
     queryKey: ['/api/workouts'],
     enabled: isOnboarded === true,
   });
 
-  const { data: bodyLogs = [], refetch: refetchBodyLogs } = useQuery<BodyLog[]>({
+  const { data: bodyLogsData = [], refetch: refetchBodyLogs, isError: bodyLogsError } = useQuery<BodyLog[]>({
     queryKey: ['/api/body-logs'],
     enabled: isOnboarded === true,
   });
+
+  const workouts = useMemo(() => {
+    if (workoutsData.length > 0) {
+      return workoutsData;
+    }
+    if (!isOnline || workoutsError) {
+      return getCachedWorkouts();
+    }
+    return workoutsData;
+  }, [workoutsData, isOnline, workoutsError, getCachedWorkouts]);
+
+  const bodyLogs = useMemo(() => {
+    if (bodyLogsData.length > 0) {
+      return bodyLogsData;
+    }
+    if (!isOnline || bodyLogsError) {
+      return getCachedBodyLogs();
+    }
+    return bodyLogsData;
+  }, [bodyLogsData, isOnline, bodyLogsError, getCachedBodyLogs]);
+
+  useEffect(() => {
+    if (isOnline && workoutsData.length > 0) {
+      cacheWorkouts(workoutsData);
+    }
+  }, [workoutsData, isOnline, cacheWorkouts]);
+
+  useEffect(() => {
+    if (isOnline && bodyLogsData.length > 0) {
+      cacheBodyLogs(bodyLogsData);
+    }
+  }, [bodyLogsData, isOnline, cacheBodyLogs]);
 
   const saveUserMutation = useMutation({
     mutationFn: (userData: UserProfile) => apiRequest('POST', '/api/user', userData),
@@ -274,6 +314,7 @@ function AuthenticatedApp() {
     if (editingWorkout) {
       await apiRequest('PATCH', `/api/workouts/${editingWorkout.id}`, { exercises, date });
       queryClient.invalidateQueries({ queryKey: ['/api/workouts'] });
+      haptic.success();
       toast({
         title: "Тренировка обновлена",
         description: "Изменения сохранены"
@@ -284,6 +325,7 @@ function AuthenticatedApp() {
         exercises
       };
       await saveWorkoutMutation.mutateAsync(workout);
+      haptic.success();
     }
     setView('dashboard');
     setEditingWorkout(null);
@@ -296,6 +338,7 @@ function AuthenticatedApp() {
       fat
     };
     await addBodyLogMutation.mutateAsync(log);
+    haptic.light();
 
     if (userProfile) {
       await saveUserMutation.mutateAsync({
@@ -307,11 +350,7 @@ function AuthenticatedApp() {
   };
 
   if (userLoading || isOnboarded === null) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-slate-50">
-        <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (isCalibrating) {
@@ -474,6 +513,13 @@ function AuthenticatedApp() {
             onOpenCoach={() => setView('coach')}
             onOpenCycle={() => setView('cycle')}
             onOpenGoal={() => setView('goal')}
+            onRefresh={async () => {
+              await Promise.all([
+                refetchWorkouts(),
+                refetchBodyLogs(),
+                refetchUser()
+              ]);
+            }}
           />
         </div>
       )}
@@ -574,6 +620,7 @@ function App() {
         <TooltipProvider>
           <AppRouter />
           <Toaster />
+          <OfflineIndicator />
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>

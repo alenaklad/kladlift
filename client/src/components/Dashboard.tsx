@@ -1,4 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
+import { RefreshCw } from 'lucide-react';
 import { 
   AreaChart, 
   Area, 
@@ -223,6 +225,7 @@ interface DashboardProps {
   onOpenCoach: () => void;
   onOpenCycle: () => void;
   onOpenGoal: () => void;
+  onRefresh?: () => Promise<void>;
 }
 
 function getWeekRange(weekOffset: number): { start: number; end: number; label: string } {
@@ -265,12 +268,25 @@ export function Dashboard({
   onOpenHistory,
   onOpenCoach,
   onOpenCycle,
-  onOpenGoal
+  onOpenGoal,
+  onRefresh
 }: DashboardProps) {
   const [weekOffset, setWeekOffset] = useState(0);
   const [showBodyModal, setShowBodyModal] = useState(false);
   const [selectedMuscle, setSelectedMuscle] = useState<string | null>(null);
   const [showStories, setShowStories] = useState(false);
+
+  const handleRefresh = useCallback(async () => {
+    if (onRefresh) {
+      await onRefresh();
+    }
+  }, [onRefresh]);
+
+  const { containerRef, pullDistance, isRefreshing, progress } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    threshold: 80,
+    maxPull: 120
+  });
 
   const storyTimeActive = isStoryTimeActive();
 
@@ -400,7 +416,28 @@ export function Dashboard({
   }, [bodyLogs]);
 
   return (
-    <div className="px-4 sm:px-6 pt-16 sm:pt-20 pb-28 sm:pb-24 max-w-4xl mx-auto space-y-4 sm:space-y-6 bg-slate-50 dark:bg-slate-900 min-h-screen">
+    <div 
+      ref={containerRef}
+      className="px-4 sm:px-6 pt-16 sm:pt-20 pb-28 sm:pb-24 max-w-4xl mx-auto space-y-4 sm:space-y-6 bg-slate-50 dark:bg-slate-900 min-h-screen overflow-auto"
+      style={{ transform: `translateY(${pullDistance}px)` }}
+    >
+      {(pullDistance > 0 || isRefreshing) && (
+        <div 
+          className="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex items-center justify-center"
+          style={{ 
+            opacity: Math.min(progress, 1),
+            transform: `scale(${0.5 + progress * 0.5})`
+          }}
+        >
+          <div className={`w-10 h-10 bg-white dark:bg-slate-800 rounded-full shadow-lg flex items-center justify-center ${isRefreshing ? 'animate-spin' : ''}`}>
+            <RefreshCw 
+              size={20} 
+              className={`text-purple-600 dark:text-purple-400 ${isRefreshing ? '' : ''}`}
+              style={{ transform: `rotate(${progress * 360}deg)` }}
+            />
+          </div>
+        </div>
+      )}
       <header className="flex justify-between items-center gap-3 mb-4 sm:mb-6">
         <div className="flex items-center gap-2 sm:gap-3">
           <img src="/logo.png" alt="KladLift" className="w-10 h-10 sm:w-12 sm:h-12 object-contain pl-[4px] pr-[4px]" />
