@@ -28,6 +28,7 @@ import { UserMenu } from "@/components/UserMenu";
 import { ProfileView } from "@/components/ProfileView";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { InstallPWABanner } from "@/components/InstallPWABanner";
 
 type AppView = 'dashboard' | 'log' | 'progress' | 'coach' | 'history' | 'admin' | 'cycle' | 'goal' | 'profile';
 
@@ -581,6 +582,7 @@ function App() {
         <TooltipProvider>
           <AppRouter />
           <Toaster />
+          <InstallPWABanner />
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
