@@ -440,7 +440,7 @@ export function Dashboard({
       )}
       <header className="flex justify-between items-center gap-3 mb-4 sm:mb-6">
         <div className="flex items-center gap-2 sm:gap-3">
-          <img src="/logo.png" alt="KladLift" className="w-10 h-10 sm:w-12 sm:h-12 object-contain pl-[4px] pr-[4px]" />
+          <img src="/logo.png" alt="KladLift" className="w-8 h-8 sm:w-10 sm:h-10 object-contain pl-[4px] pr-[4px]" />
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100" data-testid="text-app-title">KladLift</h1>
             <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium">Твоя система</p>
