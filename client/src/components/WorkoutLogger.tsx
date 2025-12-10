@@ -8,6 +8,8 @@ import {
   Trash2, 
   ArrowRight, 
   ChevronLeft,
+  ChevronDown,
+  ChevronUp,
   Info,
   Youtube,
   Calendar,
@@ -42,6 +44,7 @@ interface WorkoutLoggerProps {
   onCancel: () => void;
   initialExercises?: WorkoutExercise[];
   initialDate?: number;
+  initialCategory?: MuscleGroup;
   allWorkouts?: Workout[];
 }
 
@@ -74,12 +77,22 @@ function parseInputDate(dateStr: string): number {
   return date.getTime();
 }
 
-export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initialDate, allWorkouts = [] }: WorkoutLoggerProps) {
+function pluralizeSets(count: number): string {
+  if (count % 10 === 1 && count % 100 !== 11) {
+    return `${count} подход`;
+  } else if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) {
+    return `${count} подхода`;
+  }
+  return `${count} подходов`;
+}
+
+export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initialDate, initialCategory, allWorkouts = [] }: WorkoutLoggerProps) {
   const haptic = useHaptic();
   const [exercises, setExercises] = useState<WorkoutExercise[]>(initialExercises);
   const [selectedExercise, setSelectedExercise] = useState<ExerciseWithImage | null>(null);
   const [currentSets, setCurrentSets] = useState<SetData[]>([{ weight: 0, reps: 0 }]);
-  const [activeCategory, setActiveCategory] = useState<MuscleGroup>('legs');
+  const [activeCategory, setActiveCategory] = useState<MuscleGroup>(initialCategory || 'legs');
+  const [expandedExercises, setExpandedExercises] = useState<Set<number>>(new Set());
   const [search, setSearch] = useState('');
   const [workoutDate, setWorkoutDate] = useState<number>(initialDate || Date.now());
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -685,25 +698,97 @@ export function WorkoutLogger({ onSave, onCancel, initialExercises = [], initial
             </span>
           </div>
           <div className="space-y-2">
-            {exercises.map((ex, i) => (
-              <div 
-                key={i} 
-                className="flex justify-between items-center p-2.5 sm:p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl sm:rounded-2xl"
-                data-testid={`workout-summary-exercise-${i}`}
-              >
-                <span className="font-bold text-sm sm:text-base text-slate-900 dark:text-white truncate mr-3">{ex.name}</span>
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <span className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400">{ex.sets.length} sets</span>
-                  <button 
-                    onClick={() => removeExercise(i)} 
-                    className="p-1.5 touch-target text-slate-400 active:text-red-500 transition-colors"
-                    data-testid={`button-remove-exercise-${i}`}
+            {exercises.map((ex, i) => {
+              const isExpanded = expandedExercises.has(i);
+              const toggleExpand = () => {
+                setExpandedExercises(prev => {
+                  const next = new Set(prev);
+                  if (next.has(i)) {
+                    next.delete(i);
+                  } else {
+                    next.add(i);
+                  }
+                  return next;
+                });
+                haptic.light();
+              };
+              
+              return (
+                <div 
+                  key={i} 
+                  className="bg-slate-50 dark:bg-slate-700/50 rounded-xl sm:rounded-2xl overflow-hidden"
+                  data-testid={`workout-summary-exercise-${i}`}
+                >
+                  <div 
+                    className="flex justify-between items-center p-2.5 sm:p-3 cursor-pointer active:bg-slate-100 dark:active:bg-slate-600/50 transition-colors"
+                    onClick={toggleExpand}
                   >
-                    <Trash2 size={16} />
-                  </button>
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      {isExpanded ? (
+                        <ChevronUp size={16} className="text-slate-400 flex-shrink-0" />
+                      ) : (
+                        <ChevronDown size={16} className="text-slate-400 flex-shrink-0" />
+                      )}
+                      <span className="font-bold text-sm sm:text-base text-slate-900 dark:text-white truncate">{ex.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <span className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400">{pluralizeSets(ex.sets.length)}</span>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeExercise(i);
+                        }} 
+                        className="p-1.5 touch-target text-slate-400 active:text-red-500 transition-colors"
+                        data-testid={`button-remove-exercise-${i}`}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {isExpanded && (
+                    <div className="px-3 pb-3 pt-1 border-t border-slate-200 dark:border-slate-600">
+                      <div className="space-y-1.5">
+                        {ex.sets.map((set, setIdx) => (
+                          <div 
+                            key={setIdx} 
+                            className="flex items-center gap-3 text-sm"
+                            data-testid={`workout-summary-set-${i}-${setIdx}`}
+                          >
+                            <span className="text-slate-400 font-mono text-xs w-5">{setIdx + 1}.</span>
+                            {set.weight !== undefined && set.weight > 0 && (
+                              <span className="font-medium text-slate-700 dark:text-slate-300">
+                                {set.weight} кг
+                              </span>
+                            )}
+                            {set.reps !== undefined && set.reps > 0 && (
+                              <span className="text-slate-500 dark:text-slate-400">
+                                × {set.reps} повт.
+                              </span>
+                            )}
+                            {set.duration !== undefined && set.duration > 0 && (
+                              <span className="font-medium text-slate-700 dark:text-slate-300">
+                                {set.duration} мин
+                              </span>
+                            )}
+                            {set.distance !== undefined && set.distance > 0 && (
+                              <span className="text-slate-500 dark:text-slate-400">
+                                {set.distance} {set.distanceUnit || 'км'}
+                              </span>
+                            )}
+                            {set.steps !== undefined && set.steps > 0 && (
+                              <span className="text-slate-500 dark:text-slate-400">
+                                {set.steps} шагов
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

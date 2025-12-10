@@ -145,12 +145,18 @@ export function getExercisesByMuscle(muscle: MuscleGroup): Exercise[] {
   return FULL_EXERCISE_DB.filter(e => e.muscle === muscle);
 }
 
-// Проксируем изображения с Google Cloud Storage через наш сервер (для России)
+// Проксируем изображения через наш сервер (для обхода блокировок в России)
 export function getProxiedImageUrl(url: string): string {
   if (!url) return '';
   
-  // Проксируем только Google Cloud Storage (заблокирован в России)
-  if (url.includes('storage.googleapis.com') || url.includes('storage.cloud.google.com')) {
+  // Проксируем Google Cloud Storage и Unsplash (могут быть заблокированы в России)
+  const proxyDomains = [
+    'storage.googleapis.com',
+    'storage.cloud.google.com',
+    'images.unsplash.com'
+  ];
+  
+  if (proxyDomains.some(domain => url.includes(domain))) {
     return `/api/image-proxy?url=${encodeURIComponent(url)}`;
   }
   
@@ -161,5 +167,7 @@ export function getVisualForExercise(exercise: Exercise & { imageUrl?: string | 
   if (exercise.imageUrl) {
     return getProxiedImageUrl(exercise.imageUrl);
   }
-  return MUSCLE_GROUPS[exercise.muscle]?.image || MUSCLE_GROUPS.legs.image;
+  // Проксируем и fallback изображения из MUSCLE_GROUPS (тоже Unsplash)
+  const fallbackUrl = MUSCLE_GROUPS[exercise.muscle]?.image || MUSCLE_GROUPS.legs.image;
+  return getProxiedImageUrl(fallbackUrl);
 }

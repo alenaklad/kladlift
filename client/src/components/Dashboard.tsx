@@ -29,7 +29,8 @@ import {
   getCardioType,
   type UserProfile, 
   type Workout, 
-  type BodyLog 
+  type BodyLog,
+  type MuscleGroup 
 } from '@shared/schema';
 import { formatDate } from '@/lib/training';
 import { 
@@ -218,7 +219,7 @@ interface DashboardProps {
   user: UserProfile;
   workouts: Workout[];
   bodyLogs: BodyLog[];
-  onLogClick: () => void;
+  onLogClick: (category?: MuscleGroup) => void;
   onUpdateBody: (weight: number, fat: number | undefined, date: number) => void;
   onDeleteBodyLog: (id: string) => void;
   onOpenHistory: () => void;
@@ -701,7 +702,7 @@ export function Dashboard({
               {randomMotivationalText}
             </p>
             <button 
-              onClick={onLogClick}
+              onClick={() => onLogClick('cardio')}
               className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-xl font-medium text-sm hover:bg-purple-700 transition-colors"
               data-testid="button-add-cardio"
             >
@@ -799,7 +800,7 @@ export function Dashboard({
         </div>
       </div>
       <button 
-        onClick={onLogClick} 
+        onClick={() => onLogClick()} 
         className="w-full py-3.5 sm:py-4 touch-target bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base shadow-lg shadow-purple-500/25 active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
         data-testid="button-log-workout"
       >

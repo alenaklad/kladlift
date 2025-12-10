@@ -13,7 +13,7 @@ import {
   Home,
   Undo2
 } from "lucide-react";
-import type { UserProfile, Workout, BodyLog, WorkoutExercise, User } from "@shared/schema";
+import type { UserProfile, Workout, BodyLog, WorkoutExercise, User, MuscleGroup } from "@shared/schema";
 
 import { Onboarding } from "@/components/Onboarding";
 import { Dashboard } from "@/components/Dashboard";
@@ -147,6 +147,7 @@ function AuthenticatedApp() {
   const [isOnboarded, setIsOnboarded] = useState<boolean | null>(null);
   const [isCalibrating, setIsCalibrating] = useState(false);
   const [editingWorkout, setEditingWorkout] = useState<Workout | null>(null);
+  const [logCategory, setLogCategory] = useState<MuscleGroup | undefined>(undefined);
   const [pendingDeletes, setPendingDeletes] = useState<Map<string, PendingDelete>>(new Map());
   const pendingDeletesRef = useRef<Map<string, PendingDelete>>(new Map());
 
@@ -368,9 +369,11 @@ function AuthenticatedApp() {
         onCancel={() => {
           setView('dashboard');
           setEditingWorkout(null);
+          setLogCategory(undefined);
         }}
         initialExercises={editingWorkout?.exercises}
         initialDate={editingWorkout?.date}
+        initialCategory={logCategory}
         allWorkouts={workouts}
       />
     );
@@ -506,7 +509,10 @@ function AuthenticatedApp() {
             user={userProfile}
             workouts={workouts}
             bodyLogs={bodyLogs}
-            onLogClick={() => setView('log')}
+            onLogClick={(category) => {
+              setLogCategory(category);
+              setView('log');
+            }}
             onUpdateBody={handleUpdateBody}
             onDeleteBodyLog={(id) => deleteBodyLogMutation.mutate(id)}
             onOpenHistory={() => setView('history')}
